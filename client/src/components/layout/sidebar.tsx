@@ -12,6 +12,7 @@ import {
   Home, 
   Info, 
   Settings, 
+  PieChart,
   LogOut,
   Menu,
   X,
@@ -26,6 +27,7 @@ const NAVIGATION_ITEMS = [
   { href: "/about", label: "About", icon: Info },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/subscription", label: "Subscription", icon: Crown },
+  { href: "/categories", label: "Categories", icon: PieChart },
 ];
 
 export default function Sidebar() {

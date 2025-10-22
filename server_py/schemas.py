@@ -141,3 +141,4 @@ class AIQuery(BaseModel):
 
 class AIResponse(BaseModel):
     answer: str
+

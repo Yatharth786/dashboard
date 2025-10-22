@@ -81,7 +81,9 @@ import Subscription from "@/pages/subscription";
 import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
- 
+import CategoryProducts from "./pages/category-products";
+import Categories from "./pages/categories";
+
 // Context for user authentication
 interface User {
   id: string;
@@ -155,6 +157,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route component={NotFound} />
+      <Route path="/categories" component={Categories} />
+      <Route path="/category-products/:category" component={CategoryProducts} />
     </Switch>
   );
 }

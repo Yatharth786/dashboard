@@ -74,7 +74,7 @@ import bcrypt
 from datetime import datetime
 from typing import List
 
-from ..database_config import get_db
+from ..dataforseo_amazon_collector import get_db
 from ..models import User
 from ..schemas import UserCreate, UserOut
 

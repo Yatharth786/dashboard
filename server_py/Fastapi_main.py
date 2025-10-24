@@ -563,13 +563,12 @@
 #     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 
 
-# server_py/Fastapi_main.py - CLEAN VERSION
+# server_py/Fastapi_main.py - CLEANED (No Scheduler Code)
 from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from typing import List, Optional
-from contextlib import asynccontextmanager
 import subprocess, json, logging, sys, os
 from datetime import datetime
 from uuid import uuid4
@@ -578,9 +577,6 @@ from dotenv import load_dotenv
 from server_py import crud, schemas, models
 from server_py.database_config import get_db, engine, Base, SessionLocal
 from server_py.dataforseo_amazon import dataforseo_collector
-from server_py.scheduler import start_scheduler, get_scheduler  # ✅ FIXED
-
-# Remove all the commented code above this line
 
 # -------------------
 # Logging
@@ -648,52 +644,11 @@ def initialize_database() -> bool:
         return False
 
 # -------------------
-# Lifespan context (startup/shutdown)
-# -------------------
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Startup and shutdown events"""
-    # Startup
-    logger.info("\n" + "=" * 70)
-    logger.info("🎯 TRENDSENSEI API - STARTING UP")
-    logger.info("=" * 70 + "\n")
-    
-    env_ok = check_environment()
-    db_ok = initialize_database()
-    
-    if not env_ok or not db_ok:
-        logger.warning("⚠️ Server starting with some issues")
-    else:
-        logger.info("🎉 All startup checks passed!")
-    
-    # ✅ START SCHEDULER
-    try:
-        scheduler = start_scheduler()
-        logger.info("✅ Scheduler started successfully")
-    except Exception as e:
-        logger.error(f"❌ Failed to start scheduler: {e}")
-    
-    yield  # Server runs here
-    
-    # Shutdown
-    logger.info("\n" + "=" * 70)
-    logger.info("🛑 SHUTTING DOWN")
-    logger.info("=" * 70)
-    
-    try:
-        scheduler = get_scheduler()
-        scheduler.stop()
-        logger.info("✅ Scheduler stopped")
-    except Exception as e:
-        logger.error(f"Error stopping scheduler: {e}")
-
-# -------------------
-# FastAPI app with lifespan
+# FastAPI app
 # -------------------
 app = FastAPI(
     title="TrendSensei Product API",
-    version="2.0.0",
-    lifespan=lifespan  # ✅ Enable lifespan events
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -746,7 +701,6 @@ def read_root():
         "message": "TrendSensei API is running",
         "version": "2.0.0",
         "status": "healthy",
-        "scheduler": "enabled",
         "docs": "/docs"
     }
 
@@ -756,15 +710,8 @@ def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "database": "connected" if test_connection() else "disconnected",
-        "scheduler": "running",
         "environment": "configured"
     }
-    
-    try:
-        scheduler = get_scheduler()
-        health_status["scheduler"] = "running" if scheduler.is_running else "stopped"
-    except:
-        health_status["scheduler"] = "error"
     
     missing = [v for v in REQUIRED_ENV if not os.getenv(v)]
     if missing:
@@ -786,23 +733,12 @@ def system_status():
                 table_counts[table_name] = "error"
         db.close()
         
-        # Get scheduler status
-        try:
-            scheduler = get_scheduler()
-            scheduler_status = {
-                "running": scheduler.is_running,
-                "jobs": len(scheduler.get_jobs())
-            }
-        except:
-            scheduler_status = {"running": False, "jobs": 0}
-        
         return {
             "server": {"status": "running", "version": "2.0.0"},
             "database": {
                 "status": "connected" if test_connection() else "disconnected",
                 "tables": table_counts
             },
-            "scheduler": scheduler_status,
             "environment": {
                 v: ("✓ set" if os.getenv(v) else "✗ missing")
                 for v in REQUIRED_ENV
@@ -811,119 +747,6 @@ def system_status():
     except Exception as e:
         logger.error(f"Status check error: {e}", exc_info=True)
         return {"error": str(e)}
-
-# -------------------
-# SCHEDULER ENDPOINTS
-# -------------------
-@app.get("/scheduler/status")
-def get_scheduler_status():
-    """Get scheduler status"""
-    try:
-        scheduler = get_scheduler()
-        return {
-            "is_running": scheduler.is_running,
-            "jobs": scheduler.get_jobs()
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/scheduler/jobs/daily")
-def create_daily_job(
-    keywords: List[str] = Query(...),
-    hour: int = Query(2, ge=0, le=23),
-    minute: int = Query(0, ge=0, le=59),
-    location_code: int = Query(2840),
-    depth: int = Query(100)
-):
-    """Create a daily scheduled job"""
-    try:
-        scheduler = get_scheduler()
-        job_id = scheduler.add_daily_job(
-            keywords=keywords,
-            hour=hour,
-            minute=minute,
-            location_code=location_code,
-            depth=depth
-        )
-        return {
-            "success": True,
-            "job_id": job_id,
-            "message": f"Daily job scheduled at {hour:02d}:{minute:02d} UTC"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/scheduler/jobs/interval")
-def create_interval_job(
-    keywords: List[str] = Query(...),
-    hours: int = Query(0, ge=0),
-    minutes: int = Query(0, ge=0),
-    location_code: int = Query(2840),
-    depth: int = Query(100)
-):
-    """Create an interval-based job"""
-    try:
-        if hours == 0 and minutes == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="Either hours or minutes must be > 0"
-            )
-        
-        scheduler = get_scheduler()
-        job_id = scheduler.add_interval_job(
-            keywords=keywords,
-            hours=hours,
-            minutes=minutes,
-            location_code=location_code,
-            depth=depth
-        )
-        return {
-            "success": True,
-            "job_id": job_id,
-            "message": f"Interval job scheduled every {hours}h {minutes}m"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/scheduler/jobs/{job_id}/pause")
-def pause_job(job_id: str):
-    """Pause a scheduled job"""
-    try:
-        scheduler = get_scheduler()
-        scheduler.pause_job(job_id)
-        return {"success": True, "message": f"Job {job_id} paused"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/scheduler/jobs/{job_id}/resume")
-def resume_job(job_id: str):
-    """Resume a paused job"""
-    try:
-        scheduler = get_scheduler()
-        scheduler.resume_job(job_id)
-        return {"success": True, "message": f"Job {job_id} resumed"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/scheduler/jobs/{job_id}")
-def delete_job(job_id: str):
-    """Delete a scheduled job"""
-    try:
-        scheduler = get_scheduler()
-        scheduler.remove_job(job_id)
-        return {"success": True, "message": f"Job {job_id} deleted"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/scheduler/jobs/{job_id}/run-now")
-def run_job_now(job_id: str):
-    """Run a job immediately"""
-    try:
-        scheduler = get_scheduler()
-        scheduler.run_job_now(job_id)
-        return {"success": True, "message": f"Job {job_id} triggered"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 # -------------------
 # Products endpoints
@@ -1085,7 +908,7 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
     return {"answer": answer}
 
 # -------------------
-# DataForSEO endpoints
+# DataForSEO endpoints (Manual API calls only)
 # -------------------
 @app.post("/dataforseo/amazon")
 async def collect_amazon_data(
@@ -1096,6 +919,7 @@ async def collect_amazon_data(
     wait_time: int = Query(90),
     db: Session = Depends(get_db)
 ):
+    """Manual DataForSEO collection (for testing/on-demand)"""
     try:
         logger.info(f"🔥 DataForSEO request: {keyword}")
         result = dataforseo_collector.collect_and_store(
@@ -1120,6 +944,7 @@ async def collect_amazon_data(
 
 @app.post("/dataforseo/amazon/batch")
 async def collect_batch(request: schemas.BatchKeywordsRequest, db: Session = Depends(get_db)):
+    """Batch collection (manual trigger only)"""
     try:
         results = []
         for keyword in request.keywords:
@@ -1147,6 +972,7 @@ def get_dataforseo_products(
     min_rating: Optional[float] = None,
     db: Session = Depends(get_db)
 ):
+    """Get products collected by DataForSEO (from database)"""
     try:
         query = db.query(models.AmazonProduct)
         if keyword:
@@ -1177,6 +1003,7 @@ def get_dataforseo_products(
 
 @app.get("/dataforseo/stats")
 def get_stats(db: Session = Depends(get_db)):
+    """Get DataForSEO collection statistics"""
     total_products = db.query(func.count(models.AmazonProduct.id)).scalar()
     total_tasks = db.query(func.count(models.DataForSEOTask.id)).scalar()
     total_cost = db.query(func.sum(models.DataForSEOTask.cost)).scalar() or 0
@@ -1238,7 +1065,8 @@ def get_filtered_analytics(
 # -------------------
 if __name__ == "__main__":
     import uvicorn
-    logger.info("🚀 STARTING FASTAPI SERVER WITH SCHEDULER")
+    logger.info("🚀 STARTING FASTAPI SERVER")
+    logger.info("Note: Scheduler runs separately via dataforseo_cron.py")
     try:
         uvicorn.run(
             "server_py.Fastapi_main:app",

@@ -1,4 +1,4 @@
-from pydantic import BaseModel,EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
@@ -88,24 +88,6 @@ class AmazonReview(BaseModel):
 
 class Product(BaseModel):
     id: int
-    asin: str
-    title: str
-    brand: Optional[str]
-    category: Optional[str]
-    price: Optional[float]
-    currency: Optional[str]
-    rating: Optional[float]
-    reviews: Optional[int]
-    availability: Optional[bool]
-    variation: Optional[Dict[str, Any]]  
-    image_url: Optional[str]
-    last_updated: Optional[datetime]  
-
-    class Config:
-        from_attributes = True
-
-class Product(BaseModel):
-    id: int
     title: str
     brand: Optional[str]
     category: Optional[str]
@@ -142,3 +124,11 @@ class AIQuery(BaseModel):
 class AIResponse(BaseModel):
     answer: str
 
+# ==================== DATAFORSEO SCHEMAS (ADDED) ====================
+
+class BatchKeywordsRequest(BaseModel):
+    """Schema for batch keyword collection"""
+    keywords: List[str] = Field(..., example=["laptop", "smartphone"])
+    location_code: Optional[int] = Field(2840, example=2840)
+    language_code: Optional[str] = Field("en_US", example="en_US")
+    depth: Optional[int] = Field(100, example=100)

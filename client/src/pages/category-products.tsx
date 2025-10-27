@@ -948,7 +948,8 @@ export default function CategoryProducts() {
                       </td>
                       <td className="px-6 py-4 font-medium">{p.product_name}</td>
                       <td className="px-6 py-4 text-sky-700 font-semibold">
-                        ₹{p.avg_price.toFixed(2)}
+                        ₹{p.avg_price ? p.avg_price.toFixed(2) : "N/A"}
+
                       </td>
                       <td className="px-6 py-4">{p.total_reviews}</td>
                       <td className="px-6 py-4">{p.avg_rating.toFixed(1)}</td>

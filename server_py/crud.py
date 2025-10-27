@@ -288,10 +288,27 @@ def search_reviews(db: Session, query: str, limit: int = 50):
         )
     ).limit(limit).all()
 
+# def get_review_statistics(db: Session):
+#     total = db.query(func.count(models.AmazonReview.review_id)).scalar()
+#     avg_rating = db.query(func.avg(models.AmazonReview.star_rating)).scalar()
+#     return {"total_reviews": total, "average_rating": float(avg_rating) if avg_rating else None}
+
 def get_review_statistics(db: Session):
-    total = db.query(func.count(models.AmazonReview.review_id)).scalar()
-    avg_rating = db.query(func.avg(models.AmazonReview.star_rating)).scalar()
-    return {"total_reviews": total, "average_rating": float(avg_rating) if avg_rating else None}
+    query = text("""
+        SELECT 
+            COUNT(*) as total_reviews,
+            ROUND(AVG(star_rating), 2) as average_rating,
+            COUNT(DISTINCT product_title) as total_products
+        FROM "Amazon_Reviews"
+    """)
+    
+    row = db.execute(query).fetchone()
+    
+    return {
+        "total_reviews": int(row.total_reviews) if row.total_reviews else 0,
+        "average_rating": float(row.average_rating) if row.average_rating else 0.0,
+        "total_products": int(row.total_products) if row.total_products else 0
+    }
 
 def get_sentiment_distribution(db: Session):
     return (
@@ -429,20 +446,47 @@ def get_top_products_amazon(db: Session, n: int):
     )
     return [dict(product_title=r.product_title, avg_rating=r.avg_rating, review_count=r.review_count) for r in result]
 
+# def get_category_analytics(db: Session) -> List[Dict[str, Any]]:
+#     query = """
+#     SELECT
+#         category,
+#         COUNT(*) AS total_products,
+#         AVG(price) AS avg_price,
+#         AVG(rating) AS avg_rating,
+#         SUM(reviews) AS total_reviews
+#     FROM flipkart
+#     GROUP BY category
+#     ORDER BY total_products DESC
+#     """
+#     result = db.execute(text(query))
+#     return [dict(row._mapping) for row in result]
+
 def get_category_analytics(db: Session) -> List[Dict[str, Any]]:
     query = """
-    SELECT
-        category,
+    SELECT 
+        category AS category,
         COUNT(*) AS total_products,
         AVG(price) AS avg_price,
         AVG(rating) AS avg_rating,
         SUM(reviews) AS total_reviews
     FROM flipkart
     GROUP BY category
-    ORDER BY total_products DESC
+
+    UNION ALL
+
+    SELECT 
+        product_category AS category,
+        COUNT(*) AS total_products,
+        NULL AS avg_price,  -- Amazon_Reviews has no price column
+        AVG(star_rating) AS avg_rating,
+        SUM(total_votes) AS total_reviews
+    FROM "Amazon_Reviews"
+    GROUP BY product_category
     """
+
     result = db.execute(text(query))
     return [dict(row._mapping) for row in result]
+
 
 def forecast_next_price(df: pd.DataFrame, look_back=5, epochs=50) -> float:
     if len(df) < look_back:
@@ -478,7 +522,6 @@ def get_flipkart_categories(db: Session):
 def get_amazon_categories(db: Session):
     rows = db.execute(text('SELECT DISTINCT product_category AS category FROM "Amazon_Reviews"')).fetchall()
     return [{"category": row.category} for row in rows]
-
 
 def get_top_forecasted_products(db: Session, n: int = 10) -> list:
     query = "SELECT id, title, price, last_updated as date FROM flipkart ORDER BY id, last_updated"

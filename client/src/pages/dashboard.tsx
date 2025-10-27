@@ -524,7 +524,7 @@ import AIRecommendations from "@/components/dashboard/ai-recommendations";
 import Chatbot from "@/components/chatbot/chatbot";
 import { Button } from "@/components/ui/button";
 import { Bell, Filter } from "lucide-react";
-
+import { FiltersProvider } from "@/components/dashboard/FiltersContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -534,12 +534,154 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// export default function Dashboard() {
+//   const [showFilters, setShowFilters] = useState(false);
+//   const [notifications, setNotifications] = useState<
+//     { id: number; message: string; time: string }[]
+//   >([]);
+//   const [selectedSource, setSelectedSource] = useState("flipkart");
+
+//   const BASE_URL = "http://localhost:8000"; // 🔹 Change if deploying to remote FastAPI
+
+//   // Fetch notifications from FastAPI
+//   const fetchNotifications = async (source = selectedSource) => {
+//     try {
+//       const res = await fetch(`${BASE_URL}/notifications?table=${source}`);
+//       const data = await res.json();
+//       if (data?.data) {
+//         setNotifications(data.data);
+//       } else {
+//         setNotifications([]);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching notifications:", error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchNotifications();
+//     const interval = setInterval(fetchNotifications, 30000); // auto-refresh every 30s
+//     return () => clearInterval(interval);
+//   }, [selectedSource]);
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex">
+//       {/* Sidebar */}
+//       <Sidebar />
+
+//       {/* Main Content */}
+//       <div className="flex-1 ml-64 min-h-screen flex flex-col">
+//         {/* Header Bar */}
+//         <header className="bg-white/70 backdrop-blur-xl border border-sky-100 shadow-lg rounded-2xl px-8 py-5 mb-6 flex items-center justify-between sticky top-4 z-20 mx-6">
+//           <div>
+//             <h2 className="text-2xl font-bold text-sky-900">Dashboard</h2>
+//             <p className="text-slate-600 text-sm">
+//               Real-time analytics from your review database
+//             </p>
+//           </div>
+
+//           <div className="flex items-center space-x-2">
+//             {/* Filter Toggle */}
+//             <Button
+//               variant="outline"
+//               size="sm"
+//               className="flex items-center gap-1"
+//               onClick={() => setShowFilters((prev) => !prev)}
+//             >
+//               <Filter className="w-4 h-4" /> Filters
+//             </Button>
+
+//             {/* Select Table Source */}
+//             <select
+//               className="border border-slate-300 rounded px-2 py-1 text-sm bg-white/60 backdrop-blur-sm"
+//               value={selectedSource}
+//               onChange={(e) => {
+//                 const newSource = e.target.value;
+//                 setSelectedSource(newSource);
+//                 fetchNotifications(newSource);
+//               }}
+//             >
+//               <option value="flipkart">Flipkart</option>
+//               <option value="amazon_reviews">Amazon</option>
+//               <option value="both">All</option>
+//             </select>
+
+//             {/* Notifications Dropdown */}
+//             <DropdownMenu>
+//               <DropdownMenuTrigger asChild>
+//                 <Button variant="ghost" size="sm" className="relative">
+//                   <Bell className="w-4 h-4" />
+//                   {notifications.length > 0 && (
+//                     <span className="absolute top-0 right-0 inline-flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+//                   )}
+//                 </Button>
+//               </DropdownMenuTrigger>
+//               <DropdownMenuContent
+//                 align="end"
+//                 className="w-80 rounded-2xl shadow-lg bg-white/90 backdrop-blur-md"
+//               >
+//                 <DropdownMenuLabel className="font-semibold text-slate-800">
+//                   Notifications ({selectedSource})
+//                 </DropdownMenuLabel>
+//                 <DropdownMenuSeparator />
+//                 {notifications.length === 0 ? (
+//                   <DropdownMenuItem className="text-sm text-slate-500">
+//                     No new notifications
+//                   </DropdownMenuItem>
+//                 ) : (
+//                   notifications.map((n) => (
+//                     <DropdownMenuItem
+//                       key={n.id}
+//                       className="flex flex-col items-start py-2 border-b last:border-none border-slate-200"
+//                     >
+//                       <p className="text-sm truncate w-full text-slate-700">
+//                         {n.message}
+//                       </p>
+//                       <span className="text-xs text-slate-400">{n.time}</span>
+//                     </DropdownMenuItem>
+//                   ))
+//                 )}
+//                 <DropdownMenuSeparator />
+//                 <DropdownMenuItem
+//                   onClick={() => setNotifications([])}
+//                   className="text-sm text-blue-600 cursor-pointer"
+//                 >
+//                   Clear all
+//                 </DropdownMenuItem>
+//               </DropdownMenuContent>
+//             </DropdownMenu>
+//           </div>
+//         </header>
+
+//         {/* Filters Panel */}
+//         {showFilters && (
+//           <div className="px-6 py-4 border border-sky-100 rounded-2xl bg-white/70 backdrop-blur-xl mx-6 mb-6 transition-all duration-300">
+//             <FiltersPanel selectedSource={selectedSource} />
+//           </div>
+//         )}
+
+//         {/* Dashboard Main Section */}
+//         <FiltersProvider>
+//           <main className="px-6 space-y-6 flex-1 overflow-y-auto">
+//           <MetricsCards selectedSource={selectedSource} />
+//           <ChartsGrid selectedSource={selectedSource} />
+//           <AIRecommendations selectedSource={selectedSource} />
+//           <ProductRankings selectedSource={selectedSource} />
+//           </main>
+//         </FiltersProvider>
+//       </div>
+
+//       {/* Floating Chatbot */}
+//       <Chatbot />
+//     </div>
+//   );
+// }
 export default function Dashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [notifications, setNotifications] = useState<
     { id: number; message: string; time: string }[]
   >([]);
-  const [selectedSource, setSelectedSource] = useState("flipkart");
+  const [selectedSource, setSelectedSource] = useState("Amazon_Reviews");
 
   const BASE_URL = "http://localhost:8000"; // 🔹 Change if deploying to remote FastAPI
 
@@ -565,112 +707,114 @@ export default function Dashboard() {
   }, [selectedSource]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex">
-      {/* Sidebar */}
-      <Sidebar />
+    <FiltersProvider> {/* ✅ Wrap everything that uses filters */}
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex">
+        {/* Sidebar */}
+        <Sidebar />
 
-      {/* Main Content */}
-      <div className="flex-1 ml-64 min-h-screen flex flex-col">
-        {/* Header Bar */}
-        <header className="bg-white/70 backdrop-blur-xl border border-sky-100 shadow-lg rounded-2xl px-8 py-5 mb-6 flex items-center justify-between sticky top-4 z-20 mx-6">
-          <div>
-            <h2 className="text-2xl font-bold text-sky-900">Dashboard</h2>
-            <p className="text-slate-600 text-sm">
-              Real-time analytics from your review database
-            </p>
-          </div>
+        {/* Main Content */}
+        <div className="flex-1 ml-64 min-h-screen flex flex-col">
+          {/* Header Bar */}
+          <header className="bg-white/70 backdrop-blur-xl border border-sky-100 shadow-lg rounded-2xl px-8 py-5 mb-6 flex items-center justify-between sticky top-4 z-20 mx-6">
+            <div>
+              <h2 className="text-2xl font-bold text-sky-900">Dashboard</h2>
+              <p className="text-slate-600 text-sm">
+                Real-time analytics from your review database
+              </p>
+            </div>
 
-          <div className="flex items-center space-x-2">
-            {/* Filter Toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1"
-              onClick={() => setShowFilters((prev) => !prev)}
-            >
-              <Filter className="w-4 h-4" /> Filters
-            </Button>
-
-            {/* Select Table Source */}
-            <select
-              className="border border-slate-300 rounded px-2 py-1 text-sm bg-white/60 backdrop-blur-sm"
-              value={selectedSource}
-              onChange={(e) => {
-                const newSource = e.target.value;
-                setSelectedSource(newSource);
-                fetchNotifications(newSource);
-              }}
-            >
-              <option value="flipkart">Flipkart</option>
-              <option value="amazon_reviews">Amazon</option>
-              <option value="both">Both</option>
-            </select>
-
-            {/* Notifications Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative">
-                  <Bell className="w-4 h-4" />
-                  {notifications.length > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-80 rounded-2xl shadow-lg bg-white/90 backdrop-blur-md"
+            <div className="flex items-center space-x-2">
+              {/* Filter Toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={() => setShowFilters((prev) => !prev)}
               >
-                <DropdownMenuLabel className="font-semibold text-slate-800">
-                  Notifications ({selectedSource})
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {notifications.length === 0 ? (
-                  <DropdownMenuItem className="text-sm text-slate-500">
-                    No new notifications
-                  </DropdownMenuItem>
-                ) : (
-                  notifications.map((n) => (
-                    <DropdownMenuItem
-                      key={n.id}
-                      className="flex flex-col items-start py-2 border-b last:border-none border-slate-200"
-                    >
-                      <p className="text-sm truncate w-full text-slate-700">
-                        {n.message}
-                      </p>
-                      <span className="text-xs text-slate-400">{n.time}</span>
-                    </DropdownMenuItem>
-                  ))
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setNotifications([])}
-                  className="text-sm text-blue-600 cursor-pointer"
+                <Filter className="w-4 h-4" /> Filters
+              </Button>
+
+              {/* Select Table Source */}
+              <select
+                className="border border-slate-300 rounded px-2 py-1 text-sm bg-white/60 backdrop-blur-sm"
+                value={selectedSource}
+                onChange={(e) => {
+                  const newSource = e.target.value;
+                  setSelectedSource(newSource);
+                  fetchNotifications(newSource);
+                }}
+              >
+                <option value="flipkart">Flipkart</option>
+                <option value="amazon_reviews">Amazon</option>
+                <option value="both">All</option>
+              </select>
+
+              {/* Notifications Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative">
+                    <Bell className="w-4 h-4" />
+                    {notifications.length > 0 && (
+                      <span className="absolute top-0 right-0 inline-flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-80 rounded-2xl shadow-lg bg-white/90 backdrop-blur-md"
                 >
-                  Clear all
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
+                  <DropdownMenuLabel className="font-semibold text-slate-800">
+                    Notifications ({selectedSource})
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {notifications.length === 0 ? (
+                    <DropdownMenuItem className="text-sm text-slate-500">
+                      No new notifications
+                    </DropdownMenuItem>
+                  ) : (
+                    notifications.map((n) => (
+                      <DropdownMenuItem
+                        key={n.id}
+                        className="flex flex-col items-start py-2 border-b last:border-none border-slate-200"
+                      >
+                        <p className="text-sm truncate w-full text-slate-700">
+                          {n.message}
+                        </p>
+                        <span className="text-xs text-slate-400">{n.time}</span>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setNotifications([])}
+                    className="text-sm text-blue-600 cursor-pointer"
+                  >
+                    Clear all
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
 
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="px-6 py-4 border border-sky-100 rounded-2xl bg-white/70 backdrop-blur-xl mx-6 mb-6 transition-all duration-300">
-            <FiltersPanel selectedSource={selectedSource} />
-          </div>
-        )}
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="px-6 py-4 border border-sky-100 rounded-2xl bg-white/70 backdrop-blur-xl mx-6 mb-6 transition-all duration-300">
+              <FiltersPanel selectedSource={selectedSource} />
+            </div>
+          )}
 
-        {/* Dashboard Main Section */}
-        <main className="px-6 space-y-6 flex-1 overflow-y-auto">
-          <MetricsCards selectedSource={selectedSource} />
-          <ChartsGrid selectedSource={selectedSource} />
-          <AIRecommendations selectedSource={selectedSource} />
-          <ProductRankings selectedSource={selectedSource} />
-        </main>
+          {/* Dashboard Main Section */}
+          <main className="px-6 space-y-6 flex-1 overflow-y-auto">
+            <MetricsCards selectedSource={selectedSource} />
+            <ChartsGrid selectedSource={selectedSource} />
+            <AIRecommendations selectedSource={selectedSource} />
+            <ProductRankings selectedSource={selectedSource} />
+          </main>
+        </div>
+
+        {/* Floating Chatbot */}
+        <Chatbot />
       </div>
-
-      {/* Floating Chatbot */}
-      <Chatbot />
-    </div>
+    </FiltersProvider>
   );
 }

@@ -331,7 +331,7 @@ export default function Chatbot() {
     {
       id: "welcome",
       message:
-        "👋 Hi! I'm your AI Assistant.\n\nSelect a data source below (Flipkart or Amazon Reviews), and ask me anything like:\n• What products are trending?\n• Which category has the best ratings?",
+        "👋 Hi! I'm your AI Assistant.\n\nSelect a data source below (Flipkart or Amazon), and ask me anything like:\n• What products are trending?\n• Which category has the best ratings?",
       isUser: false,
       timestamp: new Date(),
     },

@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
 """
-DataForSEO Amazon Product Collector - Standalone Cron Job
-(Updated to use a RestClient that accepts timeout and robust retry/backoff)
-
-Usage:
-    python dataforseo_cron.py --run-once
+DataForSEO Amazon Product Collector - Working Version
+Based on October 24th successful implementation
 """
 
 import os
 import sys
 import time
-import json
 import logging
 import argparse
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List, Optional
 import psycopg2
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
-import requests  # needed to catch requests.Timeout
 
 try:
     from rest_client import RestClient
 except ImportError:
-    print("ERROR: rest_client.py not found! Get it from DataForSEO examples zip or use the provided rest_client.py.")
+    print("ERROR: rest_client.py not found!")
     sys.exit(1)
 
 logging.basicConfig(
@@ -46,20 +41,32 @@ if sys.platform == "win32":
 # ==================== CONFIG ====================
 
 class Config:
+    """Configuration for DataForSEO API and Database"""
+    
     def __init__(self):
         load_dotenv()
 
+        # Database
         self.DATABASE_URL = os.getenv("DATABASE_URL")
+        
+        # DataForSEO API
         self.DATAFORSEO_LOGIN = os.getenv("DATAFORSEO_LOGIN")
         self.DATAFORSEO_PASSWORD = os.getenv("DATAFORSEO_PASSWORD")
+        
+        # Location Settings - Using names like the working version
         self.LOCATION_NAME = os.getenv("LOCATION_NAME", "United States")
         self.LANGUAGE_NAME = os.getenv("LANGUAGE_NAME", "English (United States)")
+        
+        # Collection Settings
         self.DEPTH = int(os.getenv("DEPTH", "100"))
-        self.WAIT_TIME = int(os.getenv("WAIT_TIME", "90"))
-        self.TIMEOUT = int(os.getenv("DATAFORSEO_TIMEOUT", "60"))
+        self.INITIAL_WAIT = int(os.getenv("WAIT_TIME", "180"))  # 3 minutes initial wait
+        
+        # Database Connection
         self.DB_CONNECT_TIMEOUT = int(os.getenv("DB_CONNECT_TIMEOUT", "10"))
         self.DB_MAX_RETRIES = int(os.getenv("DB_MAX_RETRIES", "3"))
-        self.DEFAULT_KEYWORDS = os.getenv("KEYWORDS", "laptop,smartphone,headphones").split(",")
+        
+        # Keywords
+        self.DEFAULT_KEYWORDS = [k.strip() for k in os.getenv("KEYWORDS", "laptop,smartphone,headphones").split(",")]
 
         self.validate()
 
@@ -75,6 +82,8 @@ class Config:
 # ==================== DATABASE ====================
 
 class Database:
+    """Database handler for PostgreSQL"""
+    
     def __init__(self, database_url: str, connect_timeout: int = 10, max_retries: int = 3):
         self.database_url = database_url
         self.connect_timeout = connect_timeout
@@ -82,6 +91,7 @@ class Database:
         self.conn = None
 
     def connect(self):
+        """Connect to database with retry logic"""
         for attempt in range(1, self.max_retries + 1):
             try:
                 logger.info(f"[DB] Connecting to database (attempt {attempt}/{self.max_retries})...")
@@ -96,17 +106,18 @@ class Database:
             except psycopg2.OperationalError as e:
                 logger.error(f"[DB ERROR] {e}")
                 if attempt < self.max_retries:
-                    time.sleep(attempt * 2)
-                else:
-                    return False
+                    wait_time = attempt * 2
+                    time.sleep(wait_time)
         return False
 
     def disconnect(self):
+        """Close database connection"""
         if self.conn:
             self.conn.close()
             logger.info("[DB] Disconnected")
 
     def create_tables(self):
+        """Create necessary tables if they don't exist"""
         cursor = self.conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS amazon_products (
@@ -131,157 +142,142 @@ class Database:
         logger.info("[DB] Tables verified")
 
     def save_products(self, products: List[Dict]):
+        """Save products to database"""
         if not products:
             return 0
+        
         cursor = self.conn.cursor()
-        execute_values(cursor, """
-            INSERT INTO amazon_products 
-            (task_id, asin, keyword, title, url, image_url, price_from, price_to, currency, 
-             rating_value, rating_votes, is_best_seller)
-            VALUES %s ON CONFLICT (task_id, asin) DO NOTHING
-        """, [
-            (
-                p.get("task_id"), p.get("asin"), p.get("keyword"), p.get("title"),
-                p.get("url"), p.get("image_url"), p.get("price_from"), p.get("price_to"),
-                p.get("currency"), p.get("rating_value"), p.get("rating_votes"),
-                p.get("is_best_seller", False)
-            )
-            for p in products
-        ])
-        self.conn.commit()
-        return cursor.rowcount
+        try:
+            execute_values(cursor, """
+                INSERT INTO amazon_products 
+                (task_id, asin, keyword, title, url, image_url, price_from, price_to, currency, 
+                 rating_value, rating_votes, is_best_seller)
+                VALUES %s ON CONFLICT (task_id, asin) DO NOTHING
+            """, [
+                (
+                    p.get("task_id"), p.get("asin"), p.get("keyword"), p.get("title"),
+                    p.get("url"), p.get("image_url"), p.get("price_from"), p.get("price_to"),
+                    p.get("currency"), p.get("rating_value"), p.get("rating_votes"),
+                    p.get("is_best_seller", False)
+                )
+                for p in products
+            ])
+            self.conn.commit()
+            return len(products)
+        except Exception as e:
+            logger.error(f"[DB ERROR] Failed to save products: {e}")
+            self.conn.rollback()
+            return 0
 
 
 # ==================== DATAFORSEO CLIENT ====================
 
 class DataForSEOClient:
-    """
-    Wrapper for RestClient that passes timeout down to RestClient.post/get.
-    It handles retries + backoff for transient network errors.
-    """
-
-    def __init__(self, login: str, password: str, timeout: int = 60):
+    """DataForSEO API client wrapper - matching October 24th working version"""
+    
+    def __init__(self, login: str, password: str):
         self.client = RestClient(login, password)
-        self.timeout = timeout
-        logger.info(f"[API] Initialized with {timeout}s timeout")
+        logger.info("[API] Initialized with 60s timeout")
 
-    def _safe_request(self, func, *args, retries: int = 3, backoff: float = 2.0, **kwargs):
-        """
-        Call func (RestClient.post/get) with retries. The RestClient supports a `timeout` kwarg,
-        and we add it automatically here from self.timeout.
-        """
-        attempt = 0
-        while attempt < retries:
-            attempt += 1
-            try:
-                # pass the timeout down to RestClient which will forward to requests
-                return func(*args, **kwargs, timeout=self.timeout)
-            except requests.exceptions.Timeout as e:
-                logger.warning(f"[TIMEOUT] Attempt {attempt}/{retries} timed out: {e}")
-                if attempt < retries:
-                    sleep_for = backoff ** attempt
-                    logger.info(f"[API] Retrying after {sleep_for:.1f}s...")
-                    time.sleep(sleep_for)
-                    continue
-                else:
-                    logger.error(f"[API] Exhausted timeout retries: {e}")
-                    return None
-            except Exception as e:
-                # For other exceptions, log and decide whether to retry based on attempt count
-                logger.error(f"[API ERROR] Attempt {attempt}/{retries} failed: {e}")
-                if attempt < retries:
-                    sleep_for = backoff ** attempt
-                    logger.info(f"[API] Retrying after {sleep_for:.1f}s...")
-                    time.sleep(sleep_for)
-                    continue
+    def submit_task(self, keyword: str, location_name: str, language_name: str, depth: int = 100):
+        """Submit a task to DataForSEO API"""
+        try:
+            logger.info(f"[API] Submitting task for keyword='{keyword}'")
+            
+            # Using the exact format that worked on October 24th
+            post_data = [{
+                "keyword": keyword,
+                "location_name": location_name,
+                "language_name": language_name,
+                "depth": depth
+            }]
+            
+            # Call the API
+            response = self.client.post("/v3/merchant/amazon/products/task_post", post_data, timeout=60)
+            
+            if not response:
+                logger.error("[API] No response from API")
                 return None
-
-    def submit_task(self, keyword: str, location: str, language: str, depth: int = 100, **extra):
-        """
-        Submit a single products task. Returns task_id string on success, else None.
-        extra allows priority/tag/pingback_url etc. to be passed if needed.
-        """
-        post_data = {0: {"keyword": keyword, "location_name": location, "language_name": language, "depth": depth}}
-        if extra:
-            post_data[0].update(extra)
-
-        endpoint = "/v3/merchant/amazon/products/task_post"
-        logger.info(f"[API] Submitting task for keyword='{keyword}'")
-        response = self._safe_request(self.client.post, endpoint, post_data)
-        if not response:
-            logger.error(f"[API] Task submission failed for '{keyword}' (no response)")
+            
+            # Check status
+            if response.get("status_code") != 20000:
+                logger.error(f"[API] API error: {response.get('status_message', 'Unknown error')}")
+                return None
+            
+            # Extract task ID
+            tasks = response.get("tasks", [])
+            if not tasks:
+                logger.error("[API] No tasks in response")
+                return None
+            
+            task_id = tasks[0].get("id")
+            if task_id:
+                logger.info(f"[API] Task submitted successfully. task_id={task_id}")
+                return task_id
+            
+            logger.error("[API] No task ID in response")
+            return None
+            
+        except Exception as e:
+            logger.error(f"[API ERROR] {e}")
             return None
 
-        status_code = response.get("status_code")
-        if status_code != 20000:
-            logger.error(f"[API] Task post failed (code={status_code}) msg={response.get('status_message')}")
-            return None
-
-        tasks = response.get("tasks") or []
-        if not tasks:
-            logger.error("[API] No tasks returned in response")
-            return None
-
-        task_id = tasks[0].get("id")
-        logger.info(f"[API] Task submitted successfully. task_id={task_id}")
-        return task_id
-
-    def get_results(self, task_id: str, poll: bool = False, max_wait: int = 300, interval: int = 10):
-        """
-        Fetch task results. If poll=True, keep polling until task has status_code==20000 and result present.
-        """
-        endpoint = f"/v3/merchant/amazon/products/task_get/advanced/{task_id}"
-
-        if not poll:
+    def get_results(self, task_id: str):
+        """Get results for a submitted task"""
+        try:
             logger.info(f"[API] Fetching results for task_id={task_id}")
-            response = self._safe_request(self.client.get, endpoint)
-            if not response or response.get("status_code") != 20000:
-                logger.debug(f"[API] get_results no valid response for task_id={task_id}: {response}")
+            
+            response = self.client.get(
+                f"/v3/merchant/amazon/products/task_get/advanced/{task_id}",
+                timeout=60
+            )
+            
+            if not response:
                 return None
-            return response
-
-        logger.info(f"[API] Polling for results (task_id={task_id}) up to {max_wait}s, interval={interval}s")
-        waited = 0
-        while waited <= max_wait:
-            response = self._safe_request(self.client.get, endpoint)
-            if response is None:
-                logger.warning(f"[API] No response while polling task_id={task_id}")
-            else:
-                tasks = response.get("tasks") or []
-                if tasks:
-                    t = tasks[0]
-                    task_status = t.get("status_code")
-                    if task_status == 20000 and t.get("result"):
-                        logger.info(f"[API] Task {task_id} completed.")
-                        return response
-                    else:
-                        logger.info(f"[API] Task {task_id} status_code={task_status}; still processing.")
-                else:
-                    logger.debug(f"[API] Poll response missing tasks for task_id={task_id}: {response}")
-
-            time.sleep(interval)
-            waited += interval
-
-        logger.error(f"[API] Polling timed out after {max_wait}s for task_id={task_id}")
-        return None
+            
+            # Check if task is complete
+            if response.get("status_code") == 20000:
+                tasks = response.get("tasks", [])
+                if tasks and tasks[0].get("result"):
+                    return response
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"[API ERROR] {e}")
+            return None
 
 
 # ==================== COLLECTOR ====================
 
 class AmazonDataCollector:
+    """Main collector class"""
+    
     def __init__(self, config: Config):
         self.config = config
-        self.db = Database(config.DATABASE_URL)
-        self.api = DataForSEOClient(config.DATAFORSEO_LOGIN, config.DATAFORSEO_PASSWORD, config.TIMEOUT)
+        self.db = Database(
+            config.DATABASE_URL,
+            config.DB_CONNECT_TIMEOUT,
+            config.DB_MAX_RETRIES
+        )
+        self.api = DataForSEOClient(
+            config.DATAFORSEO_LOGIN,
+            config.DATAFORSEO_PASSWORD
+        )
 
     def extract_products(self, results: Dict, task_id: str, keyword: str):
+        """Extract products from API response"""
         products = []
+        
         for task in results.get("tasks", []):
             for result in task.get("result", []):
                 for item in result.get("items", []):
-                    asin = item.get("data_asin")
+                    asin = item.get("data_asin") or item.get("asin")
                     if not asin:
                         continue
+                    
+                    rating = item.get("rating") or {}
+                    
                     products.append({
                         "task_id": task_id,
                         "asin": asin,
@@ -292,47 +288,101 @@ class AmazonDataCollector:
                         "price_from": item.get("price_from"),
                         "price_to": item.get("price_to"),
                         "currency": item.get("currency"),
-                        "rating_value": (item.get("rating") or {}).get("value"),
-                        "rating_votes": (item.get("rating") or {}).get("votes_count"),
+                        "rating_value": rating.get("value") if isinstance(rating, dict) else None,
+                        "rating_votes": rating.get("votes_count") if isinstance(rating, dict) else None,
                         "is_best_seller": item.get("is_best_seller", False)
                     })
+        
         return products
 
     def collect_keyword(self, keyword: str):
+        """Collect data for a single keyword - matching October 24th logic"""
         logger.info(f"[COLLECT] Keyword: {keyword}")
-        task_id = self.api.submit_task(keyword, self.config.LOCATION_NAME, self.config.LANGUAGE_NAME, self.config.DEPTH)
+        
+        # Submit task
+        task_id = self.api.submit_task(
+            keyword=keyword,
+            location_name=self.config.LOCATION_NAME,
+            language_name=self.config.LANGUAGE_NAME,
+            depth=self.config.DEPTH
+        )
+        
         if not task_id:
-            return {"success": False}
-        # Option A: simple sleep then single get (your previous behavior)
-        time.sleep(self.config.WAIT_TIME)
+            logger.error(f"[FAILED] Could not submit task for '{keyword}'")
+            return {"success": False, "keyword": keyword}
+        
+        # Wait for initial processing (same as October 24th)
+        time.sleep(self.config.INITIAL_WAIT)
+        
+        # Get results
         results = self.api.get_results(task_id)
-        # Option B: use polling instead (uncomment if you want)
-        # results = self.api.get_results(task_id, poll=True, max_wait=600, interval=8)
+        
         if not results:
-            return {"success": False}
+            logger.error(f"[FAILED] Could not retrieve results for '{keyword}'")
+            return {"success": False, "keyword": keyword, "task_id": task_id}
+        
+        # Extract and save products
         products = self.extract_products(results, task_id, keyword)
         saved = self.db.save_products(products)
+        
         logger.info(f"[DONE] {saved} products saved for '{keyword}'")
-        return {"success": True, "count": saved}
+        
+        return {
+            "success": True,
+            "keyword": keyword,
+            "task_id": task_id,
+            "count": saved
+        }
+
+    def collect_all(self, keywords: List[str]):
+        """Collect data for all keywords"""
+        results = []
+        
+        for keyword in keywords:
+            result = self.collect_keyword(keyword.strip())
+            results.append(result)
+        
+        return results
 
 
 # ==================== MAIN ====================
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--run-once", action="store_true")
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description="DataForSEO Amazon Product Collector")
+    parser.add_argument("--run-once", action="store_true", help="Run once and exit")
     args = parser.parse_args()
 
-    config = Config()
-    collector = AmazonDataCollector(config)
-    if not collector.db.connect():
-        logger.error("[EXIT] Database connection failed")
+    try:
+        config = Config()
+        collector = AmazonDataCollector(config)
+        
+        if not collector.db.connect():
+            logger.error("[EXIT] Database connection failed")
+            sys.exit(1)
+        
+        collector.db.create_tables()
+        
+        results = collector.collect_all(config.DEFAULT_KEYWORDS)
+        
+        collector.db.disconnect()
+        
+        # Summary
+        successful = sum(1 for r in results if r.get("success"))
+        total_products = sum(r.get("count", 0) for r in results)
+        
+        logger.info("=" * 70)
+        logger.info(f"[COMPLETE] Successful: {successful}/{len(results)}")
+        logger.info(f"[STATS] Total products: {total_products}")
+        logger.info("=" * 70)
+        
+    except KeyboardInterrupt:
+        logger.info("\n[STOP] Stopped by user")
+        sys.exit(0)
+        
+    except Exception as e:
+        logger.error(f"[ERROR] {e}", exc_info=True)
         sys.exit(1)
-    collector.db.create_tables()
-    for kw in config.DEFAULT_KEYWORDS:
-        collector.collect_keyword(kw.strip())
-    collector.db.disconnect()
-    logger.info("[COMPLETE] Data collection finished successfully")
 
 
 if __name__ == "__main__":

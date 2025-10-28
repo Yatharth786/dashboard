@@ -500,7 +500,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
-import { AISummaryDisplay } from "@/components/chatbot/ai_summary_display"; // ADD THIS IMPORT
+import { AISummaryDisplay } from "@/components/chatbot/ai_summary_display";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 

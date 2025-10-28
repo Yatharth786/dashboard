@@ -525,3 +525,25 @@ LINE 3:                 (id, keyword, location_name, language_name, ...
 2025-10-24 15:19:32,859 - INFO - [DB] Connection successful
 2025-10-24 15:19:32,898 - INFO - [DB] Tables verified
 2025-10-24 15:19:32,899 - INFO - [COLLECT] Keyword: laptop
+2025-10-24 15:20:44,019 - INFO - [API] Initialized with 60s timeout
+2025-10-24 15:20:44,019 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-24 15:20:44,183 - INFO - [DB] Connection successful
+2025-10-24 15:20:44,266 - INFO - [DB] Tables verified
+2025-10-24 15:20:44,267 - INFO - [COLLECT] Keyword: laptop
+2025-10-24 15:20:44,267 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-24 15:20:45,393 - INFO - [API] Task submitted successfully. task_id=10241250-1177-0209-0000-cbd3e0e495a9
+2025-10-24 15:23:45,393 - INFO - [API] Fetching results for task_id=10241250-1177-0209-0000-cbd3e0e495a9
+2025-10-24 15:23:47,660 - INFO - [DONE] 94 products saved for 'laptop'
+2025-10-24 15:23:47,661 - INFO - [COLLECT] Keyword: smartphone
+2025-10-24 15:23:47,661 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-24 15:23:47,883 - INFO - [API] Task submitted successfully. task_id=10241253-1177-0209-0000-15ddba7555b0
+2025-10-24 15:26:47,887 - INFO - [API] Fetching results for task_id=10241253-1177-0209-0000-15ddba7555b0
+2025-10-24 15:26:50,966 - INFO - [DONE] 14 products saved for 'smartphone'
+2025-10-24 15:26:50,969 - INFO - [COLLECT] Keyword: headphones
+2025-10-24 15:26:50,969 - INFO - [API] Submitting task for keyword='headphones'
+2025-10-24 15:26:51,262 - INFO - [API] Task submitted successfully. task_id=10241256-1177-0209-0000-cd57511b1f09
+2025-10-24 15:29:51,262 - INFO - [API] Fetching results for task_id=10241256-1177-0209-0000-cd57511b1f09
+2025-10-24 15:29:52,613 - INFO - [DONE] 70 products saved for 'headphones'
+2025-10-24 15:29:52,613 - INFO - [COLLECT] Keyword: smartwatch
+2025-10-24 15:29:52,614 - INFO - [API] Submitting task for keyword='smartwatch'
+2025-10-24 15:29:52,914 - INFO - [API] Task submitted successfully. task_id=10241259-1177-0209-0000-6d7c1c442b38

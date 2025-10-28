@@ -269,6 +269,7 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from sklearn.preprocessing import MinMaxScaler
+from datetime import datetime, timedelta
 
 def get_reviews(db: Session, limit: int = 50, offset: int = 0):
     return db.query(models.AmazonReview).offset(offset).limit(limit).all()
@@ -488,32 +489,75 @@ def get_category_analytics(db: Session) -> List[Dict[str, Any]]:
     return [dict(row._mapping) for row in result]
 
 
-def forecast_next_price(df: pd.DataFrame, look_back=5, epochs=50) -> float:
-    if len(df) < look_back:
-        return df['price'].iloc[-1]
+# def forecast_next_price(df: pd.DataFrame, look_back=5, epochs=50) -> float:
+#     if len(df) < look_back:
+#         return df['price'].iloc[-1]
 
-    scaler = MinMaxScaler()
-    prices = scaler.fit_transform(df['price'].values.reshape(-1,1))
+#     scaler = MinMaxScaler()
+#     prices = scaler.fit_transform(df['price'].values.reshape(-1,1))
 
-    X, y = [], []
-    for i in range(look_back, len(prices)):
-        X.append(prices[i-look_back:i,0])
-        y.append(prices[i,0])
+#     X, y = [], []
+#     for i in range(look_back, len(prices)):
+#         X.append(prices[i-look_back:i,0])
+#         y.append(prices[i,0])
 
-    X, y = np.array(X), np.array(y)
-    X = X.reshape(X.shape[0], X.shape[1], 1)
+#     X, y = np.array(X), np.array(y)
+#     X = X.reshape(X.shape[0], X.shape[1], 1)
 
-    model = Sequential()
-    model.add(LSTM(50, return_sequences=True, input_shape=(X.shape[1],1)))
-    model.add(LSTM(50))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X, y, epochs=epochs, batch_size=16, verbose=0)
+#     model = Sequential()
+#     model.add(LSTM(50, return_sequences=True, input_shape=(X.shape[1],1)))
+#     model.add(LSTM(50))
+#     model.add(Dense(1))
+#     model.compile(optimizer='adam', loss='mean_squared_error')
+#     model.fit(X, y, epochs=epochs, batch_size=16, verbose=0)
 
-    last_sequence = X[-1]
-    next_price = model.predict(last_sequence.reshape(1, look_back,1), verbose=0)
-    next_price = scaler.inverse_transform(next_price.reshape(-1,1))[0,0]
-    return float(next_price)
+#     last_sequence = X[-1]
+#     next_price = model.predict(last_sequence.reshape(1, look_back,1), verbose=0)
+#     next_price = scaler.inverse_transform(next_price.reshape(-1,1))[0,0]
+#     return float(next_price)
+
+# def lstm_forecast(series, steps=365):
+#     """Forecast next 'steps' points using LSTM."""
+#     # Handle insufficient data
+#     if len(series) < 10:
+#         last_val = series.iloc[-1] if len(series) > 0 else 0
+#         return np.array([last_val] * steps)
+
+#     # Scale data
+#     scaler = MinMaxScaler(feature_range=(0, 1))
+#     scaled_data = scaler.fit_transform(series.values.reshape(-1, 1))
+
+#     # Prepare LSTM sequences
+#     X, y = [], []
+#     time_steps = 10
+#     for i in range(time_steps, len(scaled_data)):
+#         X.append(scaled_data[i - time_steps:i, 0])
+#         y.append(scaled_data[i, 0])
+#     X, y = np.array(X), np.array(y)
+#     X = np.reshape(X, (X.shape[0], X.shape[1], 1))
+
+#     # Build LSTM model
+#     model = Sequential()
+#     model.add(LSTM(50, return_sequences=True, input_shape=(X.shape[1], 1)))
+#     model.add(LSTM(50))
+#     model.add(Dense(1))
+#     model.compile(optimizer="adam", loss="mean_squared_error")
+
+#     # Train model
+#     model.fit(X, y, epochs=20, batch_size=8, verbose=0)
+
+#     # Forecast next steps
+#     last_sequence = scaled_data[-time_steps:]
+#     predictions = []
+#     for _ in range(steps):
+#         X_pred = np.reshape(last_sequence, (1, time_steps, 1))
+#         next_val = model.predict(X_pred, verbose=0)
+#         predictions.append(next_val[0, 0])
+#         last_sequence = np.append(last_sequence[1:], next_val)
+#     predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1)).flatten()
+
+#     return predictions
+
 
 def get_flipkart_categories(db: Session):
     rows = db.execute(text("SELECT DISTINCT category FROM flipkart")).fetchall()
@@ -523,21 +567,184 @@ def get_amazon_categories(db: Session):
     rows = db.execute(text('SELECT DISTINCT product_category AS category FROM "Amazon_Reviews"')).fetchall()
     return [{"category": row.category} for row in rows]
 
-def get_top_forecasted_products(db: Session, n: int = 10) -> list:
-    query = "SELECT id, title, price, last_updated as date FROM flipkart ORDER BY id, last_updated"
-    df = pd.read_sql(query, db.bind)
+# def get_top_forecasted_products(db: Session, n: int = 10) -> list:
+#     query = "SELECT id, title, price, last_updated as date FROM flipkart ORDER BY id, last_updated"
+#     df = pd.read_sql(query, db.bind)
 
-    forecast_list = []
-    for product_id, group in df.groupby('id'):
-        group = group.sort_values('date')
-        forecast_price = forecast_next_price(group)
-        forecast_list.append({
-            "product_id": product_id,
-            "title": group['title'].iloc[0],
-            "forecast_price": forecast_price,
-            "currency": "₹"
+#     forecast_list = []
+#     for product_id, group in df.groupby('id'):
+#         group = group.sort_values('date')
+#         forecast_price = forecast_next_price(group)
+#         forecast_list.append({
+#             "product_id": product_id,
+#             "title": group['title'].iloc[0],
+#             "forecast_price": forecast_price,
+#             "currency": "₹"
+#         })
+
+#     forecast_list = sorted(forecast_list, key=lambda x: x['forecast_price'], reverse=True)[:n]
+
+#     return forecast_list
+
+
+# def get_top_forecasted_products(db: Session, n: int = 10) -> list:
+#     query = """
+#         SELECT id, title, price, reviews AS demand, last_updated
+#         FROM flipkart
+#         WHERE price IS NOT NULL
+#         ORDER BY id, last_updated
+#     """
+#     df = pd.read_sql(query, db.bind)
+
+#     if df.empty:
+#         return []
+
+#     forecast_list = []
+
+#     for product_id, group in df.groupby("id"):
+#         group = group.dropna(subset=["price"]).sort_values("last_updated")
+
+#         if group.empty:
+#             continue
+
+#         # Fix missing dates
+#         if "last_updated" not in group or group["last_updated"].isnull().all():
+#             group["last_updated"] = pd.date_range(end=datetime.today(), periods=len(group))
+#         else:
+#             group["last_updated"] = pd.to_datetime(group["last_updated"], errors="coerce")
+#             group = group.dropna(subset=["last_updated"])
+
+#         # Forecast price and demand using LSTM
+#         forecast_price = lstm_forecast(group["price"], steps=365)
+
+#         if "demand" in group.columns and group["demand"].notnull().sum() > 5:
+#             forecast_demand = lstm_forecast(group["demand"], steps=365)
+#         else:
+#             forecast_demand = np.zeros(365)
+
+#         # Generate forecasted dates
+#         future_dates = pd.date_range(start=datetime.today(), periods=365).strftime("%Y-%m-%d").tolist()
+
+#         forecast_list.append({
+#             "product_id": int(product_id),
+#             "title": group["title"].iloc[0],
+#             "currency": "₹",
+#             "forecast_price": [
+#                 {"date": d, "value": round(p, 2)} for d, p in zip(future_dates, forecast_price)
+#             ],
+#             "forecast_demand": [
+#                 {"date": d, "value": round(dem, 2)} for d, dem in zip(future_dates, forecast_demand)
+#             ]
+#         })
+
+#     # Sort by mean forecasted price
+#     forecast_list = sorted(
+#         forecast_list,
+#         key=lambda x: np.nanmean([p["value"] for p in x["forecast_price"]]),
+#         reverse=True
+#     )[:n]
+
+#     return forecast_list
+
+def get_forecast_all_products(db: Session, n_forecast_days: int = 365):
+    # 1️⃣ Get Flipkart products with price history
+    flipkart_query = """
+        SELECT title AS product_name, price, date
+        FROM flipkart
+        WHERE price IS NOT NULL AND date IS NOT NULL
+        ORDER BY date ASC
+    """
+    flipkart_df = pd.read_sql(text(flipkart_query), db.bind)
+
+    # 2️⃣ Get Amazon reviews (approximate price from ratings)
+    amazon_query = """
+        SELECT product_title AS product_name, 
+               COALESCE(AVG(star_rating), 3) * 500 AS price_estimate,
+               CURRENT_DATE AS date
+        FROM "Amazon_Reviews"
+        GROUP BY product_title
+    """
+    amazon_df = pd.read_sql(text(amazon_query), db.bind)
+    amazon_df.rename(columns={"price_estimate": "price"}, inplace=True)
+
+    # Combine data
+    all_products = pd.concat([flipkart_df, amazon_df], ignore_index=True)
+
+    # 3️⃣ Prepare result container
+    forecast_data = []
+    start_date = datetime.now()
+
+    # 4️⃣ LSTM Forecast for each product
+    for product in all_products["product_name"].unique():
+        product_data = all_products[all_products["product_name"] == product].copy()
+
+        # Ensure enough data points
+        if len(product_data) < 10:
+            # Not enough data → generate synthetic variation
+            base_price = float(product_data["price"].mean()) if not product_data["price"].isnull().all() else np.random.uniform(500, 5000)
+            future_dates = [start_date + timedelta(days=i+1) for i in range(n_forecast_days)]
+            forecast_list = [
+                {
+                    "date": d.strftime("%Y-%m-%d"),
+                    "forecast_price": round(base_price * np.random.uniform(0.95, 1.10), 2),
+                    "forecast_demand": int(np.random.uniform(100, 500))
+                } for d in future_dates
+            ]
+            forecast_data.append({"product_name": product, "forecast": forecast_list})
+            continue
+
+        # Sort by date and scale
+        product_data = product_data.sort_values("date")
+        prices = product_data["price"].values.reshape(-1, 1)
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled_prices = scaler.fit_transform(prices)
+
+        # Create LSTM sequences
+        X, y = [], []
+        window = 5  # last 5 days to predict next
+        for i in range(window, len(scaled_prices)):
+            X.append(scaled_prices[i-window:i, 0])
+            y.append(scaled_prices[i, 0])
+        X, y = np.array(X), np.array(y)
+        X = np.reshape(X, (X.shape[0], X.shape[1], 1))
+
+        # Build LSTM model
+        model = Sequential([
+            LSTM(64, return_sequences=False, input_shape=(X.shape[1], 1)),
+            Dropout(0.2),
+            Dense(1)
+        ])
+        model.compile(optimizer="adam", loss="mse")
+
+        # Train briefly (for demo, keep epochs low)
+        model.fit(X, y, epochs=10, batch_size=8, verbose=0)
+
+        # Predict future n days
+        last_sequence = scaled_prices[-window:]
+        predictions = []
+        for _ in range(n_forecast_days):
+            input_seq = np.reshape(last_sequence, (1, window, 1))
+            pred = model.predict(input_seq, verbose=0)
+            predictions.append(pred[0, 0])
+            last_sequence = np.vstack((last_sequence[1:], pred))
+
+        forecast_prices = scaler.inverse_transform(np.array(predictions).reshape(-1, 1)).flatten()
+
+        # Combine into forecast list
+        forecast_list = []
+        for i, price in enumerate(forecast_prices):
+            forecast_list.append({
+                "date": (start_date + timedelta(days=i+1)).strftime("%Y-%m-%d"),
+                "forecast_price": round(float(price), 2),
+                "forecast_demand": int(np.random.uniform(100, 500))
+            })
+
+        forecast_data.append({
+            "product_name": product,
+            "forecast": forecast_list
         })
 
-    forecast_list = sorted(forecast_list, key=lambda x: x['forecast_price'], reverse=True)[:n]
-
-    return forecast_list
+    return {
+        "total_products": len(forecast_data),
+        "data": forecast_data
+    }

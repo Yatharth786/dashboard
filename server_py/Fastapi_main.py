@@ -677,10 +677,10 @@ import subprocess, json
 from pydantic import BaseModel
 import uvicorn
 import pandas as pd
-from prophet import Prophet
+
 from . import crud, schemas, models
 from .database_config import get_db, engine
-from datetime import datetime, timedelta
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Amazon Reviews API", version="1.0.0")
@@ -879,10 +879,18 @@ def get_top_items(
     else:
         return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
     
-@app.get("/top_forecast")
-def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
-    forecast_list = crud.get_top_forecasted_products(db, n)
-    return {"table": "flipkart_forecast", "count": len(forecast_list), "data": forecast_list} 
+# @app.get("/top_forecast")
+# def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
+#     forecast_list = crud.get_top_forecasted_products(db, n)
+#     return {"table": "flipkart_forecast", "count": len(forecast_list), "data": forecast_list} 
+
+@app.get("/forecast_all_products")
+def forecast_all_products(n_forecast_days: int = Query(30, description="Days to forecast"),
+                          db: Session = Depends(get_db)):
+    forecast_list = crud.get_forecast_all_products(db, n_forecast_days)
+    return forecast_list
+
+
 
 @app.get("/notifications")
 def get_notifications(

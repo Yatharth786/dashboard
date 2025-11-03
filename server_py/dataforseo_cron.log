@@ -2539,3 +2539,1479 @@ AttributeError: 'NoneType' object has no attribute 'get'
 2025-10-28 10:50:37,219 - INFO - [COLLECT] Keyword: laptop
 2025-10-28 10:50:37,220 - INFO - [API] Submitting task for keyword='laptop'
 2025-10-28 10:50:38,153 - INFO - [API] Task submitted successfully. task_id=10280720-1184-0209-0000-8a291d778ef2
+2025-10-28 10:52:38,998 - INFO - 
+[STOP] Stopped by user
+2025-10-28 10:52:41,932 - INFO - [API] Initialized for LIVE requests
+2025-10-28 10:52:41,933 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-28 10:52:42,157 - INFO - [DB] Connection successful
+2025-10-28 10:52:42,296 - INFO - [DB] Tables verified
+2025-10-28 10:52:42,296 - INFO - ======================================================================
+2025-10-28 10:52:42,296 - INFO - [START] Starting LIVE data collection...
+2025-10-28 10:52:42,297 - INFO - ======================================================================
+2025-10-28 10:52:42,297 - INFO - [COLLECT] Keyword: laptop
+2025-10-28 10:52:42,297 - INFO - [API] Sending LIVE request for keyword='laptop'
+2025-10-28 10:52:42,950 - ERROR - [API] API error: Not Found.
+2025-10-28 10:52:42,950 - ERROR - [FAILED] Could not get results for 'laptop'
+2025-10-28 10:52:42,951 - INFO - [COLLECT] Keyword: smartphone
+2025-10-28 10:52:42,951 - INFO - [API] Sending LIVE request for keyword='smartphone'
+2025-10-28 10:52:43,598 - ERROR - [API] API error: Not Found.
+2025-10-28 10:52:43,599 - ERROR - [FAILED] Could not get results for 'smartphone'
+2025-10-28 10:52:43,599 - INFO - [COLLECT] Keyword: headphones
+2025-10-28 10:52:43,600 - INFO - [API] Sending LIVE request for keyword='headphones'
+2025-10-28 10:52:44,223 - ERROR - [API] API error: Not Found.
+2025-10-28 10:52:44,223 - ERROR - [FAILED] Could not get results for 'headphones'
+2025-10-28 10:52:44,224 - INFO - [COLLECT] Keyword: smartwatch
+2025-10-28 10:52:44,224 - INFO - [API] Sending LIVE request for keyword='smartwatch'
+2025-10-28 10:52:44,840 - ERROR - [API] API error: Not Found.
+2025-10-28 10:52:44,840 - ERROR - [FAILED] Could not get results for 'smartwatch'
+2025-10-28 10:52:44,840 - INFO - [COLLECT] Keyword: tablet
+2025-10-28 10:52:44,841 - INFO - [API] Sending LIVE request for keyword='tablet'
+2025-10-28 10:52:45,446 - ERROR - [API] API error: Not Found.
+2025-10-28 10:52:45,447 - ERROR - [FAILED] Could not get results for 'tablet'
+2025-10-28 10:52:45,448 - INFO - [DB] Disconnected
+2025-10-28 10:52:45,448 - INFO - ======================================================================
+2025-10-28 10:52:45,448 - INFO - [COMPLETE] Data collection finished
+2025-10-28 10:52:45,449 - INFO - [STATS] Successful: 0/5
+2025-10-28 10:52:45,450 - INFO - [STATS] Total products: 0
+2025-10-28 10:52:45,454 - INFO - [STATS] Estimated cost: $0.000
+2025-10-28 10:52:45,455 - INFO - [STATS] Duration: 3s (0.1min)
+2025-10-28 10:52:45,456 - INFO - [STATS] Mode: LIVE (immediate results)
+2025-10-28 10:52:45,456 - INFO - ======================================================================
+2025-10-28 10:53:37,623 - INFO - [API] Initialized with 60s timeout
+2025-10-28 10:53:37,623 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-28 10:53:37,858 - INFO - [DB] Connection successful
+2025-10-28 10:53:37,978 - INFO - [DB] Tables verified
+2025-10-28 10:53:37,979 - INFO - [COLLECT] Keyword: laptop
+2025-10-28 10:53:37,979 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-28 10:53:38,659 - INFO - [API] Task submitted successfully. task_id=10280723-1184-0209-0000-75699e55791d
+2025-10-28 10:56:38,660 - INFO - [API] Fetching results for task_id=10280723-1184-0209-0000-75699e55791d
+2025-10-28 10:56:39,467 - ERROR - [FAILED] Could not retrieve results for 'laptop'
+2025-10-28 10:56:39,468 - INFO - [COLLECT] Keyword: smartphone
+2025-10-28 10:56:39,468 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-28 10:56:40,250 - INFO - [API] Task submitted successfully. task_id=10280726-1184-0209-0000-b997dd75a4e3
+2025-10-28 10:58:34,988 - INFO - 
+[STOP] Stopped by user
+2025-10-28 10:58:49,652 - INFO - [API] Initialized with 60s timeout
+2025-10-28 10:58:49,652 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-28 10:58:49,885 - INFO - [DB] ✓ Connection successful
+2025-10-28 10:58:50,012 - INFO - [DB] Tables verified
+2025-10-28 10:58:50,012 - INFO - 
+2025-10-28 10:58:50,012 - INFO - ======================================================================
+2025-10-28 10:58:50,013 - INFO - [START] Starting data collection...
+2025-10-28 10:58:50,013 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-28 10:58:50,013 - INFO - ======================================================================
+2025-10-28 10:58:50,014 - INFO - 
+[PROGRESS] Processing keyword 1/5
+2025-10-28 10:58:50,014 - INFO - 
+2025-10-28 10:58:50,014 - INFO - ======================================================================
+2025-10-28 10:58:50,015 - INFO - [COLLECT] Keyword: laptop
+2025-10-28 10:58:50,015 - INFO - ======================================================================
+2025-10-28 10:58:50,015 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-28 10:58:50,705 - INFO - [API] ✓ Task submitted: 10280728-1184-0209-0000-8dddf44757b2
+2025-10-28 10:58:50,705 - INFO - [WAIT] Waiting 180s for processing...
+2025-10-28 11:01:50,706 - INFO - [API] Fetching results for 10280728-1184-0209-0000-8dddf44757b2
+2025-10-28 11:01:51,511 - WARNING - [API] Task not ready (status: 20000)
+2025-10-28 11:01:51,512 - ERROR - [FAILED] Could not retrieve results for 'laptop'
+2025-10-28 11:01:51,513 - INFO - 
+[PROGRESS] Processing keyword 2/5
+2025-10-28 11:01:51,514 - INFO - 
+2025-10-28 11:01:51,514 - INFO - ======================================================================
+2025-10-28 11:01:51,515 - INFO - [COLLECT] Keyword: smartphone
+2025-10-28 11:01:51,516 - INFO - ======================================================================
+2025-10-28 11:01:51,518 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-28 11:01:52,256 - INFO - [API] ✓ Task submitted: 10280731-1184-0209-0000-b7896b2d8bd4
+2025-10-28 11:01:52,257 - INFO - [WAIT] Waiting 180s for processing...
+2025-10-28 11:04:52,258 - INFO - [API] Fetching results for 10280731-1184-0209-0000-b7896b2d8bd4
+2025-10-28 11:04:53,048 - WARNING - [API] Task not ready (status: 20000)
+2025-10-28 11:04:53,048 - ERROR - [FAILED] Could not retrieve results for 'smartphone'
+2025-10-28 11:04:53,050 - INFO - 
+[PROGRESS] Processing keyword 3/5
+2025-10-28 11:04:53,050 - INFO - 
+2025-10-28 11:04:53,051 - INFO - ======================================================================
+2025-10-28 11:04:53,053 - INFO - [COLLECT] Keyword: headphones
+2025-10-28 11:04:53,054 - INFO - ======================================================================
+2025-10-28 11:04:53,055 - INFO - [API] Submitting task for keyword='headphones'
+2025-10-28 11:04:53,792 - INFO - [API] ✓ Task submitted: 10280734-1184-0209-0000-fade23ab0b4c
+2025-10-28 11:04:53,793 - INFO - [WAIT] Waiting 180s for processing...
+2025-10-28 11:05:39,230 - INFO - 
+[STOP] Stopped by user
+2025-10-28 11:05:41,434 - INFO - [API] Initialized with 60s timeout
+2025-10-28 11:05:41,434 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-28 11:05:41,695 - INFO - [DB] ✓ Connection successful
+2025-10-28 11:05:41,815 - INFO - [DB] Tables verified
+2025-10-28 11:05:41,816 - INFO - 
+2025-10-28 11:05:41,817 - INFO - ======================================================================
+2025-10-28 11:05:41,817 - INFO - [START] Starting data collection...
+2025-10-28 11:05:41,818 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-28 11:05:41,819 - INFO - ======================================================================
+2025-10-28 11:05:41,819 - INFO - 
+[PROGRESS] Processing keyword 1/5
+2025-10-28 11:05:41,820 - INFO - 
+2025-10-28 11:05:41,820 - INFO - ======================================================================
+2025-10-28 11:05:41,821 - INFO - [COLLECT] Keyword: laptop
+2025-10-28 11:05:41,821 - INFO - ======================================================================
+2025-10-28 11:05:41,821 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-28 11:05:42,505 - INFO - [API] ✓ Task submitted: 10280735-1184-0209-0000-e7593222a92e
+2025-10-28 11:05:42,505 - INFO - [WAIT] Initial wait: 180s for processing...
+2025-10-28 11:08:42,506 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-28 11:08:42,507 - INFO - [API] Fetching results for 10280735-1184-0209-0000-e7593222a92e
+2025-10-28 11:08:44,103 - INFO - [API] ✓ Results retrieved
+2025-10-28 11:08:44,435 - INFO - [SUCCESS] ✓ Saved 95 products for 'laptop'
+2025-10-28 11:08:44,438 - INFO - 
+[PROGRESS] Processing keyword 2/5
+2025-10-28 11:08:44,439 - INFO - 
+2025-10-28 11:08:44,440 - INFO - ======================================================================
+2025-10-28 11:08:44,441 - INFO - [COLLECT] Keyword: smartphone
+2025-10-28 11:08:44,443 - INFO - ======================================================================
+2025-10-28 11:08:44,444 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-28 11:08:45,408 - INFO - [API] ✓ Task submitted: 10280738-1184-0209-0000-ec6e66222c1e
+2025-10-28 11:08:45,409 - INFO - [WAIT] Initial wait: 180s for processing...
+2025-10-28 11:11:45,410 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-28 11:11:45,411 - INFO - [API] Fetching results for 10280738-1184-0209-0000-ec6e66222c1e
+2025-10-28 11:11:47,042 - INFO - [API] ✓ Results retrieved
+2025-10-28 11:11:47,342 - INFO - [SUCCESS] ✓ Saved 108 products for 'smartphone'
+2025-10-28 11:11:47,343 - INFO - 
+[PROGRESS] Processing keyword 3/5
+2025-10-28 11:11:47,343 - INFO - 
+2025-10-28 11:11:47,344 - INFO - ======================================================================
+2025-10-28 11:11:47,344 - INFO - [COLLECT] Keyword: headphones
+2025-10-28 11:11:47,344 - INFO - ======================================================================
+2025-10-28 11:11:47,344 - INFO - [API] Submitting task for keyword='headphones'
+2025-10-28 11:11:48,092 - INFO - [API] ✓ Task submitted: 10280741-1184-0209-0000-7c94e675d1b9
+2025-10-28 11:11:48,093 - INFO - [WAIT] Initial wait: 180s for processing...
+2025-10-28 11:14:48,094 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-28 11:14:48,095 - INFO - [API] Fetching results for 10280741-1184-0209-0000-7c94e675d1b9
+2025-10-28 11:14:49,980 - INFO - [API] ✓ Results retrieved
+2025-10-28 11:14:50,399 - INFO - [SUCCESS] ✓ Saved 120 products for 'headphones'
+2025-10-28 11:14:50,401 - INFO - 
+[PROGRESS] Processing keyword 4/5
+2025-10-28 11:14:50,402 - INFO - 
+2025-10-28 11:14:50,402 - INFO - ======================================================================
+2025-10-28 11:14:50,403 - INFO - [COLLECT] Keyword: smartwatch
+2025-10-28 11:14:50,404 - INFO - ======================================================================
+2025-10-28 11:14:50,404 - INFO - [API] Submitting task for keyword='smartwatch'
+2025-10-28 11:14:51,143 - INFO - [API] ✓ Task submitted: 10280744-1184-0209-0000-506a652964fa
+2025-10-28 11:14:51,144 - INFO - [WAIT] Initial wait: 180s for processing...
+2025-10-28 11:17:51,146 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-28 11:17:51,147 - INFO - [API] Fetching results for 10280744-1184-0209-0000-506a652964fa
+2025-10-28 11:17:52,901 - INFO - [API] ✓ Results retrieved
+2025-10-28 11:17:53,297 - INFO - [SUCCESS] ✓ Saved 107 products for 'smartwatch'
+2025-10-28 11:17:53,298 - INFO - 
+[PROGRESS] Processing keyword 5/5
+2025-10-28 11:17:53,298 - INFO - 
+2025-10-28 11:17:53,299 - INFO - ======================================================================
+2025-10-28 11:17:53,299 - INFO - [COLLECT] Keyword: tablet
+2025-10-28 11:17:53,299 - INFO - ======================================================================
+2025-10-28 11:17:53,300 - INFO - [API] Submitting task for keyword='tablet'
+2025-10-28 11:17:54,004 - INFO - [API] ✓ Task submitted: 10280747-1184-0209-0000-217758a520a4
+2025-10-28 11:17:54,004 - INFO - [WAIT] Initial wait: 180s for processing...
+2025-10-28 11:20:54,005 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-28 11:20:54,006 - INFO - [API] Fetching results for 10280747-1184-0209-0000-217758a520a4
+2025-10-28 11:20:54,791 - WARNING - [API] Task in queue (40602)
+2025-10-28 11:20:54,792 - INFO - [WAITING] Results not ready, waiting 30s before retry...
+2025-10-28 11:21:24,793 - INFO - [CHECK] Attempt 2/8 to retrieve results...
+2025-10-28 11:21:24,793 - INFO - [API] Fetching results for 10280747-1184-0209-0000-217758a520a4
+2025-10-28 11:21:26,616 - INFO - [API] ✓ Results retrieved
+2025-10-28 11:21:26,970 - INFO - [SUCCESS] ✓ Saved 113 products for 'tablet'
+2025-10-28 11:21:26,972 - INFO - [DB] Disconnected
+2025-10-28 11:21:26,973 - INFO - 
+2025-10-28 11:21:26,973 - INFO - ======================================================================
+2025-10-28 11:21:26,975 - INFO - [COMPLETE] Finished data collection
+2025-10-28 11:21:26,976 - INFO - [STATS] Successful: 5/5
+2025-10-28 11:21:26,976 - INFO - [STATS] Total products: 543
+2025-10-28 11:21:26,989 - INFO - [STATS] Estimated cost: $0.543
+2025-10-28 11:21:26,990 - INFO - ======================================================================
+2025-10-29 17:18:08,163 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-29 17:18:08,163 - INFO - [CONFIG] Language Code: en_US
+2025-10-29 17:18:08,163 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-29 17:18:08,164 - INFO - [API] Initialized with 60s timeout
+2025-10-29 17:18:08,164 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-29 17:18:10,278 - ERROR - [DB ERROR] connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-29 17:18:12,279 - INFO - [DB] Attempt 2/3: Connecting...
+2025-10-29 17:18:14,376 - ERROR - [DB ERROR] connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-29 17:18:18,377 - INFO - [DB] Attempt 3/3: Connecting...
+2025-10-29 17:18:20,489 - ERROR - [DB ERROR] connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-29 17:18:20,490 - ERROR - [EXIT] Database connection failed
+2025-10-29 17:20:27,540 - INFO - 
+======================================================================
+2025-10-29 17:20:27,540 - INFO - DataForSEO Amazon Collector - CSV Version
+2025-10-29 17:20:27,540 - INFO - No database required - saves to CSV files
+2025-10-29 17:20:27,540 - INFO - ======================================================================
+2025-10-29 17:20:27,542 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-29 17:20:27,543 - INFO - [CONFIG] Language Code: en_US
+2025-10-29 17:20:27,543 - INFO - [CONFIG] Output Directory: data_output
+2025-10-29 17:20:27,545 - INFO - [CSV] Output directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-29 17:20:27,545 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-29 17:20:27,545 - INFO - [API] Initialized with 60s timeout
+2025-10-29 17:20:27,545 - INFO - 
+2025-10-29 17:20:27,545 - INFO - ======================================================================
+2025-10-29 17:20:27,546 - INFO - [START] DataForSEO Collection for INDIA
+2025-10-29 17:20:27,546 - INFO - [INFO] Location: 2356 (India)
+2025-10-29 17:20:27,546 - INFO - [INFO] Language: en_US
+2025-10-29 17:20:27,546 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-29 17:20:27,546 - INFO - [INFO] Output: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-29 17:20:27,546 - INFO - ======================================================================
+2025-10-29 17:20:27,546 - INFO - 
+[PROGRESS] Keyword 1/5
+2025-10-29 17:20:27,546 - INFO - 
+2025-10-29 17:20:27,546 - INFO - ======================================================================
+2025-10-29 17:20:27,546 - INFO - [COLLECT] Keyword: laptop
+2025-10-29 17:20:27,546 - INFO - ======================================================================
+2025-10-29 17:20:27,546 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-29 17:20:27,547 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-29 17:20:28,399 - INFO - [API] ✓ Task submitted: 10291350-1177-0209-0000-5d9c9017c2b5
+2025-10-29 17:20:28,400 - INFO - [API] Cost: $0.001
+2025-10-29 17:20:28,400 - INFO - [WAIT] Initial wait: 200s...
+2025-10-29 17:23:48,402 - INFO - [CHECK] Attempt 1/8...
+2025-10-29 17:23:48,402 - INFO - [API] Fetching results for 10291350-1177-0209-0000-5d9c9017c2b5
+2025-10-29 17:23:49,352 - INFO - [API] ✓ Results retrieved
+2025-10-29 17:23:49,355 - INFO - [CSV] ✓ Saved to: amazon_india_laptop_20251029_172349.csv
+2025-10-29 17:23:49,355 - INFO - [SUCCESS] ✓ Saved 120 products for 'laptop'
+2025-10-29 17:23:49,355 - INFO - 
+[PROGRESS] Keyword 2/5
+2025-10-29 17:23:49,355 - INFO - 
+2025-10-29 17:23:49,355 - INFO - ======================================================================
+2025-10-29 17:23:49,355 - INFO - [COLLECT] Keyword: smartphone
+2025-10-29 17:23:49,356 - INFO - ======================================================================
+2025-10-29 17:23:49,356 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-29 17:23:49,356 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-29 17:23:49,553 - INFO - [API] ✓ Task submitted: 10291353-1177-0209-0000-e6d766033c01
+2025-10-29 17:23:49,554 - INFO - [API] Cost: $0.001
+2025-10-29 17:23:49,554 - INFO - [WAIT] Initial wait: 200s...
+2025-10-29 17:27:09,555 - INFO - [CHECK] Attempt 1/8...
+2025-10-29 17:27:09,556 - INFO - [API] Fetching results for 10291353-1177-0209-0000-e6d766033c01
+2025-10-29 17:27:10,864 - INFO - [API] ✓ Results retrieved
+2025-10-29 17:27:10,866 - INFO - [CSV] ✓ Saved to: amazon_india_smartphone_20251029_172710.csv
+2025-10-29 17:27:10,867 - INFO - [SUCCESS] ✓ Saved 120 products for 'smartphone'
+2025-10-29 17:27:10,867 - INFO - 
+[PROGRESS] Keyword 3/5
+2025-10-29 17:27:10,867 - INFO - 
+2025-10-29 17:27:10,867 - INFO - ======================================================================
+2025-10-29 17:27:10,867 - INFO - [COLLECT] Keyword: headphones
+2025-10-29 17:27:10,867 - INFO - ======================================================================
+2025-10-29 17:27:10,867 - INFO - [API] Submitting task for keyword='headphones'
+2025-10-29 17:27:10,867 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-29 17:27:11,142 - INFO - [API] ✓ Task submitted: 10291357-1177-0209-0000-f350830e85cb
+2025-10-29 17:27:11,143 - INFO - [API] Cost: $0.001
+2025-10-29 17:27:11,143 - INFO - [WAIT] Initial wait: 200s...
+2025-10-29 17:30:31,145 - INFO - [CHECK] Attempt 1/8...
+2025-10-29 17:30:31,146 - INFO - [API] Fetching results for 10291357-1177-0209-0000-f350830e85cb
+2025-10-29 17:30:33,995 - INFO - [API] ✓ Results retrieved
+2025-10-29 17:30:34,008 - INFO - [CSV] ✓ Saved to: amazon_india_headphones_20251029_173033.csv
+2025-10-29 17:30:34,010 - INFO - [SUCCESS] ✓ Saved 98 products for 'headphones'
+2025-10-29 17:30:34,012 - INFO - 
+[PROGRESS] Keyword 4/5
+2025-10-29 17:30:34,013 - INFO - 
+2025-10-29 17:30:34,014 - INFO - ======================================================================
+2025-10-29 17:30:34,015 - INFO - [COLLECT] Keyword: smartwatch
+2025-10-29 17:30:34,021 - INFO - ======================================================================
+2025-10-29 17:30:34,024 - INFO - [API] Submitting task for keyword='smartwatch'
+2025-10-29 17:30:34,025 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-29 17:30:34,316 - INFO - [API] ✓ Task submitted: 10291400-1177-0209-0000-cd945e137082
+2025-10-29 17:30:34,317 - INFO - [API] Cost: $0.001
+2025-10-29 17:30:34,317 - INFO - [WAIT] Initial wait: 200s...
+2025-10-29 17:33:54,319 - INFO - [CHECK] Attempt 1/8...
+2025-10-29 17:33:54,322 - INFO - [API] Fetching results for 10291400-1177-0209-0000-cd945e137082
+2025-10-29 17:33:57,246 - INFO - [API] ✓ Results retrieved
+2025-10-29 17:33:57,264 - INFO - [CSV] ✓ Saved to: amazon_india_smartwatch_20251029_173357.csv
+2025-10-29 17:33:57,266 - INFO - [SUCCESS] ✓ Saved 106 products for 'smartwatch'
+2025-10-29 17:33:57,268 - INFO - 
+[PROGRESS] Keyword 5/5
+2025-10-29 17:33:57,269 - INFO - 
+2025-10-29 17:33:57,270 - INFO - ======================================================================
+2025-10-29 17:33:57,276 - INFO - [COLLECT] Keyword: tablet
+2025-10-29 17:33:57,277 - INFO - ======================================================================
+2025-10-29 17:33:57,280 - INFO - [API] Submitting task for keyword='tablet'
+2025-10-29 17:33:57,282 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-29 17:33:57,542 - INFO - [API] ✓ Task submitted: 10291403-1177-0209-0000-c705dfe85c9f
+2025-10-29 17:33:57,543 - INFO - [API] Cost: $0.001
+2025-10-29 17:33:57,545 - INFO - [WAIT] Initial wait: 200s...
+2025-10-29 17:37:17,547 - INFO - [CHECK] Attempt 1/8...
+2025-10-29 17:37:17,548 - INFO - [API] Fetching results for 10291403-1177-0209-0000-c705dfe85c9f
+2025-10-29 17:38:19,375 - ERROR - [RestClient] Timeout after 60s: https://api.dataforseo.com/v3/merchant/amazon/products/task_get/advanced/10291403-1177-0209-0000-c705dfe85c9f
+2025-10-29 17:38:19,376 - ERROR - [API] No response received
+2025-10-29 17:38:19,376 - INFO - [WAITING] 30s before retry...
+2025-10-29 17:38:49,377 - INFO - [CHECK] Attempt 2/8...
+2025-10-29 17:38:49,386 - INFO - [API] Fetching results for 10291403-1177-0209-0000-c705dfe85c9f
+2025-10-29 17:38:52,033 - WARNING - [API] Task in queue (40602)
+2025-10-29 17:38:52,034 - INFO - [WAITING] 30s before retry...
+2025-10-29 17:39:22,036 - INFO - [CHECK] Attempt 3/8...
+2025-10-29 17:39:22,037 - INFO - [API] Fetching results for 10291403-1177-0209-0000-c705dfe85c9f
+2025-10-29 17:39:22,565 - INFO - [API] ✓ Results retrieved
+2025-10-29 17:39:22,581 - INFO - [CSV] ✓ Saved to: amazon_india_tablet_20251029_173922.csv
+2025-10-29 17:39:22,583 - INFO - [SUCCESS] ✓ Saved 131 products for 'tablet'
+2025-10-29 17:39:22,586 - INFO - [CSV] ✓ Summary saved to: summary_20251029_173922.txt
+2025-10-29 17:39:22,592 - INFO - 
+2025-10-29 17:39:22,593 - INFO - ======================================================================
+2025-10-29 17:39:22,593 - INFO - [COMPLETE] Collection Finished!
+2025-10-29 17:39:22,595 - INFO - ======================================================================
+2025-10-29 17:39:22,596 - INFO - Collection Date: 2025-10-29 17:39:22
+2025-10-29 17:39:22,597 - INFO - Location: 2356 (India)
+2025-10-29 17:39:22,597 - INFO - Language: en_US
+2025-10-29 17:39:22,598 - INFO - Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-29 17:39:22,599 - INFO - Successful: 5/5
+2025-10-29 17:39:22,599 - INFO - Total Products: 575
+2025-10-29 17:39:22,600 - INFO - Estimated Cost: $0.575
+2025-10-29 17:39:22,607 - INFO - Time Taken: 18m 55s
+2025-10-29 17:39:22,607 - INFO - Output Directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-29 17:39:22,610 - INFO - ======================================================================
+2025-10-30 09:53:27,178 - INFO - 
+======================================================================
+2025-10-30 09:53:27,178 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 09:53:27,179 - INFO - Table: dataforseo_amazon_products
+2025-10-30 09:53:27,179 - INFO - ======================================================================
+2025-10-30 09:53:27,183 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 09:53:27,184 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 09:53:27,184 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 09:53:27,184 - INFO - [API] Initialized
+2025-10-30 09:53:27,185 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 09:53:29,329 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 09:53:29,331 - INFO - [DB] Retrying in 2s...
+2025-10-30 09:53:31,332 - INFO - [DB] Attempt 2/3: Connecting...
+2025-10-30 09:53:33,427 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 09:53:33,427 - INFO - [DB] Retrying in 4s...
+2025-10-30 09:53:37,428 - INFO - [DB] Attempt 3/3: Connecting...
+2025-10-30 09:53:39,503 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 09:53:39,509 - ERROR - [DB] All connection attempts failed
+2025-10-30 09:53:39,510 - ERROR - [EXIT] Database connection failed
+2025-10-30 09:53:39,510 - ERROR - [HELP] Check DATABASE_URL and network connection
+2025-10-30 09:55:30,281 - INFO - 
+======================================================================
+2025-10-30 09:55:30,281 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 09:55:30,282 - INFO - Table: dataforseo_amazon_products
+2025-10-30 09:55:30,282 - INFO - ======================================================================
+2025-10-30 09:55:30,285 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 09:55:30,285 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 09:55:30,286 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 09:55:30,286 - INFO - [API] Initialized
+2025-10-30 09:55:30,286 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 09:55:30,816 - INFO - [DB] ✓ Connection successful
+2025-10-30 09:55:30,928 - ERROR - [DB ERROR] Failed to create table: column "location_code" does not exist
+
+2025-10-30 09:55:30,965 - ERROR - [EXIT] Failed to create/verify table
+2025-10-30 09:57:22,119 - INFO - 
+======================================================================
+2025-10-30 09:57:22,119 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 09:57:22,119 - INFO - Table: dataforseo_amazon_products
+2025-10-30 09:57:22,120 - INFO - ======================================================================
+2025-10-30 09:57:22,123 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 09:57:22,123 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 09:57:22,124 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 09:57:22,124 - INFO - [API] Initialized
+2025-10-30 09:57:22,124 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 09:57:22,418 - INFO - [DB] ✓ Connection successful
+2025-10-30 09:57:22,539 - ERROR - [DB ERROR] Failed to create table: column "location_code" does not exist
+
+2025-10-30 09:57:22,603 - ERROR - [EXIT] Failed to create/verify table
+2025-10-30 09:58:45,705 - INFO - 
+======================================================================
+2025-10-30 09:58:45,705 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 09:58:45,706 - INFO - Table: dataforseo_amazon_products
+2025-10-30 09:58:45,706 - INFO - ======================================================================
+2025-10-30 09:58:45,709 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 09:58:45,709 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 09:58:45,710 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 09:58:45,710 - INFO - [API] Initialized
+2025-10-30 09:58:45,710 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 09:58:45,983 - INFO - [DB] ✓ Connection successful
+2025-10-30 09:58:46,138 - INFO - [DB] ✓ Table 'dataforseo_amazon_products' verified
+2025-10-30 09:58:46,217 - INFO - [DB] Current records: 0
+2025-10-30 09:58:46,269 - INFO - [DB] Initial stats: 0 products, 0 keywords
+2025-10-30 09:58:46,271 - INFO - 
+2025-10-30 09:58:46,272 - INFO - ======================================================================
+2025-10-30 09:58:46,272 - INFO - [START] DataForSEO Collection - INDIA
+2025-10-30 09:58:46,272 - INFO - [INFO] Location: 2356 (India)
+2025-10-30 09:58:46,273 - INFO - [INFO] Language: en_US
+2025-10-30 09:58:46,273 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 09:58:46,274 - INFO - [INFO] Table: dataforseo_amazon_products
+2025-10-30 09:58:46,274 - INFO - ======================================================================
+2025-10-30 09:58:46,275 - INFO - 
+[PROGRESS] Keyword 1/5
+2025-10-30 09:58:46,275 - INFO - 
+2025-10-30 09:58:46,275 - INFO - ======================================================================
+2025-10-30 09:58:46,276 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 09:58:46,276 - INFO - ======================================================================
+2025-10-30 09:58:46,278 - INFO - [API] Submitting task for 'laptop'
+2025-10-30 09:58:46,278 - INFO - [API] Location: 2356, Language: en_US, Depth: 100
+2025-10-30 09:58:47,731 - INFO - [API] ✓ Task submitted: 10300628-1177-0209-0000-e0daac447871
+2025-10-30 09:58:47,733 - INFO - [API] Estimated cost: $0.0010
+2025-10-30 09:58:47,734 - INFO - [WAIT] Waiting 200s for processing...
+2025-10-30 10:02:07,741 - INFO - [CHECK] Attempt 1/8
+2025-10-30 10:02:07,742 - INFO - [API] Fetching results for 10300628-1177-0209-0000-e0daac447871
+2025-10-30 10:02:09,698 - INFO - [API] ✓ Results retrieved
+2025-10-30 10:02:09,702 - INFO - [DB] Saving 120 products...
+2025-10-30 10:02:10,026 - ERROR - [DB ERROR] Failed to save products: column "price_from" of relation "dataforseo_amazon_products" does not exist
+LINE 4:                  price_from, price_to, currency, rating_valu...
+                         ^
+
+2025-10-30 10:02:10,027 - ERROR - [DB ERROR] First product sample: {'task_id': '10300628-1177-0209-0000-e0daac447871', 'asin': 'B0F4R3GFMQ', 'keyword': 'laptop', 'title': "HP 15, 13th Gen Intel Core i3-1315U (12GB DDR4, 512GB SSD) FHD, Anti-Glare, Micro-Edge, 15.6''/39.6cm, Win11, M365 Basic(1yr)* Office24, Silver, 1.59kg, fd0573TU, FHD Camera w/Shutter Laptop", 'url': 'https://www.amazon.in/HP-i3-1315U-Anti-Glare-Micro-Edge-fd0573TU/dp/B0F4R3GFMQ/ref=sr_1_1?crid=X1XL2BVU0Z25&dib=eyJ2IjoiMSJ9.DaCJaC_X__zvgtpETxaWT-rO1K_kNNn2H6oMDD0O7Jfm1n1Rcbihba53-eCcrIsIJ2_oAaQOX1FMSCfcf68IOaY3r5E2cDumx1BWUbNCTCEel8UWJ10f7LU1_9E9dnTDeOZQsd7NDFVGTxzHAD7lPkyO6evOa1rTlLh1Xr5Pjirv8B6aRT7bw5dW6srEdSfSUKwvxfN7ybC4yHAVkeMgULftqbkWQGwFqbpEeBBuD5I.706OpbrrG4PYgcbu7xKlH2KQ3fwUhEC6GkM3_BDxdJk&dib_tag=se&keywords=laptop&qid=1761798541&sprefix=laptop%2Caps%2C262&sr=8-1', 'image_url': 'https://m.media-amazon.com/images/I/71FXHAM+jWL._AC_UY218_.jpg', 'price_from': None, 'price_to': None, 'currency': None, 'rating_value': 4, 'rating_votes': 668, 'is_best_seller': False, 'location_code': 2356, 'language_code': 'en_US'}
+2025-10-30 10:02:10,058 - INFO - [SUCCESS] ✓ Saved 0 products for 'laptop'
+2025-10-30 10:02:10,059 - INFO - 
+[PROGRESS] Keyword 2/5
+2025-10-30 10:02:10,060 - INFO - 
+2025-10-30 10:02:10,060 - INFO - ======================================================================
+2025-10-30 10:02:10,060 - INFO - [COLLECT] Keyword: smartphone
+2025-10-30 10:02:10,061 - INFO - ======================================================================
+2025-10-30 10:02:10,061 - INFO - [API] Submitting task for 'smartphone'
+2025-10-30 10:02:10,062 - INFO - [API] Location: 2356, Language: en_US, Depth: 100
+2025-10-30 10:02:10,347 - INFO - [API] ✓ Task submitted: 10300632-1177-0209-0000-71b3eb1638c5
+2025-10-30 10:02:10,349 - INFO - [API] Estimated cost: $0.0010
+2025-10-30 10:02:10,349 - INFO - [WAIT] Waiting 200s for processing...
+2025-10-30 10:05:30,365 - INFO - [CHECK] Attempt 1/8
+2025-10-30 10:05:30,365 - INFO - [API] Fetching results for 10300632-1177-0209-0000-71b3eb1638c5
+2025-10-30 10:05:32,303 - INFO - [API] ✓ Results retrieved
+2025-10-30 10:05:32,305 - INFO - [DB] Saving 108 products...
+2025-10-30 10:05:32,657 - ERROR - [DB ERROR] Failed to save products: column "price_from" of relation "dataforseo_amazon_products" does not exist
+LINE 4:                  price_from, price_to, currency, rating_valu...
+                         ^
+
+2025-10-30 10:05:32,659 - ERROR - [DB ERROR] First product sample: {'task_id': '10300632-1177-0209-0000-71b3eb1638c5', 'asin': 'B0FG2LPC6K', 'keyword': 'smartphone', 'title': "realme NARZO 80 Lite 4G (Obsidian Black, 4GB+64GB) | 6300mAh Segment's Biggest Battery | 7.94mm Slim Design | 300% Ultra Volume | Pulse Light: 9 Colors, 5 Glow Modes | Ai Assist", 'url': 'https://www.amazon.in/realme-Obsidian-6300mAh-Segments-Biggest/dp/B0FG2LPC6K/ref=sr_1_1?crid=OQY1ZVVHF86S&dib=eyJ2IjoiMSJ9.GohkxX1dn0wJz8hBYtVZmpWFoTwkxsIPTjJWgqPr2AzeGYTPvICz8cSsUMmhagfD94zeu-kCv8LPSDTaFvvz5d_5KbL6-DY-vNigBXf0Iw8JMX7oGvdGEHmbIafUFKeiOsOBvqDGZQRSwdriggXCKFvSfzaEGXZGbCw4wP9F70tX8L2SucrZIbWxBwmiRioD-6UEbkHlbpm44s0akS9uOtB7Q6uWOPIZjd6CS30i5g0.De3ff24tbxhBfYOE-EwW1yjXyulkv26CuFiEJr1EROw&dib_tag=se&keywords=smartphone&qid=1761798878&sprefix=smartphone%2Caps%2C151&sr=8-1', 'image_url': 'https://m.media-amazon.com/images/I/81oxfhHd5XL._AC_UY218_.jpg', 'price_from': 6798, 'price_to': None, 'currency': 'INR', 'rating_value': 4.2, 'rating_votes': 1100, 'is_best_seller': False, 'location_code': 2356, 'language_code': 'en_US'}
+2025-10-30 10:05:32,693 - INFO - [SUCCESS] ✓ Saved 0 products for 'smartphone'
+2025-10-30 10:05:32,695 - INFO - 
+[PROGRESS] Keyword 3/5
+2025-10-30 10:05:32,695 - INFO - 
+2025-10-30 10:05:32,696 - INFO - ======================================================================
+2025-10-30 10:05:32,696 - INFO - [COLLECT] Keyword: headphones
+2025-10-30 10:05:32,696 - INFO - ======================================================================
+2025-10-30 10:05:32,697 - INFO - [API] Submitting task for 'headphones'
+2025-10-30 10:05:32,697 - INFO - [API] Location: 2356, Language: en_US, Depth: 100
+2025-10-30 10:05:32,957 - INFO - [API] ✓ Task submitted: 10300635-1177-0209-0000-289ace857d5c
+2025-10-30 10:05:32,957 - INFO - [API] Estimated cost: $0.0010
+2025-10-30 10:05:32,957 - INFO - [WAIT] Waiting 200s for processing...
+2025-10-30 10:08:29,625 - INFO - 
+[STOP] Stopped by user
+2025-10-30 10:19:25,328 - INFO - 
+======================================================================
+2025-10-30 10:19:25,329 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 10:19:25,329 - INFO - Table: dataforseo_amazon_products
+2025-10-30 10:19:25,329 - INFO - ======================================================================
+2025-10-30 10:19:25,332 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:19:25,332 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:19:25,333 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:19:25,333 - INFO - [API] Initialized
+2025-10-30 10:19:25,333 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 10:19:25,603 - INFO - [DB] ✓ Connection successful
+2025-10-30 10:19:25,786 - INFO - [DB] ✓ Table 'dataforseo_amazon_products' verified
+2025-10-30 10:19:25,887 - INFO - [DB] Current records: 0
+2025-10-30 10:19:25,935 - INFO - [DB] Initial stats: 0 products, 0 keywords
+2025-10-30 10:19:25,935 - INFO - 
+2025-10-30 10:19:25,936 - INFO - ======================================================================
+2025-10-30 10:19:25,937 - INFO - [START] DataForSEO Collection - INDIA
+2025-10-30 10:19:25,937 - INFO - [INFO] Location: 2356 (India)
+2025-10-30 10:19:25,937 - INFO - [INFO] Language: en_US
+2025-10-30 10:19:25,938 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 10:19:25,939 - INFO - [INFO] Table: dataforseo_amazon_products
+2025-10-30 10:19:25,939 - INFO - ======================================================================
+2025-10-30 10:19:25,941 - INFO - 
+[PROGRESS] Keyword 1/5
+2025-10-30 10:19:25,942 - INFO - 
+2025-10-30 10:19:25,943 - INFO - ======================================================================
+2025-10-30 10:19:25,944 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 10:19:25,944 - INFO - ======================================================================
+2025-10-30 10:19:25,945 - INFO - [API] Submitting task for 'laptop'
+2025-10-30 10:19:25,945 - INFO - [API] Location: 2356, Language: en_US, Depth: 100
+2025-10-30 10:19:27,165 - INFO - [API] ✓ Task submitted: 10300649-1177-0209-0000-fbee9953733b
+2025-10-30 10:19:27,165 - INFO - [API] Estimated cost: $0.0010
+2025-10-30 10:19:27,165 - INFO - [WAIT] Waiting 200s for processing...
+2025-10-30 10:22:47,176 - INFO - [CHECK] Attempt 1/8
+2025-10-30 10:22:47,176 - INFO - [API] Fetching results for 10300649-1177-0209-0000-fbee9953733b
+2025-10-30 10:22:48,333 - INFO - [API] ✓ Results retrieved
+2025-10-30 10:22:48,333 - INFO - [DB] Saving 120 products...
+2025-10-30 10:22:48,337 - ERROR - [DB ERROR] Failed to save products: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-10-30 10:22:48,338 - ERROR - [DB ERROR] First product sample: {'task_id': '10300649-1177-0209-0000-fbee9953733b', 'asin': 'B0F4R3GFMQ', 'keyword': 'laptop', 'title': "HP 15, 13th Gen Intel Core i3-1315U (12GB DDR4, 512GB SSD) FHD, Anti-Glare, Micro-Edge, 15.6''/39.6cm, Win11, M365 Basic(1yr)* Office24, Silver, 1.59kg, fd0573TU, FHD Camera w/Shutter Laptop", 'url': 'https://www.amazon.in/HP-i3-1315U-Anti-Glare-Micro-Edge-fd0573TU/dp/B0F4R3GFMQ/ref=sr_1_1?crid=LOJI361N7VVF&dib=eyJ2IjoiMSJ9.DaCJaC_X__zvgtpETxaWT-rO1K_kNNn2H6oMDD0O7JfNU1E2Qmrb8reXmBKk2dOs5HCPI9M4zOO_GMGE7Wg-VVPUJ4hOFCMCg9sC08dXc4fyk3TdeVrNE9goTVXaN6DyuDyV2J4oXagb-0pn5vND24_inzKJyneI30Q7yCxJroc2I9psAQEmtW0lFkleFP-EbXu852_LpsxEYefd6g_Au2m05ifeBmqTAogG6dDFyxM.Gfjt_n4mGMA2IpJiKGi6Zuo91BXChr8J3Y2GdIl6ti4&dib_tag=se&keywords=laptop&qid=1761799808&sprefix=laptop%2Caps%2C131&sr=8-1', 'image_url': 'https://m.media-amazon.com/images/I/71FXHAM+jWL._AC_UY218_.jpg', 'price_from': None, 'price_to': None, 'currency': None, 'rating_value': 4, 'rating_votes': 668, 'is_best_seller': False, 'location_code': 2356, 'language_code': 'en_US'}
+2025-10-30 10:22:48,338 - ERROR - [ERROR] connection already closed
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1069, in save_products
+    execute_values(cursor, """
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^
+        INSERT INTO dataforseo_amazon_products
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<15 lines>...
+            updated_at = NOW()
+            ^^^^^^^^^^^^^^^^^^
+    """, values)
+    ^^^^^^^^^^^^
+  File "C:\Users\AFI-02-AI\AppData\Roaming\Python\Python313\site-packages\psycopg2\extras.py", line 1299, in execute_values
+    cur.execute(b''.join(parts))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1408, in main
+    results, elapsed = collector.collect_all(config.KEYWORDS)
+                       ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1368, in collect_all
+    result = self.collect_keyword(keyword.strip())
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1333, in collect_keyword
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1101, in save_products
+    self.conn.rollback()
+    ~~~~~~~~~~~~~~~~~~^^
+psycopg2.InterfaceError: connection already closed
+2025-10-30 10:33:07,602 - INFO - 
+======================================================================
+2025-10-30 10:33:07,602 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 10:33:07,602 - INFO - Table: dataforseo_amazon_products
+2025-10-30 10:33:07,603 - INFO - ======================================================================
+2025-10-30 10:33:07,620 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:33:07,620 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:33:07,620 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:33:07,622 - INFO - [API] Initialized
+2025-10-30 10:33:07,622 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 10:33:07,957 - INFO - [DB] ✓ Connection successful
+2025-10-30 10:38:39,553 - INFO - 
+======================================================================
+2025-10-30 10:38:39,554 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 10:38:39,554 - INFO - Table: dataforseo_amazon_products
+2025-10-30 10:38:39,554 - INFO - ======================================================================
+2025-10-30 10:38:39,557 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:38:39,557 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:38:39,558 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:38:39,558 - INFO - [API] Initialized
+2025-10-30 10:38:39,558 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 10:38:39,892 - INFO - [DB] ✓ Connection successful
+2025-10-30 10:40:29,039 - INFO - 
+======================================================================
+2025-10-30 10:40:29,039 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 10:40:29,040 - INFO - Table: dataforseo_amazon_products
+2025-10-30 10:40:29,040 - INFO - ======================================================================
+2025-10-30 10:40:29,043 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:40:29,043 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:40:29,043 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:40:29,043 - INFO - [API] Initialized
+2025-10-30 10:40:29,044 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 10:40:29,299 - INFO - [DB] ✓ Connection successful
+2025-10-30 10:45:51,236 - INFO - 
+======================================================================
+2025-10-30 10:45:51,237 - INFO - DataForSEO Amazon Collector - CSV Version
+2025-10-30 10:45:51,237 - INFO - No database required - saves to CSV files
+2025-10-30 10:45:51,237 - INFO - ======================================================================
+2025-10-30 10:45:51,240 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:45:51,240 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:45:51,240 - INFO - [CONFIG] Output Directory: data_output
+2025-10-30 10:45:51,243 - INFO - [CSV] Output directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 10:45:51,243 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:45:51,244 - INFO - [API] Initialized with 60s timeout
+2025-10-30 10:45:51,244 - INFO - 
+2025-10-30 10:45:51,246 - INFO - ======================================================================
+2025-10-30 10:45:51,246 - INFO - [START] DataForSEO Collection for INDIA
+2025-10-30 10:45:51,246 - INFO - [INFO] Location: 2356 (India)
+2025-10-30 10:45:51,247 - INFO - [INFO] Language: en_US
+2025-10-30 10:45:51,247 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 10:45:51,247 - INFO - [INFO] Output: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 10:45:51,247 - INFO - ======================================================================
+2025-10-30 10:45:51,247 - INFO - 
+[PROGRESS] Keyword 1/5
+2025-10-30 10:45:51,248 - INFO - 
+2025-10-30 10:45:51,248 - INFO - ======================================================================
+2025-10-30 10:45:51,253 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 10:45:51,255 - INFO - ======================================================================
+2025-10-30 10:45:51,256 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-30 10:45:51,256 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 10:45:54,719 - INFO - [API] ✓ Task submitted: 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:45:54,719 - INFO - [API] Cost: $0.001
+2025-10-30 10:45:54,720 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 10:49:14,728 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 10:49:14,729 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:49:18,481 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:49:18,481 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:49:48,483 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 10:49:48,484 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:49:49,813 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:49:49,814 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:50:19,816 - INFO - [CHECK] Attempt 3/8...
+2025-10-30 10:50:19,817 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:50:21,566 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:50:21,567 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:50:51,569 - INFO - [CHECK] Attempt 4/8...
+2025-10-30 10:50:51,571 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:50:52,624 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:50:52,626 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:51:22,628 - INFO - [CHECK] Attempt 5/8...
+2025-10-30 10:51:22,630 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:51:23,865 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:51:23,866 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:51:53,868 - INFO - [CHECK] Attempt 6/8...
+2025-10-30 10:51:53,868 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:51:55,171 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:51:55,171 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:52:25,173 - INFO - [CHECK] Attempt 7/8...
+2025-10-30 10:52:25,174 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:52:25,801 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:52:25,805 - INFO - [WAITING] 30s before retry...
+2025-10-30 10:52:55,806 - INFO - [CHECK] Attempt 8/8...
+2025-10-30 10:52:55,806 - INFO - [API] Fetching results for 10300715-1177-0209-0000-cc5af4e4dc84
+2025-10-30 10:52:56,752 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:52:56,752 - ERROR - [FAILED] Could not retrieve results for 'laptop'
+2025-10-30 10:52:56,753 - INFO - 
+[PROGRESS] Keyword 2/5
+2025-10-30 10:52:56,754 - INFO - 
+2025-10-30 10:52:56,754 - INFO - ======================================================================
+2025-10-30 10:52:56,755 - INFO - [COLLECT] Keyword: smartphone
+2025-10-30 10:52:56,755 - INFO - ======================================================================
+2025-10-30 10:52:56,755 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-30 10:52:56,755 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 10:52:57,747 - INFO - [API] ✓ Task submitted: 10300722-1177-0209-0000-849434ece38b
+2025-10-30 10:52:57,748 - INFO - [API] Cost: $0.001
+2025-10-30 10:52:57,748 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 10:54:11,227 - INFO - 
+[STOP] Stopped by user
+2025-10-30 10:54:47,537 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:54:47,537 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:54:47,538 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:54:47,538 - INFO - [API] Initialized with 60s timeout
+2025-10-30 10:54:47,538 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 10:54:52,723 - INFO - [DB] ✓ Connection successful
+2025-10-30 10:54:54,624 - INFO - [DB] Tables verified (amazon_products_india)
+2025-10-30 10:54:54,625 - INFO - 
+2025-10-30 10:54:54,626 - INFO - ======================================================================
+2025-10-30 10:54:54,626 - INFO - [START] Starting data collection for INDIA
+2025-10-30 10:54:54,626 - INFO - [INFO] Location Code: 2356 (India)
+2025-10-30 10:54:54,627 - INFO - [INFO] Language Code: en_US
+2025-10-30 10:54:54,627 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 10:54:54,627 - INFO - ======================================================================
+2025-10-30 10:54:54,627 - INFO - 
+[PROGRESS] Processing keyword 1/5
+2025-10-30 10:54:54,628 - INFO - 
+2025-10-30 10:54:54,628 - INFO - ======================================================================
+2025-10-30 10:54:54,628 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 10:54:54,628 - INFO - ======================================================================
+2025-10-30 10:54:54,628 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-30 10:54:54,628 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 10:54:58,055 - INFO - [API] ✓ Task submitted: 10300724-1177-0209-0000-c29cd337c072
+2025-10-30 10:54:58,055 - INFO - [API] Task status: Task Created.
+2025-10-30 10:54:58,056 - INFO - [WAIT] Initial wait: 200s for processing...
+2025-10-30 10:58:18,062 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-30 10:58:18,062 - INFO - [API] Fetching results for 10300724-1177-0209-0000-c29cd337c072
+2025-10-30 10:58:21,872 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:58:21,873 - INFO - [WAITING] Results not ready, waiting 30s before retry...
+2025-10-30 10:58:51,874 - INFO - [CHECK] Attempt 2/8 to retrieve results...
+2025-10-30 10:58:51,875 - INFO - [API] Fetching results for 10300724-1177-0209-0000-c29cd337c072
+2025-10-30 10:58:53,015 - WARNING - [API] Task in queue (40602)
+2025-10-30 10:58:53,015 - INFO - [WAITING] Results not ready, waiting 30s before retry...
+2025-10-30 10:59:11,433 - INFO - 
+[STOP] Stopped by user
+2025-10-30 10:59:36,624 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 10:59:36,624 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 10:59:36,625 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 10:59:36,625 - INFO - [API] Initialized with 60s timeout
+2025-10-30 10:59:36,625 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 10:59:42,109 - INFO - [DB] ✓ Connection successful
+2025-10-30 10:59:46,480 - INFO - [DB] Tables verified (amazon_products_india)
+2025-10-30 10:59:46,481 - INFO - 
+2025-10-30 10:59:46,481 - INFO - ======================================================================
+2025-10-30 10:59:46,482 - INFO - [START] Starting data collection for INDIA
+2025-10-30 10:59:46,482 - INFO - [INFO] Location Code: 2356 (India)
+2025-10-30 10:59:46,482 - INFO - [INFO] Language Code: en_US
+2025-10-30 10:59:46,483 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 10:59:46,483 - INFO - ======================================================================
+2025-10-30 10:59:46,484 - INFO - 
+[PROGRESS] Processing keyword 1/5
+2025-10-30 10:59:46,484 - INFO - 
+2025-10-30 10:59:46,484 - INFO - ======================================================================
+2025-10-30 10:59:46,484 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 10:59:46,485 - INFO - ======================================================================
+2025-10-30 10:59:46,485 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-30 10:59:46,486 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 10:59:51,578 - INFO - [API] ✓ Task submitted: 10300729-1177-0209-0000-6e65b1c75f14
+2025-10-30 10:59:51,578 - INFO - [API] Task status: Task Created.
+2025-10-30 10:59:51,578 - INFO - [WAIT] Initial wait: 200s for processing...
+2025-10-30 11:03:11,585 - INFO - [CHECK] Attempt 1/8 to retrieve results...
+2025-10-30 11:03:11,587 - INFO - [API] Fetching results for 10300729-1177-0209-0000-6e65b1c75f14
+2025-10-30 11:03:15,295 - INFO - [API] ✓ Results retrieved
+2025-10-30 11:03:15,300 - ERROR - [DB ERROR] Save failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-10-30 11:03:15,302 - ERROR - [ERROR] connection already closed
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 541, in save_products
+    execute_values(cursor, """
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^
+        INSERT INTO amazon_products_india
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<12 lines>...
+        for p in products
+        ^^^^^^^^^^^^^^^^^
+    ])
+    ^^
+  File "C:\Users\AFI-02-AI\AppData\Roaming\Python\Python313\site-packages\psycopg2\extras.py", line 1299, in execute_values
+    cur.execute(b''.join(parts))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 840, in main
+    results = collector.collect_all(config.KEYWORDS)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 817, in collect_all
+    result = self.collect_keyword(keyword.strip())
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 784, in collect_keyword
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 561, in save_products
+    self.conn.rollback()
+    ~~~~~~~~~~~~~~~~~~^^
+psycopg2.InterfaceError: connection already closed
+2025-10-30 11:05:26,945 - INFO - 
+======================================================================
+2025-10-30 11:05:26,945 - INFO - DataForSEO Amazon Collector - CSV Version
+2025-10-30 11:05:26,945 - INFO - No database required - saves to CSV files
+2025-10-30 11:05:26,945 - INFO - ======================================================================
+2025-10-30 11:05:26,948 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 11:05:26,948 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 11:05:26,949 - INFO - [CONFIG] Output Directory: data_output
+2025-10-30 11:05:26,951 - INFO - [CSV] Output directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 11:05:26,951 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 11:05:26,951 - INFO - [API] Initialized with 60s timeout
+2025-10-30 11:05:26,952 - INFO - 
+2025-10-30 11:05:26,952 - INFO - ======================================================================
+2025-10-30 11:05:26,952 - INFO - [START] DataForSEO Collection for INDIA
+2025-10-30 11:05:26,952 - INFO - [INFO] Location: 2356 (India)
+2025-10-30 11:05:26,952 - INFO - [INFO] Language: en_US
+2025-10-30 11:05:26,952 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 11:05:26,952 - INFO - [INFO] Output: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 11:05:26,952 - INFO - ======================================================================
+2025-10-30 11:05:26,953 - INFO - 
+[PROGRESS] Keyword 1/5
+2025-10-30 11:05:26,953 - INFO - 
+2025-10-30 11:05:26,953 - INFO - ======================================================================
+2025-10-30 11:05:26,953 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 11:05:26,953 - INFO - ======================================================================
+2025-10-30 11:05:26,953 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-30 11:05:26,953 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 11:05:27,925 - INFO - [API] ✓ Task submitted: 10300735-1177-0209-0000-971d13076341
+2025-10-30 11:05:27,925 - INFO - [API] Cost: $0.001
+2025-10-30 11:05:27,926 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 11:08:40,825 - INFO - 
+[STOP] Stopped by user
+2025-10-30 11:17:10,956 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 11:17:10,957 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 11:17:10,957 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 11:17:10,957 - INFO - [API] Initialized with 60s timeout
+2025-10-30 11:17:10,957 - INFO - [DB] Attempt 1/3: Connecting...
+2025-10-30 11:17:13,085 - ERROR - [DB ERROR] connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 11:17:15,087 - INFO - [DB] Attempt 2/3: Connecting...
+2025-10-30 11:17:17,256 - ERROR - [DB ERROR] connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 11:17:21,259 - INFO - [DB] Attempt 3/3: Connecting...
+2025-10-30 11:17:23,399 - ERROR - [DB ERROR] connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 11:17:23,399 - ERROR - [EXIT] Database connection failed
+2025-10-30 11:18:53,289 - INFO - 
+======================================================================
+2025-10-30 11:18:53,289 - INFO - DataForSEO Amazon Collector - CSV Version
+2025-10-30 11:18:53,289 - INFO - No database required - saves to CSV files
+2025-10-30 11:18:53,289 - INFO - ======================================================================
+2025-10-30 11:18:53,292 - INFO - [CONFIG] Location Code: 2356 (India)
+2025-10-30 11:18:53,292 - INFO - [CONFIG] Language Code: en_US
+2025-10-30 11:18:53,292 - INFO - [CONFIG] Output Directory: data_output
+2025-10-30 11:18:53,293 - INFO - [CSV] Output directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 11:18:53,293 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 11:18:53,294 - INFO - [API] Initialized with 60s timeout
+2025-10-30 11:18:53,294 - INFO - 
+2025-10-30 11:18:53,294 - INFO - ======================================================================
+2025-10-30 11:18:53,294 - INFO - [START] DataForSEO Collection for INDIA
+2025-10-30 11:18:53,294 - INFO - [INFO] Location: 2356 (India)
+2025-10-30 11:18:53,295 - INFO - [INFO] Language: en_US
+2025-10-30 11:18:53,295 - INFO - [INFO] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 11:18:53,295 - INFO - [INFO] Output: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 11:18:53,295 - INFO - ======================================================================
+2025-10-30 11:18:53,295 - INFO - 
+[PROGRESS] Keyword 1/5
+2025-10-30 11:18:53,296 - INFO - 
+2025-10-30 11:18:53,296 - INFO - ======================================================================
+2025-10-30 11:18:53,296 - INFO - [COLLECT] Keyword: laptop
+2025-10-30 11:18:53,296 - INFO - ======================================================================
+2025-10-30 11:18:53,296 - INFO - [API] Submitting task for keyword='laptop'
+2025-10-30 11:18:53,296 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 11:18:54,401 - INFO - [API] ✓ Task submitted: 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:18:54,402 - INFO - [API] Cost: $0.001
+2025-10-30 11:18:54,402 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 11:22:14,407 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 11:22:14,408 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:22:15,493 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:22:15,494 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:22:45,496 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 11:22:45,496 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:22:45,759 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:22:45,760 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:23:15,762 - INFO - [CHECK] Attempt 3/8...
+2025-10-30 11:23:15,764 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:23:15,992 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:23:15,993 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:23:45,995 - INFO - [CHECK] Attempt 4/8...
+2025-10-30 11:23:45,996 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:23:46,199 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:23:46,199 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:24:16,201 - INFO - [CHECK] Attempt 5/8...
+2025-10-30 11:24:16,202 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:24:16,444 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:24:16,445 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:24:46,446 - INFO - [CHECK] Attempt 6/8...
+2025-10-30 11:24:46,448 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:24:46,872 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:24:46,875 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:25:16,877 - INFO - [CHECK] Attempt 7/8...
+2025-10-30 11:25:16,877 - INFO - [API] Fetching results for 10300748-1177-0209-0000-20c60f6d9969
+2025-10-30 11:25:17,336 - INFO - [API] ✓ Results retrieved
+2025-10-30 11:25:17,371 - INFO - [CSV] ✓ Saved to: amazon_india_laptop_20251030_112517.csv
+2025-10-30 11:25:17,371 - INFO - [SUCCESS] ✓ Saved 108 products for 'laptop'
+2025-10-30 11:25:17,372 - INFO - 
+[PROGRESS] Keyword 2/5
+2025-10-30 11:25:17,372 - INFO - 
+2025-10-30 11:25:17,373 - INFO - ======================================================================
+2025-10-30 11:25:17,373 - INFO - [COLLECT] Keyword: smartphone
+2025-10-30 11:25:17,374 - INFO - ======================================================================
+2025-10-30 11:25:17,374 - INFO - [API] Submitting task for keyword='smartphone'
+2025-10-30 11:25:17,374 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 11:25:17,560 - INFO - [API] ✓ Task submitted: 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:25:17,561 - INFO - [API] Cost: $0.001
+2025-10-30 11:25:17,561 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 11:28:37,566 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 11:28:37,568 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:28:38,658 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:28:38,659 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:29:08,660 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 11:29:08,661 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:29:08,924 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:29:08,925 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:29:38,926 - INFO - [CHECK] Attempt 3/8...
+2025-10-30 11:29:38,929 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:29:39,338 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:29:39,339 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:30:09,340 - INFO - [CHECK] Attempt 4/8...
+2025-10-30 11:30:09,341 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:30:09,608 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:30:09,608 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:30:39,610 - INFO - [CHECK] Attempt 5/8...
+2025-10-30 11:30:39,612 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:30:39,903 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:30:39,904 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:31:09,906 - INFO - [CHECK] Attempt 6/8...
+2025-10-30 11:31:09,907 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:31:10,217 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:31:10,218 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:31:40,220 - INFO - [CHECK] Attempt 7/8...
+2025-10-30 11:31:40,223 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:31:40,479 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:31:40,481 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:32:10,483 - INFO - [CHECK] Attempt 8/8...
+2025-10-30 11:32:10,484 - INFO - [API] Fetching results for 10300755-1177-0209-0000-060dfeda705a
+2025-10-30 11:32:10,794 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:32:10,795 - ERROR - [FAILED] Could not retrieve results for 'smartphone'
+2025-10-30 11:32:10,796 - INFO - 
+[PROGRESS] Keyword 3/5
+2025-10-30 11:32:10,796 - INFO - 
+2025-10-30 11:32:10,797 - INFO - ======================================================================
+2025-10-30 11:32:10,797 - INFO - [COLLECT] Keyword: headphones
+2025-10-30 11:32:10,798 - INFO - ======================================================================
+2025-10-30 11:32:10,798 - INFO - [API] Submitting task for keyword='headphones'
+2025-10-30 11:32:10,798 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 11:32:11,095 - INFO - [API] ✓ Task submitted: 10300802-1177-0209-0000-5702cf7fd9cb
+2025-10-30 11:32:11,095 - INFO - [API] Cost: $0.001
+2025-10-30 11:32:11,096 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 11:35:31,100 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 11:35:31,101 - INFO - [API] Fetching results for 10300802-1177-0209-0000-5702cf7fd9cb
+2025-10-30 11:35:32,734 - INFO - [API] ✓ Results retrieved
+2025-10-30 11:35:32,737 - INFO - [CSV] ✓ Saved to: amazon_india_headphones_20251030_113532.csv
+2025-10-30 11:35:32,739 - INFO - [SUCCESS] ✓ Saved 62 products for 'headphones'
+2025-10-30 11:35:32,741 - INFO - 
+[PROGRESS] Keyword 4/5
+2025-10-30 11:35:32,741 - INFO - 
+2025-10-30 11:35:32,741 - INFO - ======================================================================
+2025-10-30 11:35:32,742 - INFO - [COLLECT] Keyword: smartwatch
+2025-10-30 11:35:32,743 - INFO - ======================================================================
+2025-10-30 11:35:32,743 - INFO - [API] Submitting task for keyword='smartwatch'
+2025-10-30 11:35:32,745 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 11:35:32,976 - INFO - [API] ✓ Task submitted: 10300805-1177-0209-0000-a0d42355a32f
+2025-10-30 11:35:32,977 - INFO - [API] Cost: $0.001
+2025-10-30 11:35:32,979 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 11:38:52,983 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 11:38:52,984 - INFO - [API] Fetching results for 10300805-1177-0209-0000-a0d42355a32f
+2025-10-30 11:38:54,763 - INFO - [API] ✓ Results retrieved
+2025-10-30 11:38:54,773 - INFO - [CSV] ✓ Saved to: amazon_india_smartwatch_20251030_113854.csv
+2025-10-30 11:38:54,776 - INFO - [SUCCESS] ✓ Saved 105 products for 'smartwatch'
+2025-10-30 11:38:54,777 - INFO - 
+[PROGRESS] Keyword 5/5
+2025-10-30 11:38:54,777 - INFO - 
+2025-10-30 11:38:54,778 - INFO - ======================================================================
+2025-10-30 11:38:54,778 - INFO - [COLLECT] Keyword: tablet
+2025-10-30 11:38:54,779 - INFO - ======================================================================
+2025-10-30 11:38:54,779 - INFO - [API] Submitting task for keyword='tablet'
+2025-10-30 11:38:54,783 - INFO - [API] Parameters: location_code=2356, language_code=en_US, depth=100
+2025-10-30 11:38:55,060 - INFO - [API] ✓ Task submitted: 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:38:55,061 - INFO - [API] Cost: $0.001
+2025-10-30 11:38:55,062 - INFO - [WAIT] Initial wait: 200s...
+2025-10-30 11:42:15,065 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 11:42:15,068 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:42:17,544 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:42:17,545 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:42:47,546 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 11:42:47,551 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:42:47,831 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:42:47,832 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:43:17,834 - INFO - [CHECK] Attempt 3/8...
+2025-10-30 11:43:17,836 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:43:18,075 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:43:18,077 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:43:48,078 - INFO - [CHECK] Attempt 4/8...
+2025-10-30 11:43:48,080 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:43:48,323 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:43:48,327 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:44:18,331 - INFO - [CHECK] Attempt 5/8...
+2025-10-30 11:44:18,332 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:44:18,567 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:44:18,568 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:44:48,570 - INFO - [CHECK] Attempt 6/8...
+2025-10-30 11:44:48,572 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:44:48,841 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:44:48,842 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:45:18,843 - INFO - [CHECK] Attempt 7/8...
+2025-10-30 11:45:18,844 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:45:19,100 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:45:19,101 - INFO - [WAITING] 30s before retry...
+2025-10-30 11:45:49,104 - INFO - [CHECK] Attempt 8/8...
+2025-10-30 11:45:49,105 - INFO - [API] Fetching results for 10300808-1177-0209-0000-78f8157d0f69
+2025-10-30 11:45:49,372 - WARNING - [API] Task in queue (40602)
+2025-10-30 11:45:49,374 - ERROR - [FAILED] Could not retrieve results for 'tablet'
+2025-10-30 11:45:49,379 - INFO - [CSV] ✓ Summary saved to: summary_20251030_114549.txt
+2025-10-30 11:45:49,380 - INFO - 
+2025-10-30 11:45:49,384 - INFO - ======================================================================
+2025-10-30 11:45:49,385 - INFO - [COMPLETE] Collection Finished!
+2025-10-30 11:45:49,387 - INFO - ======================================================================
+2025-10-30 11:45:49,388 - INFO - Collection Date: 2025-10-30 11:45:49
+2025-10-30 11:45:49,390 - INFO - Location: 2356 (India)
+2025-10-30 11:45:49,394 - INFO - Language: en_US
+2025-10-30 11:45:49,398 - INFO - Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 11:45:49,400 - INFO - Successful: 3/5
+2025-10-30 11:45:49,402 - INFO - Total Products: 275
+2025-10-30 11:45:49,403 - INFO - Estimated Cost: $0.275
+2025-10-30 11:45:49,405 - INFO - Time Taken: 26m 56s
+2025-10-30 11:45:49,410 - INFO - Output Directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output
+2025-10-30 11:45:49,411 - INFO - ======================================================================
+2025-10-30 13:17:12,737 - INFO - 
+======================================================================
+2025-10-30 13:17:12,738 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 13:17:12,738 - INFO - ======================================================================
+2025-10-30 13:17:12,740 - INFO - ======================================================================
+2025-10-30 13:17:12,740 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-30 13:17:12,741 - INFO - ======================================================================
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Language: en_US
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Max Retries: 8
+2025-10-30 13:17:12,741 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 13:17:12,741 - INFO - ======================================================================
+2025-10-30 13:17:12,741 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 13:17:12,741 - INFO - [API] Client initialized with 60s timeout
+2025-10-30 13:17:12,742 - INFO - 
+2025-10-30 13:17:12,742 - INFO - ======================================================================
+2025-10-30 13:17:12,742 - INFO - [DATABASE] Testing connection...
+2025-10-30 13:17:12,742 - INFO - ======================================================================
+2025-10-30 13:17:12,742 - INFO - [DB] Connection string analysis:
+2025-10-30 13:17:12,742 - INFO -   - Scheme: postgresql
+2025-10-30 13:17:12,742 - INFO -   - Host: 122.176.108.253
+2025-10-30 13:17:12,742 - INFO -   - Port: 5432
+2025-10-30 13:17:12,742 - INFO -   - Database: db1
+2025-10-30 13:17:12,742 - INFO -   - Has SSL params: False
+2025-10-30 13:17:12,742 - INFO -   - Has query params: False
+2025-10-30 13:17:12,743 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-30 13:17:12,743 - INFO - [DB] Connecting to: 122.176.108.253:5432/db1?connect_timeout=10
+2025-10-30 13:17:14,806 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 13:17:14,809 - INFO - [DB] Retrying in 2s...
+2025-10-30 13:17:16,810 - INFO - [DB] Connecting to database (attempt 2/3)...
+2025-10-30 13:17:16,811 - INFO - [DB] Connecting to: 122.176.108.253:5432/db1?connect_timeout=10
+2025-10-30 13:17:18,874 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 13:17:18,875 - INFO - [DB] Retrying in 4s...
+2025-10-30 13:17:22,876 - INFO - [DB] Connecting to database (attempt 3/3)...
+2025-10-30 13:17:22,876 - INFO - [DB] Connecting to: 122.176.108.253:5432/db1?connect_timeout=10
+2025-10-30 13:17:24,925 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-30 13:17:24,926 - ERROR - [DB] ✗ All connection attempts failed
+2025-10-30 13:17:24,928 - ERROR - [EXIT] Database connection failed
+2025-10-30 13:51:05,217 - INFO - 
+======================================================================
+2025-10-30 13:51:05,217 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 13:51:05,217 - INFO - ======================================================================
+2025-10-30 13:51:05,219 - INFO - ======================================================================
+2025-10-30 13:51:05,219 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-30 13:51:05,220 - INFO - ======================================================================
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Language: en_US
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Max Retries: 8
+2025-10-30 13:51:05,220 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 13:51:05,220 - INFO - ======================================================================
+2025-10-30 13:51:05,221 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 13:51:05,221 - INFO - [API] Client initialized with 60s timeout
+2025-10-30 13:51:05,221 - INFO - 
+2025-10-30 13:51:05,221 - INFO - ======================================================================
+2025-10-30 13:51:05,221 - INFO - [DATABASE] Testing connection...
+2025-10-30 13:51:05,221 - INFO - ======================================================================
+2025-10-30 13:51:05,221 - INFO - [DB] Connection string analysis:
+2025-10-30 13:51:05,221 - INFO -   - Scheme: postgresql
+2025-10-30 13:51:05,221 - INFO -   - Host: 122.176.108.253
+2025-10-30 13:51:05,221 - INFO -   - Port: 5432
+2025-10-30 13:51:05,221 - INFO -   - Database: db1
+2025-10-30 13:51:05,222 - INFO -   - Has SSL params: False
+2025-10-30 13:51:05,222 - INFO -   - Has query params: False
+2025-10-30 13:51:05,222 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-30 13:51:05,222 - INFO - [DB] Connecting to: 122.176.108.253:5432/db1?connect_timeout=10
+2025-10-30 13:51:06,167 - INFO - [DB] ✓ Connection successful
+2025-10-30 13:51:06,572 - ERROR - [DB ERROR] Failed to create tables: column "location_code" does not exist
+
+2025-10-30 13:51:06,643 - ERROR - [ERROR] column "location_code" does not exist
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1058, in main
+    collector.db.create_tables()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 716, in create_tables
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        CREATE INDEX IF NOT EXISTS idx_amazon_products_location
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ON amazon_products(location_code)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+psycopg2.errors.UndefinedColumn: column "location_code" does not exist
+
+2025-10-30 13:58:50,190 - INFO - 
+======================================================================
+2025-10-30 13:58:50,191 - INFO - DataForSEO Amazon Collector - Database Version
+2025-10-30 13:58:50,191 - INFO - ======================================================================
+2025-10-30 13:58:50,193 - INFO - ======================================================================
+2025-10-30 13:58:50,193 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-30 13:58:50,193 - INFO - ======================================================================
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Language: en_US
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Max Retries: 8
+2025-10-30 13:58:50,194 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 13:58:50,194 - INFO - ======================================================================
+2025-10-30 13:58:50,194 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 13:58:50,194 - INFO - [API] Client initialized with 60s timeout
+2025-10-30 13:58:50,194 - INFO - 
+2025-10-30 13:58:50,195 - INFO - ======================================================================
+2025-10-30 13:58:50,195 - INFO - [DATABASE] Testing connection...
+2025-10-30 13:58:50,195 - INFO - ======================================================================
+2025-10-30 13:58:50,195 - INFO - [DB] Connection string analysis:
+2025-10-30 13:58:50,195 - INFO -   - Scheme: postgresql
+2025-10-30 13:58:50,195 - INFO -   - Host: 122.176.108.253
+2025-10-30 13:58:50,195 - INFO -   - Port: 5432
+2025-10-30 13:58:50,195 - INFO -   - Database: db1
+2025-10-30 13:58:50,195 - INFO -   - Has SSL params: False
+2025-10-30 13:58:50,195 - INFO -   - Has query params: False
+2025-10-30 13:58:50,195 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-30 13:58:50,195 - INFO - [DB] Connecting to: 122.176.108.253:5432/db1?connect_timeout=10
+2025-10-30 13:58:50,775 - INFO - [DB] ✓ Connection successful
+2025-10-30 13:58:51,182 - ERROR - [DB ERROR] Failed to create tables: column "location_code" does not exist
+
+2025-10-30 13:58:51,241 - ERROR - [ERROR] column "location_code" does not exist
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1058, in main
+    collector.db.create_tables()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 716, in create_tables
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        CREATE INDEX IF NOT EXISTS idx_amazon_products_location
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ON amazon_products(location_code)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+psycopg2.errors.UndefinedColumn: column "location_code" does not exist
+
+2025-10-30 14:34:35,938 - INFO - 
+======================================================================
+2025-10-30 14:34:35,938 - INFO - DataForSEO Amazon Collector - Batch Processing Version
+2025-10-30 14:34:35,938 - INFO - ======================================================================
+2025-10-30 14:34:35,940 - INFO - ======================================================================
+2025-10-30 14:34:35,940 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-30 14:34:35,940 - INFO - ======================================================================
+2025-10-30 14:34:35,940 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-30 14:34:35,940 - INFO - [CONFIG] Language: en_US
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Batch Size: 5 keywords per batch
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Batch Delay: 60s between batches
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Max Retries: 8
+2025-10-30 14:34:35,941 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 14:34:35,941 - INFO - ======================================================================
+2025-10-30 14:34:35,941 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 14:34:35,941 - INFO - [API] Client initialized
+2025-10-30 14:34:35,941 - INFO - 
+2025-10-30 14:34:35,941 - INFO - ======================================================================
+2025-10-30 14:34:35,942 - INFO - [DATABASE] Connecting...
+2025-10-30 14:34:35,942 - INFO - ======================================================================
+2025-10-30 14:34:35,942 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-30 14:34:36,285 - INFO - [DB] ✓ Connection successful
+2025-10-30 14:34:36,531 - ERROR - [DB ERROR] Failed to create tables: column "location_code" does not exist
+
+2025-10-30 14:34:36,571 - ERROR - [ERROR] column "location_code" does not exist
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1002, in main
+    collector.db.create_tables()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 672, in create_tables
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        CREATE INDEX IF NOT EXISTS idx_amazon_products_location
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ON amazon_products(location_code)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+psycopg2.errors.UndefinedColumn: column "location_code" does not exist
+
+2025-10-30 14:35:44,234 - INFO - 
+======================================================================
+2025-10-30 14:35:44,234 - INFO - DataForSEO Amazon Collector - Batch Processing Version
+2025-10-30 14:35:44,235 - INFO - ======================================================================
+2025-10-30 14:35:44,237 - INFO - ======================================================================
+2025-10-30 14:35:44,237 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-30 14:35:44,237 - INFO - ======================================================================
+2025-10-30 14:35:44,237 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-30 14:35:44,237 - INFO - [CONFIG] Language: en_US
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Batch Size: 5 keywords per batch
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Batch Delay: 60s between batches
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Max Retries: 8
+2025-10-30 14:35:44,238 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-30 14:35:44,238 - INFO - ======================================================================
+2025-10-30 14:35:44,238 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-30 14:35:44,238 - INFO - [API] Client initialized
+2025-10-30 14:35:44,239 - INFO - 
+2025-10-30 14:35:44,239 - INFO - ======================================================================
+2025-10-30 14:35:44,239 - INFO - [DATABASE] Connecting...
+2025-10-30 14:35:44,239 - INFO - ======================================================================
+2025-10-30 14:35:44,239 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-30 14:35:44,619 - INFO - [DB] ✓ Connection successful
+2025-10-30 14:35:44,734 - INFO - [DB] Migrating table: Adding location_code column...
+2025-10-30 14:35:44,854 - INFO - [DB] Migrating table: Adding language_code column...
+2025-10-30 14:35:45,213 - INFO - [DB] ✓ Tables and indexes verified
+2025-10-30 14:35:45,214 - INFO - 
+2025-10-30 14:35:45,214 - INFO - ======================================================================
+2025-10-30 14:35:45,215 - INFO - [START] Starting Batch Collection
+2025-10-30 14:35:45,215 - INFO - ======================================================================
+2025-10-30 14:35:45,215 - INFO - [INFO] Total keywords: 5
+2025-10-30 14:35:45,216 - INFO - [INFO] Batch size: 5
+2025-10-30 14:35:45,216 - INFO - [INFO] Total batches: 1
+2025-10-30 14:35:45,216 - INFO - 
+2025-10-30 14:35:45,217 - INFO - ======================================================================
+2025-10-30 14:35:45,217 - INFO - [BATCH 1/1] Processing 5 keywords
+2025-10-30 14:35:45,217 - INFO - ======================================================================
+2025-10-30 14:35:45,217 - INFO - 
+[BATCH 1] Keyword 1/5
+2025-10-30 14:35:45,217 - INFO - [COLLECT] Processing: laptop
+2025-10-30 14:35:45,217 - INFO - [API] Submitting task for 'laptop'
+2025-10-30 14:35:46,476 - INFO - [API] ✓ Task submitted: 10301105-1177-0209-0000-d29ea363228b
+2025-10-30 14:35:46,477 - INFO - [WAIT] Waiting 200s...
+2025-10-30 14:39:06,480 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 14:39:08,897 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:39:38,899 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 14:39:39,454 - INFO - [API] ✓ Results retrieved for 10301105-1177-0209-0000-d29ea363228b
+2025-10-30 14:39:39,457 - INFO - [EXTRACT] Found 108 products
+2025-10-30 14:39:40,420 - INFO - [DB] ✓ Saved 108 products total
+2025-10-30 14:39:40,421 - INFO - [SUCCESS] ✓ Saved 108 products for 'laptop'
+2025-10-30 14:39:40,424 - INFO - 
+[BATCH 1] Keyword 2/5
+2025-10-30 14:39:40,426 - INFO - [COLLECT] Processing: smartphone
+2025-10-30 14:39:40,429 - INFO - [API] Submitting task for 'smartphone'
+2025-10-30 14:39:40,690 - INFO - [API] ✓ Task submitted: 10301109-1177-0209-0000-ba896bfdab67
+2025-10-30 14:39:40,693 - INFO - [WAIT] Waiting 200s...
+2025-10-30 14:43:00,697 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 14:43:03,348 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:43:33,352 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 14:43:33,869 - INFO - [API] ✓ Results retrieved for 10301109-1177-0209-0000-ba896bfdab67
+2025-10-30 14:43:33,871 - INFO - [EXTRACT] Found 108 products
+2025-10-30 14:43:34,879 - INFO - [DB] ✓ Saved 108 products total
+2025-10-30 14:43:34,881 - INFO - [SUCCESS] ✓ Saved 108 products for 'smartphone'
+2025-10-30 14:43:34,883 - INFO - 
+[BATCH 1] Keyword 3/5
+2025-10-30 14:43:34,884 - INFO - [COLLECT] Processing: headphones
+2025-10-30 14:43:34,887 - INFO - [API] Submitting task for 'headphones'
+2025-10-30 14:43:35,160 - INFO - [API] ✓ Task submitted: 10301113-1177-0209-0000-a650c0a2d0f6
+2025-10-30 14:43:35,163 - INFO - [WAIT] Waiting 200s...
+2025-10-30 14:46:55,168 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 14:46:57,850 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:47:27,852 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 14:47:28,168 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:47:58,175 - INFO - [CHECK] Attempt 3/8...
+2025-10-30 14:47:58,470 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:48:28,471 - INFO - [CHECK] Attempt 4/8...
+2025-10-30 14:48:28,763 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:48:58,766 - INFO - [CHECK] Attempt 5/8...
+2025-10-30 14:48:59,238 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:49:29,241 - INFO - [CHECK] Attempt 6/8...
+2025-10-30 14:49:29,516 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:49:59,519 - INFO - [CHECK] Attempt 7/8...
+2025-10-30 14:49:59,785 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:50:29,786 - INFO - [CHECK] Attempt 8/8...
+2025-10-30 14:50:30,100 - ERROR - [FAILED] Could not retrieve results for 'headphones'
+2025-10-30 14:50:30,101 - INFO - 
+[BATCH 1] Keyword 4/5
+2025-10-30 14:50:30,101 - INFO - [COLLECT] Processing: smartwatch
+2025-10-30 14:50:30,102 - INFO - [API] Submitting task for 'smartwatch'
+2025-10-30 14:50:30,437 - INFO - [API] ✓ Task submitted: 10301120-1177-0209-0000-00c983704c4e
+2025-10-30 14:50:30,438 - INFO - [WAIT] Waiting 200s...
+2025-10-30 14:53:50,442 - INFO - [CHECK] Attempt 1/8...
+2025-10-30 14:53:56,197 - INFO - [WAITING] 30s before retry...
+2025-10-30 14:54:26,198 - INFO - [CHECK] Attempt 2/8...
+2025-10-30 14:54:26,884 - INFO - [API] ✓ Results retrieved for 10301120-1177-0209-0000-00c983704c4e
+2025-10-30 14:54:26,885 - INFO - [EXTRACT] Found 105 products
+2025-10-30 14:54:26,941 - ERROR - [DB ERROR] Failed to save products: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 731, in save_products
+    execute_values(cursor, """
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^
+        INSERT INTO amazon_products
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+        for p in chunk
+        ^^^^^^^^^^^^^^
+    ])
+    ^^
+  File "C:\Users\AFI-02-AI\AppData\Roaming\Python\Python313\site-packages\psycopg2\extras.py", line 1299, in execute_values
+    cur.execute(b''.join(parts))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-10-30 14:54:27,091 - ERROR - [ERROR] connection already closed
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 731, in save_products
+    execute_values(cursor, """
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^
+        INSERT INTO amazon_products
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+        for p in chunk
+        ^^^^^^^^^^^^^^
+    ])
+    ^^
+  File "C:\Users\AFI-02-AI\AppData\Roaming\Python\Python313\site-packages\psycopg2\extras.py", line 1299, in execute_values
+    cur.execute(b''.join(parts))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 1035, in main
+    results = collector.collect_all(config.DEFAULT_KEYWORDS)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 996, in collect_all
+    batch_results = self.collect_batch(batch_keywords, batch_num + 1, total_batches)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 968, in collect_batch
+    result = self.collect_keyword(keyword.strip())
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 936, in collect_keyword
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\dataforseo_cron.py", line 767, in save_products
+    self.conn.rollback()
+    ~~~~~~~~~~~~~~~~~~^^
+psycopg2.InterfaceError: connection already closed
+2025-10-31 09:36:31,054 - INFO - 
+======================================================================
+2025-10-31 09:36:31,056 - INFO - DataForSEO Amazon Collector - Batch Processing Version
+2025-10-31 09:36:31,056 - INFO - ======================================================================
+2025-10-31 09:36:31,060 - INFO - ======================================================================
+2025-10-31 09:36:31,060 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-31 09:36:31,060 - INFO - ======================================================================
+2025-10-31 09:36:31,060 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-31 09:36:31,061 - INFO - [CONFIG] Language: en_US
+2025-10-31 09:36:31,061 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-31 09:36:31,061 - INFO - [CONFIG] Batch Size: 5 keywords per batch
+2025-10-31 09:36:31,061 - INFO - [CONFIG] Batch Delay: 60s between batches
+2025-10-31 09:36:31,062 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-31 09:36:31,062 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-31 09:36:31,062 - INFO - [CONFIG] Max Retries: 8
+2025-10-31 09:36:31,062 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-31 09:36:31,062 - INFO - ======================================================================
+2025-10-31 09:36:31,063 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-31 09:36:31,063 - INFO - [API] Client initialized
+2025-10-31 09:36:31,063 - INFO - 
+2025-10-31 09:36:31,063 - INFO - ======================================================================
+2025-10-31 09:36:31,064 - INFO - [DATABASE] Connecting...
+2025-10-31 09:36:31,064 - INFO - ======================================================================
+2025-10-31 09:36:31,064 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-31 09:36:33,167 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-31 09:36:33,168 - INFO - [DB] Retrying in 2s...
+2025-10-31 09:36:35,169 - INFO - [DB] Connecting to database (attempt 2/3)...
+2025-10-31 09:36:37,268 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-31 09:36:37,268 - INFO - [DB] Retrying in 4s...
+2025-10-31 09:36:41,269 - INFO - [DB] Connecting to database (attempt 3/3)...
+2025-10-31 09:36:43,364 - ERROR - [DB ERROR] Connection failed: connection to server at "122.176.108.253", port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-10-31 09:36:43,367 - ERROR - [DB] ✗ All connection attempts failed
+2025-10-31 09:36:43,369 - ERROR - [EXIT] Database connection failed
+2025-10-31 09:45:54,661 - INFO - 
+======================================================================
+2025-10-31 09:45:54,661 - INFO - DataForSEO Amazon Collector - Batch Processing Version
+2025-10-31 09:45:54,661 - INFO - ======================================================================
+2025-10-31 09:45:54,664 - INFO - ======================================================================
+2025-10-31 09:45:54,665 - INFO - [CONFIG] DataForSEO Amazon Collector - Configuration
+2025-10-31 09:45:54,665 - INFO - ======================================================================
+2025-10-31 09:45:54,665 - INFO - [CONFIG] Location: India (Code: 2356)
+2025-10-31 09:45:54,665 - INFO - [CONFIG] Language: en_US
+2025-10-31 09:45:54,665 - INFO - [CONFIG] Depth: 100 products per keyword
+2025-10-31 09:45:54,665 - INFO - [CONFIG] Batch Size: 5 keywords per batch
+2025-10-31 09:45:54,666 - INFO - [CONFIG] Batch Delay: 60s between batches
+2025-10-31 09:45:54,666 - INFO - [CONFIG] Queue: Standard ($0.001/product)
+2025-10-31 09:45:54,666 - INFO - [CONFIG] Initial Wait: 200s
+2025-10-31 09:45:54,666 - INFO - [CONFIG] Max Retries: 8
+2025-10-31 09:45:54,666 - INFO - [CONFIG] Keywords: laptop, smartphone, headphones, smartwatch, tablet
+2025-10-31 09:45:54,667 - INFO - ======================================================================
+2025-10-31 09:45:54,667 - INFO - [RestClient] Initialized for https://api.dataforseo.com
+2025-10-31 09:45:54,667 - INFO - [API] Client initialized
+2025-10-31 09:45:54,667 - INFO - 
+2025-10-31 09:45:54,667 - INFO - ======================================================================
+2025-10-31 09:45:54,668 - INFO - [DATABASE] Connecting...
+2025-10-31 09:45:54,668 - INFO - ======================================================================
+2025-10-31 09:45:54,668 - INFO - [DB] Connecting to database (attempt 1/3)...
+2025-10-31 09:45:55,113 - INFO - [DB] ✓ Connection successful
+2025-10-31 09:45:55,615 - INFO - [DB] ✓ Tables and indexes verified
+2025-10-31 09:45:55,643 - INFO - 
+2025-10-31 09:45:55,643 - INFO - ======================================================================
+2025-10-31 09:45:55,643 - INFO - [START] Starting Batch Collection
+2025-10-31 09:45:55,643 - INFO - ======================================================================
+2025-10-31 09:45:55,644 - INFO - [INFO] Total keywords: 5
+2025-10-31 09:45:55,644 - INFO - [INFO] Batch size: 5
+2025-10-31 09:45:55,644 - INFO - [INFO] Total batches: 1
+2025-10-31 09:45:55,644 - INFO - 
+2025-10-31 09:45:55,644 - INFO - ======================================================================
+2025-10-31 09:45:55,644 - INFO - [BATCH 1/1] Processing 5 keywords
+2025-10-31 09:45:55,644 - INFO - ======================================================================
+2025-10-31 09:45:55,645 - INFO - 
+[BATCH 1] Keyword 1/5
+2025-10-31 09:45:55,645 - INFO - [COLLECT] Processing: laptop
+2025-10-31 09:45:55,646 - INFO - [API] Submitting task for 'laptop'
+2025-10-31 09:45:57,034 - INFO - [API] ✓ Task submitted: 10310615-1177-0209-0000-2c35ae1685f1
+2025-10-31 09:45:57,035 - INFO - [WAIT] Waiting 200s...
+2025-10-31 09:49:17,036 - INFO - [CHECK] Attempt 1/8...
+2025-10-31 09:49:18,762 - INFO - [API] ✓ Results retrieved for 10310615-1177-0209-0000-2c35ae1685f1
+2025-10-31 09:49:18,763 - INFO - [EXTRACT] Found 106 products
+2025-10-31 09:49:19,723 - INFO - [DB] ✓ Saved 106 products total
+2025-10-31 09:49:19,724 - INFO - [SUCCESS] ✓ Saved 106 products for 'laptop'
+2025-10-31 09:49:19,724 - INFO - 
+[BATCH 1] Keyword 2/5
+2025-10-31 09:49:19,725 - INFO - [COLLECT] Processing: smartphone
+2025-10-31 09:49:19,726 - INFO - [API] Submitting task for 'smartphone'
+2025-10-31 09:49:20,011 - INFO - [API] ✓ Task submitted: 10310619-1177-0209-0000-6cb9de637233
+2025-10-31 09:49:20,013 - INFO - [WAIT] Waiting 200s...
+2025-10-31 09:52:40,016 - INFO - [CHECK] Attempt 1/8...
+2025-10-31 09:52:41,606 - INFO - [WAITING] 30s before retry...
+2025-10-31 09:53:11,609 - INFO - [CHECK] Attempt 2/8...
+2025-10-31 09:53:12,114 - INFO - [API] ✓ Results retrieved for 10310619-1177-0209-0000-6cb9de637233
+2025-10-31 09:53:12,115 - INFO - [EXTRACT] Found 108 products
+2025-10-31 09:53:12,800 - INFO - [DB] ✓ Saved 108 products total
+2025-10-31 09:53:12,802 - INFO - [SUCCESS] ✓ Saved 108 products for 'smartphone'
+2025-10-31 09:53:12,803 - INFO - 
+[BATCH 1] Keyword 3/5
+2025-10-31 09:53:12,803 - INFO - [COLLECT] Processing: headphones
+2025-10-31 09:53:12,804 - INFO - [API] Submitting task for 'headphones'
+2025-10-31 09:53:13,088 - INFO - [API] ✓ Task submitted: 10310623-1177-0209-0000-e6849042b06c
+2025-10-31 09:53:13,088 - INFO - [WAIT] Waiting 200s...
+2025-10-31 09:56:33,089 - INFO - [CHECK] Attempt 1/8...
+2025-10-31 09:56:35,366 - INFO - [API] ✓ Results retrieved for 10310623-1177-0209-0000-e6849042b06c
+2025-10-31 09:56:35,367 - INFO - [EXTRACT] Found 106 products
+2025-10-31 09:56:37,541 - INFO - [DB] ✓ Saved 106 products total
+2025-10-31 09:56:37,541 - INFO - [SUCCESS] ✓ Saved 106 products for 'headphones'
+2025-10-31 09:56:37,542 - INFO - 
+[BATCH 1] Keyword 4/5
+2025-10-31 09:56:37,543 - INFO - [COLLECT] Processing: smartwatch
+2025-10-31 09:56:37,543 - INFO - [API] Submitting task for 'smartwatch'
+2025-10-31 09:56:37,818 - INFO - [API] ✓ Task submitted: 10310626-1177-0209-0000-6edce0c9b666
+2025-10-31 09:56:37,819 - INFO - [WAIT] Waiting 200s...
+2025-10-31 09:59:57,820 - INFO - [CHECK] Attempt 1/8...
+2025-10-31 09:59:59,958 - INFO - [API] ✓ Results retrieved for 10310626-1177-0209-0000-6edce0c9b666
+2025-10-31 09:59:59,959 - INFO - [EXTRACT] Found 106 products
+2025-10-31 10:00:00,463 - INFO - [DB] ✓ Saved 106 products total
+2025-10-31 10:00:00,464 - INFO - [SUCCESS] ✓ Saved 106 products for 'smartwatch'
+2025-10-31 10:00:00,465 - INFO - 
+[BATCH 1] Keyword 5/5
+2025-10-31 10:00:00,465 - INFO - [COLLECT] Processing: tablet
+2025-10-31 10:00:00,466 - INFO - [API] Submitting task for 'tablet'
+2025-10-31 10:00:00,746 - INFO - [API] ✓ Task submitted: 10310630-1177-0209-0000-2a9a5cea6781
+2025-10-31 10:00:00,749 - INFO - [WAIT] Waiting 200s...
+2025-10-31 10:03:20,750 - INFO - [CHECK] Attempt 1/8...
+2025-10-31 10:03:22,334 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:03:52,335 - INFO - [CHECK] Attempt 2/8...
+2025-10-31 10:03:52,622 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:04:22,625 - INFO - [CHECK] Attempt 3/8...
+2025-10-31 10:04:22,934 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:04:52,935 - INFO - [CHECK] Attempt 4/8...
+2025-10-31 10:04:53,248 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:05:23,251 - INFO - [CHECK] Attempt 5/8...
+2025-10-31 10:05:23,549 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:05:53,550 - INFO - [CHECK] Attempt 6/8...
+2025-10-31 10:05:53,869 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:06:23,871 - INFO - [CHECK] Attempt 7/8...
+2025-10-31 10:06:24,222 - INFO - [WAITING] 30s before retry...
+2025-10-31 10:06:54,224 - INFO - [CHECK] Attempt 8/8...
+2025-10-31 10:06:54,976 - ERROR - [FAILED] Could not retrieve results for 'tablet'
+2025-10-31 10:06:54,977 - INFO - [DB] Connection closed
+2025-10-31 10:06:54,977 - INFO - 
+2025-10-31 10:06:54,978 - INFO - ======================================================================
+2025-10-31 10:06:54,979 - INFO - [COMPLETE] Collection Finished!
+2025-10-31 10:06:54,979 - INFO - ======================================================================
+2025-10-31 10:06:54,980 - INFO - Collection Date: 2025-10-31 10:06:54
+2025-10-31 10:06:54,980 - INFO - Location: India
+2025-10-31 10:06:54,981 - INFO - Successful: 4/5
+2025-10-31 10:06:54,981 - INFO - Total Products: 426
+2025-10-31 10:06:54,981 - INFO - Estimated Cost: $0.426
+2025-10-31 10:06:54,982 - INFO - Time Taken: 20m 59s
+2025-10-31 10:06:54,982 - INFO - ======================================================================

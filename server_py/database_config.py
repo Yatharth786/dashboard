@@ -1,54 +1,145 @@
-# ============================================
-# SOLUTION 1: Fix database_config.py
-# ============================================
-# File: server_py/database_config.py (CORRECTED)
-
-from sqlalchemy import create_engine
+# server_py/database_config.py - AUTO-FIX VERSION
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.pool import NullPool, QueuePool
 import logging
 import os
 from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Optional
+from sqlalchemy import create_engine, text 
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-# Database URL
-DATABASE_URL = "postgresql://seller-db:Seller!db@122.176.108.253:5432/db1"
+# Database URL - get directly from environment
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://seller-db:Seller!db@localhost:8000/db1")
 
-# Create engine
-engine = create_engine(DATABASE_URL)
+# Remove quotes if present in DATABASE_URL
+if DATABASE_URL.startswith('"') and DATABASE_URL.endswith('"'):
+    DATABASE_URL = DATABASE_URL[1:-1]
+
+# Create engine with better connection pooling and error handling
+engine = create_engine(
+    DATABASE_URL,
+    poolclass=QueuePool,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,  # Verify connections before using them
+    pool_recycle=3600,   # Recycle connections after 1 hour
+    echo=False,
+    connect_args={
+        "connect_timeout": 10,
+        "options": "-c statement_timeout=30000"  # 30 second statement timeout
+    }
+)
 
 # Create SessionLocal
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create Base - THIS SHOULD BE HERE, NOT IMPORTED
+# Create Base
 Base = declarative_base()
 
 def get_db():
-    """Get database session"""
+    """Get database session with proper error handling"""
     db = SessionLocal()
     try:
         yield db
+    except Exception as e:
+        logger.error(f"Database session error: {e}")
+        db.rollback()
+        raise
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception as e:
+            logger.error(f"Error closing database session: {e}")
+
+def auto_fix_schema():
+    """Automatically fix missing columns in database"""
+    try:
+        inspector = inspect(engine)
+        
+        # Check if products table exists
+        if 'products' not in inspector.get_table_names():
+            logger.info("Products table doesn't exist, will be created automatically")
+            return
+        
+        # Get existing columns
+        existing_columns = [col['name'] for col in inspector.get_columns('products')]
+        
+        # Define required columns that might be missing
+        required_columns = {
+            'source': "VARCHAR(50)",
+            'product_id': "VARCHAR(100)",
+            'asin': "VARCHAR(20)",
+            'original_price': "FLOAT",
+            'discount': "FLOAT",
+            'reviews_count': "INTEGER",
+            'is_bestseller': "BOOLEAN DEFAULT FALSE",
+            'is_deal': "BOOLEAN DEFAULT FALSE",
+            'variation': "JSONB",
+            'product_url': "VARCHAR(500)",
+            'description': "TEXT",
+            'features': "JSONB",
+            'specifications': "JSONB"
+        }
+        
+        # Add missing columns
+        with engine.connect() as conn:
+            for column_name, column_type in required_columns.items():
+                if column_name not in existing_columns:
+                    try:
+                        logger.info(f"Adding missing column: {column_name}")
+                        conn.execute(text(f"""
+                            ALTER TABLE products 
+                            ADD COLUMN IF NOT EXISTS {column_name} {column_type}
+                        """))
+                        conn.commit()
+                        logger.info(f"✅ Added column: {column_name}")
+                    except Exception as e:
+                        logger.warning(f"Could not add column {column_name}: {e}")
+        
+        logger.info("✅ Schema auto-fix completed")
+        
+    except Exception as e:
+        logger.warning(f"Schema auto-fix skipped: {e}")
 
 class DatabaseService:
     """Service for database operations"""
     
     def __init__(self):
-        self.db = SessionLocal()
+        self.db = None
+        self._connect()
+    
+    def _connect(self):
+        """Connect to database with retry logic"""
+        try:
+            self.db = SessionLocal()
+        except Exception as e:
+            logger.error(f"Failed to connect to database: {e}")
+            raise
+    
+    def _ensure_connection(self):
+        """Ensure database connection is active"""
+        if self.db is None:
+            self._connect()
     
     def close(self):
-        self.db.close()
+        """Close database connection safely"""
+        if self.db:
+            try:
+                self.db.close()
+            except Exception as e:
+                logger.error(f"Error closing database: {e}")
+            finally:
+                self.db = None
     
     def save_product(self, product_data: dict):
         """Save or update product"""
-        # Import here to avoid circular import
         from server_py.models import Product
         
+        self._ensure_connection()
         try:
             existing = self.db.query(Product).filter(
                 Product.product_id == product_data['product_id']
@@ -76,6 +167,7 @@ class DatabaseService:
         """Save multiple reviews"""
         from server_py.models import Review
         
+        self._ensure_connection()
         try:
             count = 0
             for review_data in reviews_data:
@@ -95,6 +187,7 @@ class DatabaseService:
         """Save deal"""
         from server_py.models import Deal
         
+        self._ensure_connection()
         try:
             deal = Deal(**deal_data)
             self.db.add(deal)
@@ -110,12 +203,30 @@ class DatabaseService:
     def get_all_products(self, limit: int = 100):
         """Get all products"""
         from server_py.models import Product
+        
+        self._ensure_connection()
         return self.db.query(Product).limit(limit).all()
     
     def get_product_by_id(self, product_id: str):
         """Get product by ID"""
         from server_py.models import Product
+        
+        self._ensure_connection()
         return self.db.query(Product).filter(
             Product.product_id == product_id
         ).first()
-    
+
+def test_connection():
+    """Test database connection"""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("✅ Database connection successful")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Database connection failed: {e}")
+        return False
+
+# Run connection test and auto-fix
+if test_connection():
+    auto_fix_schema()

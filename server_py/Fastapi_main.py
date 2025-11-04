@@ -1,227 +1,162 @@
-from fastapi import FastAPI, Depends, Query
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from typing import List, Optional
+# from fastapi import FastAPI, Depends, Query, HTTPException
+# from fastapi.middleware.cors import CORSMiddleware
+# from sqlalchemy.orm import Session
+# from sqlalchemy import text
+# from typing import List, Optional
+# import subprocess, json
+# from pydantic import BaseModel
+# import uvicorn
+# import pandas as pd
 
-from sqlalchemy import text, func
-from typing import List, Optional
-import subprocess, json
-from pydantic import BaseModel
-import uvicorn
-from sqlalchemy import func
-from sklearn.preprocessing import MinMaxScaler
+# from . import crud, schemas, models
+# from .database_config import get_db, engine
 
-from . import crud, schemas, models
-from .database_config import get_db, engine
-import requests
-from datetime import datetime
-from contextlib import asynccontextmanager
+# models.Base.metadata.create_all(bind=engine)
 
-# Correct imports
-from server_py import crud, schemas, models
-from server_py.database_config import get_db, engine, Base
-from server_py.rapidapi import rapidapi_client
-from server_py.database_sync_service import data_sync_service
+# app = FastAPI(title="Amazon Reviews API", version="1.0.0")
 
-# Create tables
-Base.metadata.create_all(bind=engine)
-# Global cache
-CACHE = {
-    "last_updated": None,
-    "data": {}
-}
-
-
-# --------------------------
-# DB initialization
-# --------------------------
-models.Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="Product API", version="1.1.0")
-
-# --------------------------
-# Middleware
-# --------------------------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], 
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# --------------------------
-# Health & Root
-# --------------------------
-"""class AIQuery(BaseModel):
-    question: str"""
-class AIQuery(BaseModel):
-    question: str
-    source: str  # "products" or "amazon_reviews"
-    limit: Optional[int] = 50
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # TODO: restrict in production
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+# """class AIQuery(BaseModel):
+#     question: str"""
+# class AIQuery(BaseModel):
+#     question: str
+#     source: str  # "products" or "amazon_reviews"
+#     limit: Optional[int] = 50
     
-def decimal_to_float(obj):
-    if isinstance(obj, (int, float)):
-        return obj
-    try:
-        return float(obj)
-    except Exception:
-        return str(obj)
+# def decimal_to_float(obj):
+#     if isinstance(obj, (int, float)):
+#         return obj
+#     try:
+#         return float(obj)
+#     except Exception:
+#         return str(obj)
 
-@app.get("/")
-def read_root():
-    return {"message": "Product API running"}
+# @app.get("/")
+# def read_root():
+#     return {"message": "Amazon Reviews API running"}
 
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+# @app.get("/health")
+# def health_check():
+#     return {"status": "healthy"}
+
+# # ----------- Reviews -------------
+# @app.get("/Amazon_Reviews/reviews", response_model=List[schemas.AmazonReview])
+# def get_reviews(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+#     return crud.get_reviews(db, limit=limit, offset=offset)
+
+# @app.get("/Amazon_Reviews/reviews/{review_id}", response_model=schemas.AmazonReview)
+# def get_review(review_id: str, db: Session = Depends(get_db)):
+#     return crud.get_review_by_id(db, review_id)
+
+# @app.get("/Amazon_Reviews/product/{product_id}", response_model=List[schemas.AmazonReview])
+# def get_product_reviews(product_id: str, limit: int = 20, db: Session = Depends(get_db)):
+#     return crud.get_product_reviews(db, product_id, limit)
+
+# @app.get("/Amazon_Reviews/search/{query}", response_model=List[schemas.AmazonReview])
+# def search_reviews(query: str, limit: int = 50, db: Session = Depends(get_db)):
+#     return crud.search_reviews(db, query, limit)
+
+# # ----------- Stats -------------
+# @app.get("/Amazon_Reviews/statistics")
+# def get_statistics(db: Session = Depends(get_db)):
+#     return crud.get_review_statistics(db)
+
+# @app.get("/Amazon_Reviews/sentiment", response_model=List[schemas.SentimentOut])
+# def get_sentiment(db: Session = Depends(get_db)):
+#     results = crud.get_sentiment_distribution(db)
+#     return [schemas.SentimentOut(sentiment=sentiment, count=count) for sentiment, count in results]
+
+# @app.get("/Amazon_Reviews/ratings", response_model=List[schemas.RatingOut])
+# def get_ratings(db: Session = Depends(get_db)):
+#     results = crud.get_ratings_distribution(db)
+#     return [schemas.RatingOut(rating=rating, count=count) for rating, count in results]
+
+# @app.get("/Amazon_Reviews/categories", response_model=List[schemas.CategoryOut])
+# def get_category_stats(db: Session = Depends(get_db)):
+#     return crud.get_category_statistics(db)
+
+# # ----------- Analytics -------------
+# @app.get("/Amazon_Reviews/trending", response_model=List[schemas.TrendingProductOut])
+# def get_trending(limit: int = 10, db: Session = Depends(get_db)):
+#     return crud.get_trending_products(db, limit)
+
+# @app.get("/Amazon_Reviews/trends/monthly", response_model=List[schemas.MonthlyTrendOut])
+# def monthly_trends(year: int, db: Session = Depends(get_db)):
+#     return crud.get_monthly_trends(db, year)
+
+# @app.get("/Amazon_Reviews/helpful")
+# def get_helpful(limit: int = 10, db: Session = Depends(get_db)):
+#     return crud.get_helpful_reviews(db, limit)
+
+# @app.get("/Amazon_Reviews/sentiment/{product_id}", response_model=List[schemas.SentimentOut])
+# def get_sentiment(product_id: str, db: Session = Depends(get_db)):
+#     return crud.get_product_sentiment_breakdown(db, product_id)
+
+# # ----------- Products -------------
+# @app.get("/products", response_model=List[schemas.Product])
+# def read_products(limit: int = 10, offset: int = 0, category: schemas.Optional[str] = None,
+#                   min_price: schemas.Optional[float] = None, max_price: schemas.Optional[float] = None,
+#                   db: Session = Depends(get_db)):
+#     return crud.get_products(db, limit, offset, category, min_price, max_price)
+
+# @app.get("/analytics/summary", response_model=schemas.Summary)
+# def analytics_summary(db: Session = Depends(get_db)):
+#     return crud.get_summary(db)
+
+# @app.get("/analytics/category", response_model=schemas.CategoryAnalyticsResponse)
+# def analytics_by_category(db: Session = Depends(get_db)):
+#     categories = crud.get_category_analytics(db)
+#     return {"categories": categories}
 
 
-# --------------------------
-# Amazon Reviews Endpoints
-# --------------------------
-@app.get("/Amazon_Reviews/reviews", response_model=List[schemas.AmazonReview])
-def get_reviews(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
-    return crud.get_reviews(db, limit=limit, offset=offset)
-
-@app.get("/Amazon_Reviews/reviews/{review_id}", response_model=schemas.AmazonReview)
-def get_review(review_id: str, db: Session = Depends(get_db)):
-    return crud.get_review_by_id(db, review_id)
-
-@app.get("/Amazon_Reviews/product/{product_id}", response_model=List[schemas.AmazonReview])
-def get_product_reviews(product_id: str, limit: int = 20, db: Session = Depends(get_db)):
-    return crud.get_product_reviews(db, product_id, limit)
-
-@app.get("/Amazon_Reviews/search/{query}", response_model=List[schemas.AmazonReview])
-def search_reviews(query: str, limit: int = 50, db: Session = Depends(get_db)):
-    return crud.search_reviews(db, query, limit)
-
-
-# --------------------------
-# Statistics Endpoints
-# --------------------------
-@app.get("/Amazon_Reviews/statistics")
-def get_statistics(db: Session = Depends(get_db)):
-    return crud.get_review_statistics(db)
-
-@app.get("/Amazon_Reviews/sentiment", response_model=List[schemas.SentimentOut])
-def get_sentiment(db: Session = Depends(get_db)):
-    results = crud.get_sentiment_distribution(db)
-    return [schemas.SentimentOut(sentiment=sentiment, count=count) for sentiment, count in results]
-
-@app.get("/Amazon_Reviews/ratings", response_model=List[schemas.RatingOut])
-def get_ratings(db: Session = Depends(get_db)):
-    results = crud.get_ratings_distribution(db)
-    return [schemas.RatingOut(rating=rating, count=count) for rating, count in results]
-
-@app.get("/Amazon_Reviews/categories", response_model=List[schemas.CategoryOut])
-def get_category_stats(db: Session = Depends(get_db)):
-    return crud.get_category_statistics(db)
-
-# ----------- Analytics -------------
-
-# --------------------------
-# Analytics Endpoints
-# --------------------------
-@app.get("/Amazon_Reviews/trending", response_model=List[schemas.TrendingProductOut])
-def get_trending(limit: int = 10, db: Session = Depends(get_db)):
-    return crud.get_trending_products(db, limit)
-
-@app.get("/Amazon_Reviews/trends/monthly", response_model=List[schemas.MonthlyTrendOut])
-def monthly_trends(year: int, db: Session = Depends(get_db)):
-    return crud.get_monthly_trends(db, year)
-
-@app.get("/Amazon_Reviews/helpful")
-def get_helpful(limit: int = 10, db: Session = Depends(get_db)):
-    return crud.get_helpful_reviews(db, limit)
-
-@app.get("/Amazon_Reviews/sentiment/{product_id}", response_model=List[schemas.SentimentOut])
-def get_sentiment(product_id: str, db: Session = Depends(get_db)):
-    return crud.get_product_sentiment_breakdown(db, product_id)
-
-# ----------- Products -------------
-@app.get("/products", response_model=List[schemas.Product])
-def read_products(
-    limit: int = 10,
-    offset: int = 0,
-    category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    db: Session = Depends(get_db)
-):
-    return crud.get_products(db, limit, offset, category, min_price, max_price)
-
-# --------------------------
-# Products Endpoints
-# --------------------------
-@app.get("/products", response_model=List[schemas.Product])
-def read_products(
-    limit: int = 10,
-    offset: int = 0,
-    category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    db: Session = Depends(get_db)
-):
-    return crud.get_products(db, limit, offset, category, min_price, max_price)
-
-@app.get("/analytics/summary", response_model=schemas.Summary)
-def analytics_summary(db: Session = Depends(get_db)):
-    return crud.get_summary(db)
-
-@app.get("/analytics/category", response_model=schemas.CategoryAnalyticsResponse)
-def analytics_by_category(db: Session = Depends(get_db)):
-    categories = crud.get_category_analytics(db)
-    return {"categories": categories}
-
-# --------------------------
-# Run server
-# --------------------------
 # @app.post("/ai/query")
-# def ask_ai(query: AIQuery):
-#     question = query.question
+# def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
+#     limit = query.limit or 50  # default 50 if not provided
+#     source = query.source.lower()
 
-#     with engine.connect() as conn:
-#         # Count products
-#         summary = conn.execute(text("SELECT COUNT(*) AS total FROM products"))
-#         total_products = summary.scalar()
-
-#         # Top products
-#         products = conn.execute(
-#             text("""
+#     if source == "Flipkart":
+#         # Fetch top products only
+#         rows = db.execute(
+#             text(f"""
 #             SELECT id, category, brand, title, price, rating
-#             FROM products 
-#             ORDER BY reviews DESC 
-#             LIMIT 50
+#             FROM Flipkart
+#             ORDER BY reviews DESC
+#             LIMIT {limit}
 #             """)
-#         )
-#         top_products = [dict(row._mapping) for row in products]
-
-#         # Recent Amazon reviews
-#         reviews = conn.execute(
-#             text("""
-#             SELECT product_id, star_rating, review_headline, review_body, review_date 
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "Flipkart"
+#     elif source == "amazon_reviews":
+#         # Fetch recent Amazon reviews only
+#         rows = db.execute(
+#             text(f"""
+#             SELECT product_title, star_rating, review_headline, review_body, review_date
 #             FROM "Amazon_Reviews"
-#             ORDER BY review_date DESC 
-#             LIMIT 50
+#             ORDER BY review_date DESC
+#             LIMIT {limit}
 #             """)
-#         )
-#         amazon_reviews = [dict(row._mapping) for row in reviews]
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "Amazon Reviews"
+#     else:
+#         return {"error": "Invalid source. Use 'flipkart' or 'amazon_reviews'."}
 
-#     # JSON safe
-#     top_products_json = json.dumps(top_products, indent=2, default=decimal_to_float)
-#     reviews_json = json.dumps(amazon_reviews, indent=2, default=decimal_to_float)
+#     # Convert to JSON safe for AI
+#     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
 
-#     # Prompt for AI
 #     prompt = f"""
-#     We have {total_products} products in the database.
+#     We have {len(data_list)} records in the {table_name} table.
 
-#     Top 50 products:
-#     {top_products_json}
+#     Top {limit} entries:
+#     {data_json}
 
-#     Recent Amazon reviews:
-#     {reviews_json}
-
-#     Question: {question}
+#     Question: {query.question}
 #     Answer in simple, human-readable text using the above context.
 #     """
 
@@ -241,28 +176,658 @@ def analytics_by_category(db: Session = Depends(get_db)):
 #     return {"answer": answer}
 
 
-# --------------------------
-# AI Query Endpoint
-# --------------------------
+# @app.get("/top")
+# def get_top_items(
+#     table: str = Query(..., description="Choose 'products' or 'amazon_reviews'"),
+#     n: int = Query(10, description="Number of top items to fetch"),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     Fetch top N entries from either products or Amazon_Reviews table.
+#     Use ?table=products or ?table=amazon_reviews
+#     """
+#     table = table.lower()
+    
+#     if table == "products":
+#         data = crud.get_top_products(db, n)
+#         return {"table": "products", "count": len(data), "data": data}
+#     elif table == "amazon_reviews":
+#         data = crud.get_top_products_amazon(db, n)
+#         return {"table": "amazon_reviews", "count": len(data), "data": data}
+#     else:
+#         return {"error": "Invalid table. Use 'products' or 'amazon_reviews'."}
+    
+# @app.get("/top_forecast")
+# def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
+#     """
+#     Fetch top N products by forecasted next price
+#     """
+#     forecast_list = crud.get_top_forecasted_products(db, n)
+#     return {"table": "products_forecast", "count": len(forecast_list), "data": forecast_list} 
+
+# @app.get("/notifications")
+# def get_notifications(
+#     table: str = Query("products", description="Choose 'products' or 'amazon_reviews'"),
+#     limit: int = Query(5, description="Number of recent notifications"),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     Fetch latest product/review updates for notification bell.
+#     """
+#     table = table.lower()
+
+#     if table == "Flipkart":
+#         query = text(f"""
+#             SELECT id, title AS message, category, price
+#             FROM Flipkart
+#             ORDER BY id DESC
+#             LIMIT {limit}
+#         """)
+#         rows = db.execute(query).fetchall()
+#         data = [
+#             {
+#                 "id": row.id,
+#                 "message": f"New product added: {row.message} (₹{row.price})",
+#                 "time": "Just now",
+#             }
+#             for row in rows
+#         ]
+#     elif table == "amazon_reviews":
+#         query = text(f"""
+#             SELECT product_title, review_headline, review_date
+#             FROM "Amazon_Reviews"
+#             ORDER BY review_date DESC
+#             LIMIT {limit}
+#         """)
+#         rows = db.execute(query).fetchall()
+#         data = [
+#             {
+#                 "id": i + 1,
+#                 "message": f"New review: {row.review_headline} on {row.product_title}",
+#                 "time": str(row.review_date),
+#             }
+#             for i, row in enumerate(rows)
+#         ]
+#     else:
+#         return {"error": "Invalid table. Use 'products' or 'amazon_reviews'."}
+
+#     return {"table": table, "count": len(data), "data": data}
+
+# from .routers import users
+# app.include_router(users.router, prefix="/users")
+
+
+# # @app.get("/analytics/category/{category_name}")
+# # def get_products_by_category(category_name: str, db: Session = Depends(get_db)):
+# #     """
+# #     Returns all products in a category with name, avg price, total reviews, and avg rating.
+# #     """
+# #     query = text("""
+# #         SELECT title AS product_name,
+# #                ROUND(AVG(price), 2) AS avg_price,
+# #                SUM(reviews) AS total_reviews,
+# #                ROUND(AVG(rating), 2) AS avg_rating
+# #         FROM products
+# #         WHERE LOWER(category) = LOWER(:category_name)
+# #         GROUP BY title
+# #         ORDER BY total_reviews DESC
+# #         LIMIT 50
+# #     """)
+# #     rows = db.execute(query, {"category_name": category_name}).fetchall()
+# #     products = [dict(row._mapping) for row in rows]
+# #     return {"category": category_name, "products": products}
+
+
+# @app.get("/analytics/category/{category_name}")
+# def get_products_by_category(
+#     category_name: str,
+#     limit: int = 20,          # products per page
+#     offset: int = 0,          # skip first N products
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Returns Flipkart in a category with pagination.
+#     """
+#     query = text("""
+#         SELECT title AS product_name,
+#                ROUND(AVG(price), 2) AS avg_price,
+#                SUM(reviews) AS total_reviews,
+#                ROUND(AVG(rating), 2) AS avg_rating
+#         FROM Flipkart
+#         WHERE LOWER(category) = LOWER(:category_name)
+#         GROUP BY title
+#         ORDER BY total_reviews DESC
+#         LIMIT :limit OFFSET :offset
+#     """)
+#     rows = db.execute(query, {"category_name": category_name, "limit": limit, "offset": offset}).fetchall()
+#     products = [dict(row._mapping) for row in rows]
+
+#     count_query = text("""
+#         SELECT COUNT(DISTINCT title) as total_count
+#         FROM Flipkart
+#         WHERE LOWER(category) = LOWER(:category_name)
+#     """)
+#     total_count = db.execute(count_query, {"category_name": category_name}).fetchone().total_count
+
+#     return {"category": category_name, "products": products, "total_count": total_count}
+
+
+# @app.get("/product/{product_title}")
+# def get_product_details(product_title: str, db: Session = Depends(get_db)):
+#     """
+#     Get product details by title (case-insensitive, space-safe).
+#     """
+#     query = text("""
+#         SELECT 
+#             title AS product_name,
+#             ROUND(AVG(price), 2) AS avg_price,
+#             ROUND(AVG(rating), 2) AS avg_rating,
+#             SUM(reviews) AS total_reviews
+#         FROM Flipkart
+#         WHERE LOWER(TRIM(title)) = LOWER(TRIM(:product_title))
+#         GROUP BY title
+#         LIMIT 1
+#     """)
+#     row = db.execute(query, {"product_title": product_title}).fetchone()
+
+#     if not row:
+#         raise HTTPException(status_code=404, detail="Product not found")
+
+#     return dict(row._mapping)
+
+# if __name__ == "__main__":
+#     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+# from fastapi import FastAPI, Depends, Query, HTTPException
+# from fastapi.middleware.cors import CORSMiddleware
+# from sqlalchemy.orm import Session
+# from sqlalchemy import text
+# from typing import List, Optional
+# import subprocess, json
+# from pydantic import BaseModel
+# import uvicorn
+# import pandas as pd
+
+# from . import crud, schemas, models
+# from .database_config import get_db, engine
+
+# models.Base.metadata.create_all(bind=engine)
+
+# app = FastAPI(title="Amazon Reviews API", version="1.0.0")
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # TODO: restrict in production
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# class AIQuery(BaseModel):
+#     question: str
+#     source: str  # "flipkart" or "amazon_reviews"
+#     limit: Optional[int] = 50
+    
+# def decimal_to_float(obj):
+#     if isinstance(obj, (int, float)):
+#         return obj
+#     try:
+#         return float(obj)
+#     except Exception:
+#         return str(obj)
+
+# @app.get("/")
+# def read_root():
+#     return {"message": "Amazon Reviews API running"}
+
+# @app.get("/health")
+# def health_check():
+#     return {"status": "healthy"}
+
+# # ----------- Reviews -------------
+# @app.get("/Amazon_Reviews/reviews", response_model=List[schemas.AmazonReview])
+# def get_reviews(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+#     return crud.get_reviews(db, limit=limit, offset=offset)
+
+# @app.get("/Amazon_Reviews/reviews/{review_id}", response_model=schemas.AmazonReview)
+# def get_review(review_id: str, db: Session = Depends(get_db)):
+#     return crud.get_review_by_id(db, review_id)
+
+# @app.get("/Amazon_Reviews/product/{product_id}", response_model=List[schemas.AmazonReview])
+# def get_product_reviews(product_id: str, limit: int = 20, db: Session = Depends(get_db)):
+#     return crud.get_product_reviews(db, product_id, limit)
+
+# @app.get("/Amazon_Reviews/search/{query}", response_model=List[schemas.AmazonReview])
+# def search_reviews(query: str, limit: int = 50, db: Session = Depends(get_db)):
+#     return crud.search_reviews(db, query, limit)
+
+# # ----------- Stats -------------
+# @app.get("/Amazon_Reviews/statistics")
+# def get_statistics(db: Session = Depends(get_db)):
+#     return crud.get_review_statistics(db)
+
+# @app.get("/Amazon_Reviews/sentiment", response_model=List[schemas.SentimentOut])
+# def get_sentiment(db: Session = Depends(get_db)):
+#     results = crud.get_sentiment_distribution(db)
+#     return [schemas.SentimentOut(sentiment=sentiment, count=count) for sentiment, count in results]
+
+# @app.get("/Amazon_Reviews/ratings", response_model=List[schemas.RatingOut])
+# def get_ratings(db: Session = Depends(get_db)):
+#     results = crud.get_ratings_distribution(db)
+#     return [schemas.RatingOut(rating=rating, count=count) for rating, count in results]
+
+# @app.get("/Amazon_Reviews/categories", response_model=List[schemas.CategoryOut])
+# def get_category_stats(db: Session = Depends(get_db)):
+#     return crud.get_category_statistics(db)
+
+# # ----------- Analytics -------------
+# @app.get("/Amazon_Reviews/trending", response_model=List[schemas.TrendingProductOut])
+# def get_trending(limit: int = 10, db: Session = Depends(get_db)):
+#     return crud.get_trending_products(db, limit)
+
+# @app.get("/Amazon_Reviews/trends/monthly", response_model=List[schemas.MonthlyTrendOut])
+# def monthly_trends(year: int, db: Session = Depends(get_db)):
+#     return crud.get_monthly_trends(db, year)
+
+# @app.get("/Amazon_Reviews/helpful")
+# def get_helpful(limit: int = 10, db: Session = Depends(get_db)):
+#     return crud.get_helpful_reviews(db, limit)
+
+# @app.get("/Amazon_Reviews/sentiment/{product_id}", response_model=List[schemas.SentimentOut])
+# def get_sentiment(product_id: str, db: Session = Depends(get_db)):
+#     return crud.get_product_sentiment_breakdown(db, product_id)
+
+# # ----------- flipkart -------------
+# @app.get("/flipkart", response_model=List[schemas.Product])
+# def read_products(limit: int = 10, offset: int = 0, category: schemas.Optional[str] = None,
+#                   min_price: schemas.Optional[float] = None, max_price: schemas.Optional[float] = None,
+#                   db: Session = Depends(get_db)):
+#     return crud.get_products(db, limit, offset, category, min_price, max_price)
+
+# @app.get("/analytics/summary", response_model=schemas.Summary)
+# def analytics_summary(db: Session = Depends(get_db)):
+#     return crud.get_summary(db)
+
+# @app.get("/analytics/category", response_model=schemas.CategoryAnalyticsResponse)
+# def analytics_by_category(db: Session = Depends(get_db)):
+#     categories = crud.get_category_analytics(db)
+#     return {"categories": categories}
+
+# @app.post("/ai/query")
+# def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
+#     limit = query.limit or 50
+#     source = query.source.lower()
+
+#     if source == "flipkart":
+#         rows = db.execute(
+#             text(f"""
+#             SELECT id, category, brand, title, price, rating
+#             FROM flipkart
+#             ORDER BY reviews DESC
+#             LIMIT {limit}
+#             """)
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "flipkart"
+#     elif source == "amazon_reviews":
+#         rows = db.execute(
+#             text(f"""
+#             SELECT product_title, star_rating, review_headline, review_body, review_date
+#             FROM "Amazon_Reviews"
+#             ORDER BY review_date DESC
+#             LIMIT {limit}
+#             """)
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "Amazon Reviews"
+#     else:
+#         return {"error": "Invalid source. Use 'flipkart' or 'amazon_reviews'."}
+
+#     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
+
+#     prompt = f"""
+#     We have {len(data_list)} records in the {table_name} table.
+
+#     Top {limit} entries:
+#     {data_json}
+
+#     Question: {query.question}
+#     Answer in simple, human-readable text using the above context.
+#     """
+
+#     try:
+#         result = subprocess.run(
+#             ["ollama", "run", "mistral"],
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore"
+#         )
+#         answer = result.stdout.strip()
+#     except Exception as e:
+#         answer = f"Error: {str(e)}"
+
+#     return {"answer": answer}
+
+
+# @app.get("/top")
+# def get_top_items(
+#     table: str = Query(..., description="Choose 'flipkart' or 'amazon_reviews'"),
+#     n: int = Query(10, description="Number of top items to fetch"),
+#     db: Session = Depends(get_db),
+# ):
+#     table = table.lower()
+    
+#     if table == "flipkart":
+#         data = crud.get_top_products(db, n)
+#         return {"table": "flipkart", "count": len(data), "data": data}
+#     elif table == "amazon_reviews":
+#         data = crud.get_top_products_amazon(db, n)
+#         return {"table": "amazon_reviews", "count": len(data), "data": data}
+#     else:
+#         return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
+    
+# @app.get("/top_forecast")
+# def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
+#     forecast_list = crud.get_top_forecasted_products(db, n)
+#     return {"table": "flipkart_forecast", "count": len(forecast_list), "data": forecast_list} 
+
+# @app.get("/notifications")
+# def get_notifications(
+#     table: str = Query("flipkart", description="Choose 'flipkart' or 'amazon_reviews'"),
+#     limit: int = Query(5, description="Number of recent notifications"),
+#     db: Session = Depends(get_db),
+# ):
+#     table = table.lower()
+
+#     if table == "flipkart":
+#         query = text(f"""
+#             SELECT id, title AS message, category, price
+#             FROM flipkart
+#             ORDER BY id DESC
+#             LIMIT {limit}
+#         """)
+#         rows = db.execute(query).fetchall()
+#         data = [
+#             {
+#                 "id": row.id,
+#                 "message": f"New product added: {row.message} (₹{row.price})",
+#                 "time": "Just now",
+#             }
+#             for row in rows
+#         ]
+#     elif table == "amazon_reviews":
+#         query = text(f"""
+#             SELECT product_title, review_headline, review_date
+#             FROM "Amazon_Reviews"
+#             ORDER BY review_date DESC
+#             LIMIT {limit}
+#         """)
+#         rows = db.execute(query).fetchall()
+#         data = [
+#             {
+#                 "id": i + 1,
+#                 "message": f"New review: {row.review_headline} on {row.product_title}",
+#                 "time": str(row.review_date),
+#             }
+#             for i, row in enumerate(rows)
+#         ]
+#     else:
+#         return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
+
+#     return {"table": table, "count": len(data), "data": data}
+
+
+# @app.get("/analytics/category/{category_name}")
+# def get_products_by_category(
+#     category_name: str,
+#     limit: int = 20,
+#     offset: int = 0,
+#     db: Session = Depends(get_db)
+# ):
+#     query = text("""
+#         SELECT title AS product_name,
+#                ROUND(AVG(price), 2) AS avg_price,
+#                SUM(reviews) AS total_reviews,
+#                ROUND(AVG(rating), 2) AS avg_rating
+#         FROM flipkart
+#         WHERE LOWER(category) = LOWER(:category_name)
+#         GROUP BY title
+#         ORDER BY total_reviews DESC
+#         LIMIT :limit OFFSET :offset
+#     """)
+#     rows = db.execute(query, {"category_name": category_name, "limit": limit, "offset": offset}).fetchall()
+#     products = [dict(row._mapping) for row in rows]
+
+#     count_query = text("""
+#         SELECT COUNT(DISTINCT title) as total_count
+#         FROM flipkart
+#         WHERE LOWER(category) = LOWER(:category_name)
+#     """)
+#     total_count = db.execute(count_query, {"category_name": category_name}).fetchone().total_count
+
+#     return {"category": category_name, "products": products, "total_count": total_count}
+
+
+# @app.get("/product/{product_title}")
+# def get_product_details(product_title: str, db: Session = Depends(get_db)):
+#     query = text("""
+#         SELECT 
+#             title AS product_name,
+#             ROUND(AVG(price), 2) AS avg_price,
+#             ROUND(AVG(rating), 2) AS avg_rating,
+#             SUM(reviews) AS total_reviews
+#         FROM flipkart
+#         WHERE LOWER(TRIM(title)) = LOWER(TRIM(:product_title))
+#         GROUP BY title
+#         LIMIT 1
+#     """)
+#     row = db.execute(query, {"product_title": product_title}).fetchone()
+
+#     if not row:
+#         raise HTTPException(status_code=404, detail="Product not found")
+
+#     return dict(row._mapping)
+
+# @app.get("/categories")
+# def get_categories(table: str = Query("flipkart"), db: Session = Depends(get_db)):
+#     """
+#     Return a list of distinct categories for a given table
+#     """
+#     table = table.lower()
+#     if table == "flipkart":
+#         return crud.get_flipkart_categories(db)  # Should return list of dicts with 'category' key
+#     elif table == "amazon_reviews":
+#         return crud.get_amazon_categories(db)
+#     else:
+#         return {"error": "Invalid table"}
+    
+# # -------------------
+# # Filter options
+# # -------------------
+# @app.get("/Amazon_Reviews/filter-options")
+# def get_filter_options(db: Session = Depends(get_db)):
+#     try:
+#         categories_query = db.query(models.AmazonReview.product_category).distinct().filter(
+#             models.AmazonReview.product_category.isnot(None)
+#         ).all()
+#         category_list = sorted([cat[0] for cat in categories_query if cat[0]])
+       
+#         ratings_query = db.query(models.AmazonReview.star_rating).distinct().filter(
+#             models.AmazonReview.star_rating.isnot(None)
+#         ).all()
+#         rating_list = sorted([int(r[0]) for r in ratings_query if r[0]])
+       
+#         return {"categories": category_list, "ratings": rating_list}
+#     except Exception as e:
+#         return {"error": str(e), "categories": [], "ratings": [1,2,3,4,5]}
+ 
+# if __name__ == "__main__":
+#     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+from fastapi import FastAPI, Depends, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import text, inspect
+from typing import List, Optional
+import subprocess, json
+from pydantic import BaseModel
+import uvicorn
+import pandas as pd
+
+from . import crud, schemas, models
+from .database_config import get_db, engine
+
+models.Base.metadata.create_all(bind=engine)
+
+# app = FastAPI(title="Product API", version="1.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # TODO: restrict in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class AIQuery(BaseModel):
+    question: str
+    source: str  # "flipkart" or "amazon_reviews"
+    limit: Optional[int] = 50
+    
+# def decimal_to_float(obj):
+#     if isinstance(obj, (int, float)):
+#         return obj
+#     try:
+#         return float(obj)
+#     except Exception:
+#         return str(obj)
+
+# @app.get("/")
+# def read_root():
+#     return {"message": "Product API running"}
+
+# @app.get("/health")
+# def health_check():
+#     return {"status": "healthy"}
+
+
+# # --------------------------
+# # Amazon Reviews Endpoints
+# # --------------------------
+# @app.get("/Amazon_Reviews/reviews", response_model=List[schemas.AmazonReview])
+# def get_reviews(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+#     return crud.get_reviews(db, limit=limit, offset=offset)
+
+# @app.get("/Amazon_Reviews/reviews/{review_id}", response_model=schemas.AmazonReview)
+# def get_review(review_id: str, db: Session = Depends(get_db)):
+#     return crud.get_review_by_id(db, review_id)
+
+# @app.get("/Amazon_Reviews/product/{product_id}", response_model=List[schemas.AmazonReview])
+# def get_product_reviews(product_id: str, limit: int = 20, db: Session = Depends(get_db)):
+#     return crud.get_product_reviews(db, product_id, limit)
+
+# @app.get("/Amazon_Reviews/search/{query}", response_model=List[schemas.AmazonReview])
+# def search_reviews(query: str, limit: int = 50, db: Session = Depends(get_db)):
+#     return crud.search_reviews(db, query, limit)
+
+# ----------- Stats -------------
+# @app.get("/Amazon_Reviews/statistics")
+# def get_statistics(db: Session = Depends(get_db)):
+#     return crud.get_review_statistics(db)
+
+@app.get("/Amazon_Reviews/statistics")
+def get_statistics(db: Session = Depends(get_db)):
+    """
+    Return summary statistics for Amazon Reviews including product count
+    """
+    query = text("""
+        SELECT 
+            COUNT(*) as total_reviews,
+            ROUND(AVG(star_rating), 2) as average_rating,
+            COUNT(DISTINCT product_title) as total_products
+        FROM "Amazon_Reviews"
+    """)
+    
+    row = db.execute(query).fetchone()
+    
+    return {
+        "total_reviews": int(row.total_reviews) if row.total_reviews else 0,
+        "average_rating": float(row.average_rating) if row.average_rating else 0.0,
+        "total_products": int(row.total_products) if row.total_products else 0
+    }
+
+# @app.get("/Amazon_Reviews/sentiment", response_model=List[schemas.SentimentOut])
+# def get_sentiment(db: Session = Depends(get_db)):
+#     results = crud.get_sentiment_distribution(db)
+#     return [schemas.SentimentOut(sentiment=sentiment, count=count) for sentiment, count in results]
+
+# @app.get("/Amazon_Reviews/ratings", response_model=List[schemas.RatingOut])
+# def get_ratings(db: Session = Depends(get_db)):
+#     results = crud.get_ratings_distribution(db)
+#     return [schemas.RatingOut(rating=rating, count=count) for rating, count in results]
+
+# @app.get("/Amazon_Reviews/categories", response_model=List[schemas.CategoryOut])
+# def get_category_stats(db: Session = Depends(get_db)):
+#     return crud.get_category_statistics(db)
+
+# # ----------- Analytics -------------
+
+# # --------------------------
+# # Analytics Endpoints
+# # --------------------------
+# @app.get("/Amazon_Reviews/trending", response_model=List[schemas.TrendingProductOut])
+# def get_trending(limit: int = 10, db: Session = Depends(get_db)):
+#     return crud.get_trending_products(db, limit)
+
+# @app.get("/Amazon_Reviews/trends/monthly", response_model=List[schemas.MonthlyTrendOut])
+# def monthly_trends(year: int, db: Session = Depends(get_db)):
+#     return crud.get_monthly_trends(db, year)
+
+# @app.get("/Amazon_Reviews/helpful")
+# def get_helpful(limit: int = 10, db: Session = Depends(get_db)):
+#     return crud.get_helpful_reviews(db, limit)
+
+# @app.get("/Amazon_Reviews/sentiment/{product_id}", response_model=List[schemas.SentimentOut])
+# def get_sentiment(product_id: str, db: Session = Depends(get_db)):
+#     return crud.get_product_sentiment_breakdown(db, product_id)
+
+# ----------- flipkart -------------
+@app.get("/flipkart", response_model=List[schemas.Product])
+def read_products(limit: int = 10, offset: int = 0, category: schemas.Optional[str] = None,
+                  min_price: schemas.Optional[float] = None, max_price: schemas.Optional[float] = None,
+                  db: Session = Depends(get_db)):
+    return crud.get_products(db, limit, offset, category, min_price, max_price)
+
+# @app.get("/analytics/summary", response_model=schemas.Summary)
+# def analytics_summary(db: Session = Depends(get_db)):
+#     return crud.get_summary(db)
+
+# @app.get("/analytics/category", response_model=schemas.CategoryAnalyticsResponse)
+# def analytics_by_category(db: Session = Depends(get_db)):
+#     categories = crud.get_category_analytics(db)
+#     return {"categories": categories}
+
 @app.post("/ai/query")
 def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
-    limit = query.limit or 50  # default 50 if not provided
+    limit = query.limit or 50
     source = query.source.lower()
 
-    if source == "products":
-        # Fetch top products only
+    if source == "flipkart":
         rows = db.execute(
             text(f"""
             SELECT id, category, brand, title, price, rating
-            FROM products
+            FROM flipkart
             ORDER BY reviews DESC
             LIMIT {limit}
             """)
         ).all()
         data_list = [dict(row._mapping) for row in rows]
-        table_name = "Products"
+        table_name = "flipkart"
     elif source == "amazon_reviews":
-        # Fetch recent Amazon reviews only
         rows = db.execute(
             text(f"""
             SELECT product_title, star_rating, review_headline, review_body, review_date
@@ -274,9 +839,8 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
         data_list = [dict(row._mapping) for row in rows]
         table_name = "Amazon Reviews"
     else:
-        return {"error": "Invalid source. Use 'products' or 'amazon_reviews'."}
+        return {"error": "Invalid source. Use 'flipkart' or 'amazon_reviews'."}
 
-    # Convert to JSON safe for AI
     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
 
     prompt = f"""
@@ -304,65 +868,49 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
 
     return {"answer": answer}
 
-# @app.get("/products/top", response_model=List[schemas.Product])
-# def top_products_products_table(n: int = 10, db: Session = Depends(get_db)):
-#     """
-#     Fetch top N products from the products table based on rating.
-#     """
-#     return crud.get_top_products(db, n)
 
-# @app.get("/Amazon_Reviews/top", response_model=List[schemas.TopAmazonReview])
-# def top_products_amazon_reviews(n: int = 10, db: Session = Depends(get_db)):
-#     return crud.get_top_products_amazon(db, n)
-
-
-# --------------------------
-# Forecast Endpoints
-# --------------------------
 @app.get("/top")
 def get_top_items(
-    table: str = Query(..., description="Choose 'products' or 'amazon_reviews'"),
+    table: str = Query(..., description="Choose 'flipkart' or 'amazon_reviews'"),
     n: int = Query(10, description="Number of top items to fetch"),
     db: Session = Depends(get_db),
 ):
-    """
-    Fetch top N entries from either products or Amazon_Reviews table.
-    Use ?table=products or ?table=amazon_reviews
-    """
     table = table.lower()
     
-    if table == "products":
+    if table == "flipkart":
         data = crud.get_top_products(db, n)
-        return {"table": "products", "count": len(data), "data": data}
+        return {"table": "flipkart", "count": len(data), "data": data}
     elif table == "amazon_reviews":
         data = crud.get_top_products_amazon(db, n)
         return {"table": "amazon_reviews", "count": len(data), "data": data}
     else:
-        return {"error": "Invalid table. Use 'products' or 'amazon_reviews'."}
+        return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
     
-@app.get("/top_forecast")
-def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
-    """
-    Fetch top N products by forecasted next price
-    """
-    forecast_list = crud.get_top_forecasted_products(db, n)
-    return {"table": "products_forecast", "count": len(forecast_list), "data": forecast_list} 
+# @app.get("/top_forecast")
+# def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
+#     forecast_list = crud.get_top_forecasted_products(db, n)
+#     return {"table": "flipkart_forecast", "count": len(forecast_list), "data": forecast_list} 
+
+@app.get("/forecast_all_products")
+def forecast_all_products(n_forecast_days: int = Query(30, description="Days to forecast"),
+                          db: Session = Depends(get_db)):
+    forecast_list = crud.get_forecast_all_products(db, n_forecast_days)
+    return forecast_list
+
+
 
 @app.get("/notifications")
 def get_notifications(
-    table: str = Query("products", description="Choose 'products' or 'amazon_reviews'"),
+    table: str = Query("flipkart", description="Choose 'flipkart' or 'amazon_reviews'"),
     limit: int = Query(5, description="Number of recent notifications"),
     db: Session = Depends(get_db),
 ):
-    """
-    Fetch latest product/review updates for notification bell.
-    """
     table = table.lower()
 
-    if table == "products":
+    if table == "flipkart":
         query = text(f"""
             SELECT id, title AS message, category, price
-            FROM products
+            FROM flipkart
             ORDER BY id DESC
             LIMIT {limit}
         """)
@@ -392,398 +940,212 @@ def get_notifications(
             for i, row in enumerate(rows)
         ]
     else:
-        return {"error": "Invalid table. Use 'products' or 'amazon_reviews'."}
+        return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
 
-@app.get("/top_forecast")
-def top_forecasted_products(n: int = Query(10, description="Number of top products"), db: Session = Depends(get_db)):
-    """
-    Fetch top N products by forecasted next price
-    """
-    forecast_list = crud.get_top_forecasted_products(db, n)
-    return {"table": "products_forecast", "count": len(forecast_list), "data": forecast_list}    
-
-# --------------------------
-# signup/login Endpoints
-# --------------------------
-from .routers import users
-app.include_router(users.router, prefix="/users")
-
-# Add these endpoints to your Fastapi_main.py
-
-# --------------------------
-# Filter Options Endpoint
-# --------------------------
-@app.get("/Amazon_Reviews/filter-options")
-def get_filter_options(db: Session = Depends(get_db)):
-    """
-    Get available filter options (categories, ratings, price range)
-    """
-    try:
-        # Get unique categories from Amazon_Reviews
-        categories_query = db.query(models.AmazonReview.product_category)\
-            .distinct()\
-            .filter(models.AmazonReview.product_category.isnot(None))\
-            .filter(models.AmazonReview.product_category != '')\
-            .all()
-        category_list = sorted([cat[0] for cat in categories_query if cat[0]])
-        
-        # Get unique star ratings from Amazon_Reviews
-        ratings_query = db.query(models.AmazonReview.star_rating)\
-            .distinct()\
-            .filter(models.AmazonReview.star_rating.isnot(None))\
-            .order_by(models.AmazonReview.star_rating)\
-            .all()
-        rating_list = sorted([int(r[0]) for r in ratings_query if r[0] and r[0] > 0])
-        
-        # Get price range from products table
-        price_stats = db.query(
-            func.min(models.Product.price).label('min_price'),
-            func.max(models.Product.price).label('max_price')
-        ).filter(models.Product.price.isnot(None)).first()
-        
-        min_price = float(price_stats.min_price) if price_stats and price_stats.min_price else 0
-        max_price = float(price_stats.max_price) if price_stats and price_stats.max_price else 100000
-        
-        return {
-            "categories": category_list,
-            "ratings": rating_list,
-            "price_range": {
-                "min": int(min_price),
-                "max": int(max_price)
-            }
-        }
-    except Exception as e:
-        print(f"Error fetching filter options: {e}")
-        return {
-            "error": str(e),
-            "categories": [],
-            "ratings": [1, 2, 3, 4, 5],
-            "price_range": {"min": 0, "max": 100000}
-        }
+    return {"table": table, "count": len(data), "data": data}
 
 
-# --------------------------
-# Filtered Analytics Endpoint
-# --------------------------
-@app.get("/Amazon_Reviews/analytics/filtered")
-def get_filtered_analytics(
-    category: Optional[str] = None,
-    min_rating: Optional[int] = None,
-    date_range: Optional[str] = "all",
+# @app.get("/analytics/category/{category_name}")
+# def get_products_by_category(
+#     category_name: str,
+#     limit: int = 20,
+#     offset: int = 0,
+#     db: Session = Depends(get_db)
+# ):
+#     query = text("""
+#         SELECT title AS product_name,
+#                ROUND(AVG(price), 2) AS avg_price,
+#                SUM(reviews) AS total_reviews,
+#                ROUND(AVG(rating), 2) AS avg_rating
+#         FROM flipkart
+#         WHERE LOWER(category) = LOWER(:category_name)
+#         GROUP BY title
+#         ORDER BY total_reviews DESC
+#         LIMIT :limit OFFSET :offset
+#     """)
+#     rows = db.execute(query, {"category_name": category_name, "limit": limit, "offset": offset}).fetchall()
+#     products = [dict(row._mapping) for row in rows]
+
+#     count_query = text("""
+#         SELECT COUNT(DISTINCT title) as total_count
+#         FROM flipkart
+#         WHERE LOWER(category) = LOWER(:category_name)
+#     """)
+#     total_count = db.execute(count_query, {"category_name": category_name}).fetchone().total_count
+
+#     return {"category": category_name, "products": products, "total_count": total_count}
+
+
+@app.get("/analytics/category/{category_name}")
+def get_products_by_category(
+    category_name: str,
+    limit: int = 20,
+    offset: int = 0,
     db: Session = Depends(get_db)
 ):
-    """
-    Get analytics data based on applied filters for charts
-    """
+    query = text("""
+        SELECT 
+            title AS product_name,
+            ROUND(AVG(price), 2) AS avg_price,
+            SUM(reviews) AS total_reviews,
+            ROUND(AVG(rating), 2) AS avg_rating
+        FROM flipkart
+        WHERE LOWER(category) = LOWER(:category_name)
+        GROUP BY title
+
+        UNION ALL
+
+        SELECT 
+            product_title AS product_name,
+            NULL AS avg_price,
+            SUM(total_votes) AS total_reviews,
+            ROUND(AVG(star_rating), 2) AS avg_rating
+        FROM "Amazon_Reviews"
+        WHERE LOWER(product_category) = LOWER(:category_name)
+        GROUP BY product_title
+
+        ORDER BY total_reviews DESC
+        LIMIT :limit OFFSET :offset
+    """)
+
+    rows = db.execute(query, {
+        "category_name": category_name,
+        "limit": limit,
+        "offset": offset
+    }).fetchall()
+
+    products = [dict(row._mapping) for row in rows]
+
+    count_query = text("""
+        SELECT COUNT(*) as total_count FROM (
+            SELECT title FROM flipkart WHERE LOWER(category) = LOWER(:category_name)
+            UNION ALL
+            SELECT product_title FROM "Amazon_Reviews" WHERE LOWER(product_category) = LOWER(:category_name)
+        ) AS combined
+    """)
+
+    total_count_row = db.execute(count_query, {"category_name": category_name}).fetchone()
+    total_count = total_count_row.total_count if total_count_row else 0
+
+    return {
+        "category": category_name,
+        "products": products,
+        "total_count": total_count
+    }
+
+
+
+# @app.get("/product/{product_title}")
+# def get_product_details(product_title: str, db: Session = Depends(get_db)):
+#     query = text("""
+#         SELECT 
+#             title AS product_name,
+#             ROUND(AVG(price), 2) AS avg_price,
+#             ROUND(AVG(rating), 2) AS avg_rating,
+#             SUM(reviews) AS total_reviews
+#         FROM flipkart
+#         WHERE LOWER(TRIM(title)) = LOWER(TRIM(:product_title))
+#         GROUP BY title
+#         LIMIT 1
+#     """)
+#     row = db.execute(query, {"product_title": product_title}).fetchone()
+
+#     if not row:
+#         raise HTTPException(status_code=404, detail="Product not found")
+
+#     return dict(row._mapping)
+
+@app.get("/product/{product_name}")
+def get_product_details(product_name: str, db: Session = Depends(get_db)):
     try:
-        # Base query
-        query = db.query(models.AmazonReview)
-        
-        # Apply filters
-        if category and category != "All Categories":
-            query = query.filter(models.AmazonReview.product_category == category)
-        
-        if min_rating and min_rating > 0:
-            query = query.filter(models.AmazonReview.star_rating >= min_rating)
-        
-        # Date range filter
-        if date_range != "all":
-            from datetime import datetime, timedelta
-            today = datetime.now()
-            
-            if date_range == "7d":
-                start_year = today.year
-                # Simple approximation - filter by year
-            elif date_range == "30d":
-                start_year = today.year
-            elif date_range == "90d":
-                start_year = today.year
-            elif date_range == "1y":
-                start_year = today.year - 1
-            else:
-                start_year = None
-            
-            if start_year:
-                query = query.filter(models.AmazonReview.review_year >= start_year)
-        
-        # Get sentiment distribution
-        sentiment_dist = query.with_entities(
-            models.AmazonReview.Sentiment_pc,
-            func.count(models.AmazonReview.review_id).label('count')
-        ).group_by(models.AmazonReview.Sentiment_pc).all()
-        
-        # Get rating distribution
-        rating_dist = query.with_entities(
-            models.AmazonReview.star_rating,
-            func.count(models.AmazonReview.review_id).label('count')
-        ).group_by(models.AmazonReview.star_rating).all()
-        
-        # Get category stats
-        category_stats = query.with_entities(
-            models.AmazonReview.product_category,
-            func.count(models.AmazonReview.review_id).label('count'),
-            func.avg(models.AmazonReview.star_rating).label('avg_rating')
-        ).group_by(models.AmazonReview.product_category).all()
-        
-        # Get top products
-        top_products = query.with_entities(
-            models.AmazonReview.product_title,
-            func.count(models.AmazonReview.review_id).label('review_count'),
-            func.avg(models.AmazonReview.star_rating).label('avg_rating')
-        ).group_by(models.AmazonReview.product_title)\
-         .order_by(func.count(models.AmazonReview.review_id).desc())\
-         .limit(10).all()
-        
+        inspector = inspect(db.bind)
+        amazon_exists = "amazon_reviews" in [t.lower() for t in inspector.get_table_names()]
+
+        # ✅ Combined query with proper type casts for PostgreSQL
+        query = """
+            SELECT
+                product_name,
+                ROUND(AVG(avg_price)::numeric, 2) AS avg_price,
+                ROUND(AVG(avg_rating)::numeric, 2) AS avg_rating,
+                SUM(total_reviews) AS total_reviews
+            FROM (
+                -- Flipkart data
+                SELECT
+                    title AS product_name,
+                    AVG(price) AS avg_price,
+                    AVG(rating) AS avg_rating,
+                    SUM(reviews) AS total_reviews
+                FROM flipkart
+                WHERE LOWER(title) = LOWER(:product_name)
+                GROUP BY title
+        """
+
+        # ✅ Include Amazon_Reviews data if available
+        if amazon_exists:
+            query += """
+                UNION ALL
+                SELECT
+                    product_title AS product_name,
+                    NULL AS avg_price,  -- Amazon_Reviews doesn't have price
+                    AVG(star_rating)::FLOAT AS avg_rating,
+                    SUM(total_votes)::INT AS total_reviews
+                FROM "Amazon_Reviews"
+                WHERE LOWER(product_title) = LOWER(:product_name)
+                GROUP BY product_title
+            """
+
+        query += """
+            ) AS combined
+            GROUP BY product_name
+        """
+
+        # ✅ Execute safely
+        result = db.execute(text(query), {"product_name": product_name.strip()}).fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Product not found")
+
         return {
-            "sentiment_distribution": [
-                {"sentiment": s[0], "count": s[1]} for s in sentiment_dist
-            ],
-            "rating_distribution": [
-                {"rating": r[0], "count": r[1]} for r in rating_dist
-            ],
-            "category_stats": [
-                {
-                    "category": c[0],
-                    "count": c[1],
-                    "avg_rating": float(c[2]) if c[2] else 0
-                } for c in category_stats
-            ],
-            "top_products": [
-                {
-                    "product_title": p[0],
-                    "review_count": p[1],
-                    "avg_rating": float(p[2]) if p[2] else 0
-                } for p in top_products
-            ],
-            "total_reviews": query.count(),
-            "average_rating": float(query.with_entities(
-                func.avg(models.AmazonReview.star_rating)
-            ).scalar() or 0)
+            "product_name": result.product_name,
+            "avg_price": float(result.avg_price) if result.avg_price is not None else 0.0,
+            "avg_rating": float(result.avg_rating) if result.avg_rating is not None else 0.0,
+            "total_reviews": int(result.total_reviews) if result.total_reviews is not None else 0
         }
-        
+
     except Exception as e:
-        print(f"Error getting filtered analytics: {e}")
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-
-# @app.post("/api/cache/refresh")
-# async def refresh_cache():
-#     """
-#     Refresh dashboard cache by fetching fresh data from internal endpoints.
-#     This is called automatically by the scheduler or manually via API.
-#     """
-#     try:
-#         base_url = "http://127.0.0.1:8000"
-#         endpoints = {
-#             "summary": f"{base_url}/analytics/summary",
-#             "category": f"{base_url}/analytics/category",
-#             "sentiment": f"{base_url}/Amazon_Reviews/sentiment",
-#             "ratings": f"{base_url}/Amazon_Reviews/ratings",
-#             "categories": f"{base_url}/Amazon_Reviews/categories",
-#             "trending": f"{base_url}/Amazon_Reviews/trending"
-#         }
-
-#         refreshed_data = {}
-
-#         for key, url in endpoints.items():
-#             try:
-#                 resp = requests.get(url, timeout=10)
-#                 if resp.status_code == 200:
-#                     refreshed_data[key] = resp.json()
-#                 else:
-#                     refreshed_data[key] = {"error": f"Failed: {resp.status_code}"}
-#             except Exception as e:
-#                 refreshed_data[key] = {"error": str(e)}
-
-#         CACHE["data"] = refreshed_data
-#         CACHE["last_updated"] = datetime.now().isoformat()
-
-#         return {
-#             "success": True,
-#             "message": "Dashboard cache refreshed successfully",
-#             "last_updated": CACHE["last_updated"],
-#             "keys": list(refreshed_data.keys())
-#         }
-
-#     except Exception as e:
-#         return {
-#             "success": False,
-#             "error": str(e)
-#         }
-
-# @app.get("/api/cache/status")
-# async def get_cache_status():
-#     """
-#     Returns the current cache contents and timestamp.
-#     """
-#     if CACHE["last_updated"]:
-#         return {
-#             "status": "fresh",
-#             "last_updated": CACHE["last_updated"],
-#             "data_keys": list(CACHE["data"].keys())
-#         }
-#     return {"status": "stale", "message": "Cache not yet initialized"}
-
-
-# ============================================
-# ADD THESE ENDPOINTS TO YOUR Fastapi_main.py
-# ============================================
-
-# Add these imports at the top
-from server_py.schedule import get_scheduler_status, trigger_manual_sync
-from server_py.database_sync_service import data_sync_service
-
-# Add these endpoints after your existing endpoints
-
-# --------------------------
-# Scheduler & Sync Endpoints
-# --------------------------
-
-@app.get("/scheduler/status")
-def get_scheduler_status_endpoint():
+@app.get("/categories")
+def get_categories(table: str = Query("flipkart"), db: Session = Depends(get_db)):
     """
-    Get current scheduler status and scheduled jobs
+    Return a list of distinct categories for a given table
     """
-    return get_scheduler_status()
-
-@app.post("/scheduler/trigger-sync")
-def trigger_sync_manually():
-    """
-    Manually trigger a full data sync (for testing/debugging)
-    """
-    try:
-        logger.info("Manual sync triggered via API")
-        trigger_manual_sync()
-        return {
-            "success": True,
-            "message": "Full data sync triggered successfully",
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        logger.error(f"Error triggering sync: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-@app.post("/sync/amazon")
-def sync_amazon_data():
-    """
-    Manually sync Amazon data only
-    """
-    try:
-        logger.info("Amazon sync triggered via API")
-        result = data_sync_service.sync_amazon_products_by_search()
-        return {
-            "success": True,
-            "message": "Amazon data synced",
-            "products_synced": result,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-@app.post("/sync/flipkart")
-def sync_flipkart_data():
-    """
-    Manually sync Flipkart data only
-    """
-    try:
-        logger.info("Flipkart sync triggered via API")
-        result = data_sync_service.sync_flipkart_products()
-        return {
-            "success": True,
-            "message": "Flipkart data synced",
-            "products_synced": result,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-@app.get("/sync/test-api")
-def test_rapid_api_connection():
-    """
-    Test RapidAPI connection and credentials
-    """
-    from server_py.rapidapi import rapidapi_client
+    table = table.lower()
+    if table == "flipkart":
+        return crud.get_flipkart_categories(db)  # Should return list of dicts with 'category' key
+    elif table == "amazon_reviews":
+        return crud.get_amazon_categories(db)
+    else:
+        return {"error": "Invalid table"}
     
-    try:
-        # Test Amazon API
-        amazon_result = rapidapi_client.search_amazon_products("laptop", page=1)
-        amazon_success = 'error' not in amazon_result and len(amazon_result.get('results', [])) > 0
-        
-        # Test Flipkart API
-        flipkart_result = rapidapi_client.search_flipkart_products("laptop", page=1)
-        flipkart_success = 'error' not in flipkart_result and len(flipkart_result.get('results', [])) > 0
-        
-        return {
-            "amazon": {
-                "connected": amazon_success,
-                "sample_products": len(amazon_result.get('results', [])),
-                "error": amazon_result.get('error') if not amazon_success else None
-            },
-            "flipkart": {
-                "connected": flipkart_success,
-                "sample_products": len(flipkart_result.get('results', [])),
-                "error": flipkart_result.get('error') if not flipkart_success else None
-            },
-            "overall_status": "connected" if (amazon_success or flipkart_success) else "failed"
-        }
-    except Exception as e:
-        return {
-            "overall_status": "error",
-            "error": str(e)
-        }
-
-@app.get("/sync/stats")
-def get_sync_statistics(db: Session = Depends(get_db)):
+@app.get("/flipkart/categories")
+def get_flipkart_categories_distribution(db: Session = Depends(get_db)):
     """
-    Get statistics about synced data
+    Return category distribution for Flipkart products
     """
-    try:
-        # Count products by source
-        amazon_count = db.query(models.Product).filter(
-            models.Product.source == 'amazon'
-        ).count()
-        
-        flipkart_count = db.query(models.Product).filter(
-            models.Product.source == 'flipkart'
-        ).count()
-        
-        # Get latest sync times
-        latest_amazon = db.query(models.Product).filter(
-            models.Product.source == 'amazon'
-        ).order_by(models.Product.last_updated.desc()).first()
-        
-        latest_flipkart = db.query(models.Product).filter(
-            models.Product.source == 'flipkart'
-        ).order_by(models.Product.last_updated.desc()).first()
-        
-        # Count deals
-        deals_count = db.query(models.Deal).filter(
-            models.Deal.is_active == True
-        ).count()
-        
-        return {
-            "total_products": amazon_count + flipkart_count,
-            "amazon_products": amazon_count,
-            "flipkart_products": flipkart_count,
-            "active_deals": deals_count,
-            "last_amazon_sync": latest_amazon.last_updated.isoformat() if latest_amazon else None,
-            "last_flipkart_sync": latest_flipkart.last_updated.isoformat() if latest_flipkart else None,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        return {
-            "error": str(e)
-        }
+    query = text("""
+        SELECT 
+            category,
+            COUNT(*) as count
+        FROM flipkart
+        GROUP BY category
+        ORDER BY count DESC
+    """)
     
+    rows = db.execute(query).fetchall()
+    categories = [{"category": row.category, "count": row.count} for row in rows]
+    
+    return categories 
     
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

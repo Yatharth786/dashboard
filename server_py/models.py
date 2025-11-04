@@ -1,10 +1,21 @@
-# server_py/models.py - CORRECTED VERSION
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, Float, Text, TIMESTAMP, ARRAY
-from sqlalchemy.sql import func
+from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY
+from .database_config import Base
 from datetime import datetime
-from server_py.database_config import Base
-
-# ==================== EXISTING MODELS ====================
+class User(Base):
+    __tablename__ = "users"
+ 
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(50))
+    last_name = Column(String(50))
+    email = Column(String(100), unique=True, index=True)
+    password_hash = Column(String)
+    business_name = Column(String(100))
+    location = Column(String(50))
+    business_interests = Column(ARRAY(String))
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    updated_at = Column(TIMESTAMP, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)   # <-- THIS DOESN'T EXIST IN DB
+ 
 
 class AmazonReview(Base):
     __tablename__ = "Amazon_Reviews"   
@@ -35,7 +46,7 @@ class AmazonReview(Base):
     rating_5 = Column("5 rating", Integer)
 
 class Product(Base):
-    __tablename__ = "products"  
+    __tablename__ = "flipkart"  
 
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(String(100), unique=True, index=True, nullable=True)

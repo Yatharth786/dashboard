@@ -216,8 +216,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Filter, X, RotateCcw } from "lucide-react";
+import { useFilters } from "./FiltersContext";
 
 interface FilterState {
+  table: string;
   category: string;
   priceRange: [number, number];
   rating: number;
@@ -226,11 +228,21 @@ interface FilterState {
   sortBy: string;
 }
 
-interface FiltersData {
-  categories: string[];
-  ratings: number[];
-  priceRange: { min: number; max: number };
-}
+const CATEGORIES = [
+  "All Categories",
+  "Electronics",
+  "Fashion",
+  "Home & Kitchen",
+  "Books",
+  "Sports & Fitness",
+  "Beauty & Personal Care",
+  "Automotive",
+  "Health & Wellness",
+  "Toys & Games",
+  "Office Supplies",
+  "Garden & Outdoor",
+  "Pet Supplies"
+];
 
 const DATE_RANGES = [
   { value: "7d", label: "Last 7 days" },
@@ -251,100 +263,53 @@ const SORT_OPTIONS = [
   { value: "trending", label: "Trending" },
 ];
 
-interface FiltersPanelProps {
-  onFiltersApply?: (filters: FilterState) => void;
-}
-
-export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
-  const BASE_URL = "http://localhost:8000";
-  
-  const [filters, setFilters] = useState<FilterState>({
-    category: "All Categories",
-    priceRange: [0, 100000],
-    rating: 0,
-    dateRange: "30d",
-    showTrendingOnly: false,
-    sortBy: "sales_desc",
-  });
-
+export default function FiltersPanel({ selectedSource }: { selectedSource: string }) {
+  const { filters, setFilters } = useFilters(); // ✅ Use context
   const [appliedFilters, setAppliedFilters] = useState<string[]>([]);
-  const [filtersData, setFiltersData] = useState<FiltersData>({
-    categories: ["All Categories"],
-    ratings: [0, 1, 2, 3, 4, 5],
-    priceRange: { min: 0, max: 100000 }
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  // Fetch filter options from backend
+  // ------------------ Fetch Categories ------------------
+  const fetchCategories = async (table: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/categories?table=${table}`);
+      const data = await res.json();
+      const cats = data.map((c: any) => c.category);
+
+      setCategories(["All Categories", ...cats]);
+
+      // Reset category if current not in list
+      setFilters(prev => {
+        if (!["All Categories", ...cats].includes(prev.category)) {
+          return { ...prev, category: "All Categories" };
+        }
+        return prev;
+      });
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchFilterOptions = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch categories
-        const categoriesRes = await fetch(`${BASE_URL}/Amazon_Reviews/categories`);
-        const categoriesData = await categoriesRes.json();
-        
-        // Fetch ratings
-        const ratingsRes = await fetch(`${BASE_URL}/Amazon_Reviews/ratings`);
-        const ratingsData = await ratingsRes.json();
-        
-        // Fetch price range from products summary
-        const summaryRes = await fetch(`${BASE_URL}/analytics/summary`);
-        const summaryData = await summaryRes.json();
-        
-        console.log("Fetched categories:", categoriesData);
-        console.log("Fetched ratings:", ratingsData);
-        console.log("Fetched summary:", summaryData);
-        
-        // Extract categories
-        const categoryList = Array.isArray(categoriesData) 
-          ? categoriesData.map((c: any) => c.category).filter((c: string) => c && c.trim() !== "")
-          : [];
-        
-        // Extract ratings
-        const ratingList = Array.isArray(ratingsData)
-          ? ratingsData.map((r: any) => r.rating).filter((r: number) => r > 0)
-          : [1, 2, 3, 4, 5];
-        
-        setFiltersData({
-          categories: ["All Categories", ...categoryList],
-          ratings: [0, ...ratingList],
-          priceRange: { min: 0, max: 100000 }
-        });
-        
-        setError(null);
-      } catch (err) {
-        console.error("Failed to load filter options:", err);
-        setError("Failed to load filter options from server");
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchCategories(filters.table);
+  }, [filters.table]);
 
-    fetchFilterOptions();
-  }, []);
-
+  // ------------------ Helpers ------------------
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters({ ...filters, [key]: value });
   };
 
-  const formatPrice = (price: number) => {
-    if (price >= 10000) return `₹${(price / 1000).toFixed(0)}K`;
-    return `₹${price.toLocaleString()}`;
-  };
+  const formatPrice = (price: number) => (price >= 10000 ? `₹${(price / 1000).toFixed(0)}K` : `₹${price.toLocaleString()}`);
 
   const resetFilters = () => {
-    const defaultFilters = {
+    setFilters({
+      table: "flipkart",
       category: "All Categories",
-      priceRange: [filtersData.priceRange.min, filtersData.priceRange.max] as [number, number],
+      priceRange: [0, 5000000],
       rating: 0,
       dateRange: "30d",
       showTrendingOnly: false,
       sortBy: "sales_desc",
-    };
-    setFilters(defaultFilters);
+    });
     setAppliedFilters([]);
     
     // Notify parent component
@@ -355,8 +320,9 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
 
   const applyFilters = () => {
     const applied: string[] = [];
+    applied.push(`Table: ${filters.table}`);
     if (filters.category !== "All Categories") applied.push(`Category: ${filters.category}`);
-    if (filters.priceRange[0] > filtersData.priceRange.min || filters.priceRange[1] < filtersData.priceRange.max)
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 5000000)
       applied.push(`Price: ${formatPrice(filters.priceRange[0])} - ${formatPrice(filters.priceRange[1])}`);
     if (filters.rating > 0) applied.push(`Rating: ${filters.rating}+ stars`);
     if (filters.dateRange !== "all") applied.push(`Date: ${DATE_RANGES.find(d => d.value === filters.dateRange)?.label}`);
@@ -373,38 +339,24 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
   };
 
   const removeFilter = (filterToRemove: string) => {
-    setAppliedFilters((prev) => prev.filter((f) => f !== filterToRemove));
-    
-    let updatedFilters = { ...filters };
-    
-    if (filterToRemove.startsWith("Category:")) {
-      updatedFilters.category = "All Categories";
-    } else if (filterToRemove.startsWith("Price:")) {
-      updatedFilters.priceRange = [filtersData.priceRange.min, filtersData.priceRange.max];
-    } else if (filterToRemove.startsWith("Rating:")) {
-      updatedFilters.rating = 0;
-    } else if (filterToRemove.startsWith("Date:")) {
-      updatedFilters.dateRange = "all";
-    } else if (filterToRemove === "Trending Only") {
-      updatedFilters.showTrendingOnly = false;
-    }
-    
-    setFilters(updatedFilters);
-    
-    // Apply updated filters
-    if (onFiltersApply) {
-      onFiltersApply(updatedFilters);
-    }
+    setAppliedFilters(prev => prev.filter(f => f !== filterToRemove));
+
+    if (filterToRemove.startsWith("Table:")) updateFilter("table", "flipkart");
+    else if (filterToRemove.startsWith("Category:")) updateFilter("category", "All Categories");
+    else if (filterToRemove.startsWith("Price:")) updateFilter("priceRange", [0, 5000000]);
+    else if (filterToRemove.startsWith("Rating:")) updateFilter("rating", 0);
+    else if (filterToRemove === "Trending Only") updateFilter("showTrendingOnly", false);
   };
 
+  // ------------------ Render ------------------
   return (
-    <Card className="bg-card rounded-lg border mb-6" data-testid="filters-panel">
+    <Card className="bg-card rounded-lg border mb-6">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle className="flex items-center">
           <Filter className="h-5 w-5 mr-2" />
           Filters & Settings
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={resetFilters} data-testid="button-reset-filters">
+        <Button variant="outline" size="sm" onClick={resetFilters}>
           <RotateCcw className="h-4 w-4 mr-2" /> Reset
         </Button>
       </CardHeader>
@@ -437,22 +389,32 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {/* Category */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Table Selector */}
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select 
-              value={filters.category} 
-              onValueChange={(v) => updateFilter("category", v)}
-              disabled={loading}
-            >
+            <Label>Data Source</Label>
+            <Select value={filters.table} onValueChange={(v) => updateFilter("table", v)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select table" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="flipkart">Flipkart</SelectItem>
+                <SelectItem value="amazon_reviews">Amazon</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Category Selector */}
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={filters.category} onValueChange={(v) => updateFilter("category", v)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={loading ? "Loading..." : "Select category"} />
               </SelectTrigger>
               <SelectContent>
-                {filtersData.categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -516,6 +478,9 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
                   <SelectItem key={range.value} value={range.value}>
                     {range.label}
                   </SelectItem>
+                  <SelectItem key={range.value} value={range.value}>
+                    {range.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -530,6 +495,9 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
               </SelectTrigger>
               <SelectContent>
                 {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -559,6 +527,12 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
 
         {/* Apply & Clear Buttons */}
         <div className="flex gap-2 pt-4">
+          <Button onClick={applyFilters} className="flex-1">
+            Apply Filters
+          </Button>
+          <Button variant="outline" onClick={resetFilters}>
+            Clear All
+          </Button>
           <Button onClick={applyFilters} className="flex-1" disabled={loading}>
             {loading ? "Loading..." : "Apply Filters"}
           </Button>
@@ -570,6 +544,5 @@ export default function FiltersPanel({ onFiltersApply }: FiltersPanelProps) {
     </Card>
   );
 }
- 
- 
- 
+
+

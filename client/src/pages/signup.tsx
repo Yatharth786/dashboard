@@ -914,14 +914,18 @@ export default function Signup() {
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name *</Label>
                   <Input id="firstName" placeholder="John" value={formData.firstName} onChange={handleInputChange("firstName")} required />
+                  <Input id="firstName" placeholder="John" value={formData.firstName} onChange={handleInputChange("firstName")} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name *</Label>
+                  <Input id="lastName" placeholder="Doe" value={formData.lastName} onChange={handleInputChange("lastName")} required />
                   <Input id="lastName" placeholder="Doe" value={formData.lastName} onChange={handleInputChange("lastName")} required />
                 </div>
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={handleInputChange("email")} required />
                 <Label htmlFor="email">Email *</Label>
                 <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={handleInputChange("email")} required />
               </div>
@@ -930,10 +934,13 @@ export default function Signup() {
                 <Label htmlFor="password">Password *</Label>
                 <Input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange("password")} required minLength={6} />
                 <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+                <Input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange("password")} required minLength={6} />
+                <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="businessName">Business Name (Optional)</Label>
+                <Input id="businessName" placeholder="Your Business" value={formData.businessName} onChange={handleInputChange("businessName")} />
                 <Input id="businessName" placeholder="Your Business" value={formData.businessName} onChange={handleInputChange("businessName")} />
               </div>
 
@@ -942,8 +949,13 @@ export default function Signup() {
                 <Select value={formData.location} onValueChange={handleLocationChange} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select location" />
+                <Select value={formData.location} onValueChange={handleLocationChange} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
+                    {LOCATIONS.map((loc) => (
+                      <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
                     {LOCATIONS.map((loc) => (
                       <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
                     ))}
@@ -954,9 +966,13 @@ export default function Signup() {
               <div className="space-y-3">
                 <Label className="text-base">Business Interests *</Label>
                 <p className="text-sm text-muted-foreground">Select at least one</p>
+                <Label className="text-base">Business Interests *</Label>
+                <p className="text-sm text-muted-foreground">Select at least one</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-4 border rounded-lg bg-muted/30">
                   {BUSINESS_INTERESTS.map((interest) => (
                     <div key={interest.id} className="flex items-center space-x-2">
+                      <Checkbox id={interest.id} checked={formData.businessInterests.includes(interest.id)} onCheckedChange={() => handleInterestToggle(interest.id)} />
+                      <Label htmlFor={interest.id} className="text-sm font-normal cursor-pointer">{interest.label}</Label>
                       <Checkbox id={interest.id} checked={formData.businessInterests.includes(interest.id)} onCheckedChange={() => handleInterestToggle(interest.id)} />
                       <Label htmlFor={interest.id} className="text-sm font-normal cursor-pointer">{interest.label}</Label>
                     </div>
@@ -965,11 +981,15 @@ export default function Signup() {
                 {formData.businessInterests.length > 0 && (
                   <p className="text-sm text-primary font-medium">
                     ✓ {formData.businessInterests.length} selected
+                    ✓ {formData.businessInterests.length} selected
                   </p>
                 )}
               </div>
 
               <div className="flex items-start space-x-2">
+                <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked === true)} />
+                <Label htmlFor="terms" className="text-sm cursor-pointer">
+                  I agree to <span className="text-primary underline">Terms</span> and <span className="text-primary underline">Privacy</span>
                 <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked === true)} />
                 <Label htmlFor="terms" className="text-sm cursor-pointer">
                   I agree to <span className="text-primary underline">Terms</span> and <span className="text-primary underline">Privacy</span>
@@ -982,6 +1002,7 @@ export default function Signup() {
             </form>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
+              Have an account? <Link href="/login"><Button variant="link" className="p-0 h-auto text-primary">Sign in</Button></Link>
               Have an account? <Link href="/login"><Button variant="link" className="p-0 h-auto text-primary">Sign in</Button></Link>
             </p>
           </CardContent>

@@ -469,3 +469,1452 @@ Arguments: ()
 
 2025-10-29 11:31:29,287 - __main__ - INFO - [SCHEDULER] SUCCESS - Collection completed successfully
 2025-10-29 11:31:29,288 - apscheduler.executors.default - INFO - Job "TEST: RapidAPI Collection at 11:30 AM (trigger: cron[hour='11', minute='30'], next run at: 2025-10-30 11:30:00 IST)" executed successfully
+2025-11-04 12:52:21,472 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-11-04 12:52:21,473 - __main__ - INFO - 
+2025-11-04 12:52:21,474 - __main__ - INFO - ======================================================================
+2025-11-04 12:52:21,474 - __main__ - INFO -   RAPIDAPI AMAZON SCHEDULER - TEST MODE
+2025-11-04 12:52:21,474 - __main__ - INFO -   Scheduled for 11:30 AM
+2025-11-04 12:52:21,474 - __main__ - INFO - ======================================================================
+2025-11-04 12:52:21,474 - __main__ - INFO - 
+2025-11-04 12:52:21,475 - __main__ - INFO - [SCHEDULER] Configuration:
+2025-11-04 12:52:21,475 - __main__ - INFO -   Script: rapidapi_amazon_collector.py
+2025-11-04 12:52:21,475 - __main__ - INFO -   Timeout: 30 minutes per run
+2025-11-04 12:52:21,475 - __main__ - INFO -   Fallback: CSV mode if database unavailable
+2025-11-04 12:52:21,475 - __main__ - INFO - 
+2025-11-04 12:52:21,475 - __main__ - INFO - [SCHEDULER] Scheduled jobs:
+2025-11-04 12:52:21,475 - __main__ - INFO -   JOB: TEST: RapidAPI Collection at 11:30 AM
+2025-11-04 12:52:21,476 - __main__ - INFO -        Next run: 2025-11-05 11:30:00+05:30
+2025-11-04 12:52:21,476 - __main__ - INFO - 
+2025-11-04 12:52:21,476 - __main__ - INFO - ======================================================================
+2025-11-04 12:52:21,476 - __main__ - INFO - [INFO] Press Ctrl+C to stop the scheduler
+2025-11-04 12:52:21,476 - __main__ - INFO - ======================================================================
+2025-11-04 12:52:21,476 - __main__ - INFO - 
+2025-11-04 12:52:21,487 - apscheduler.scheduler - INFO - Added job "TEST: RapidAPI Collection at 11:30 AM" to job store "default"
+2025-11-04 12:52:21,487 - apscheduler.scheduler - INFO - Scheduler started
+2025-11-04 12:56:41,842 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-11-04 12:56:41,842 - __main__ - INFO - 
+2025-11-04 12:56:41,842 - __main__ - INFO - ======================================================================
+2025-11-04 12:56:41,842 - __main__ - INFO -   RAPIDAPI AMAZON SCHEDULER - TEST MODE
+2025-11-04 12:56:41,842 - __main__ - INFO -   Scheduled for 13:00 PM
+2025-11-04 12:56:41,842 - __main__ - INFO - ======================================================================
+2025-11-04 12:56:41,842 - __main__ - INFO - 
+2025-11-04 12:56:41,842 - __main__ - INFO - [SCHEDULER] Configuration:
+2025-11-04 12:56:41,843 - __main__ - INFO -   Script: rapidapi_amazon_collector.py
+2025-11-04 12:56:41,843 - __main__ - INFO -   Timeout: 30 minutes per run
+2025-11-04 12:56:41,843 - __main__ - INFO -   Fallback: CSV mode if database unavailable
+2025-11-04 12:56:41,843 - __main__ - INFO - 
+2025-11-04 12:56:41,843 - __main__ - INFO - [SCHEDULER] Scheduled jobs:
+2025-11-04 12:56:41,843 - __main__ - INFO -   JOB: TEST: RapidAPI Collection at 13:00 PM
+2025-11-04 12:56:41,843 - __main__ - INFO -        Next run: 2025-11-04 13:00:00+05:30
+2025-11-04 12:56:41,843 - __main__ - INFO - 
+2025-11-04 12:56:41,843 - __main__ - INFO - ======================================================================
+2025-11-04 12:56:41,843 - __main__ - INFO - [INFO] Press Ctrl+C to stop the scheduler
+2025-11-04 12:56:41,843 - __main__ - INFO - ======================================================================
+2025-11-04 12:56:41,843 - __main__ - INFO - 
+2025-11-04 12:56:41,845 - apscheduler.scheduler - INFO - Added job "TEST: RapidAPI Collection at 13:00 PM" to job store "default"
+2025-11-04 12:56:41,845 - apscheduler.scheduler - INFO - Scheduler started
+2025-11-04 13:00:00,009 - apscheduler.executors.default - INFO - Running job "TEST: RapidAPI Collection at 13:00 PM (trigger: cron[hour='13', minute='0'], next run at: 2025-11-04 13:00:00 IST)" (scheduled at 2025-11-04 13:00:00+05:30)
+2025-11-04 13:00:00,010 - __main__ - INFO - ======================================================================
+2025-11-04 13:00:00,010 - __main__ - INFO - [SCHEDULER] Starting RapidAPI Amazon collection at 2025-11-04 13:00:00.010779
+2025-11-04 13:00:00,010 - __main__ - INFO - ======================================================================
+2025-11-04 13:01:43,632 - __main__ - INFO - [OUTPUT]
+2025-11-04 13:00:00,560 - INFO - [RapidAPI] Client initialized for host: real-time-amazon-data.p.rapidapi.com
+2025-11-04 13:00:00,560 - INFO - [START] Collection starting
+2025-11-04 13:00:00,560 - INFO - [DB] Connecting (1/3)...
+2025-11-04 13:00:00,699 - INFO - [MODE] Using DATABASE
+2025-11-04 13:00:00,699 - INFO - 
+[PROGRESS] Category 1/7
+2025-11-04 13:00:00,699 - INFO - 
+======================================================================
+[COLLECT] Baby Products
+2025-11-04 13:00:00,699 - INFO - [PAGE] 1/5...
+2025-11-04 13:00:00,699 - INFO - [RapidAPI] Fetching products: category=1350380031, page=1, country=IN
+2025-11-04 13:00:05,739 - INFO - [PAGE] 2/5...
+2025-11-04 13:00:05,740 - INFO - [RapidAPI] Fetching products: category=1350380031, page=2, country=IN
+2025-11-04 13:00:10,411 - INFO - [PAGE] 3/5...
+2025-11-04 13:00:10,411 - INFO - [RapidAPI] Fetching products: category=1350380031, page=3, country=IN
+2025-11-04 13:00:15,246 - INFO - [PAGE] 4/5...
+2025-11-04 13:00:15,246 - INFO - [RapidAPI] Fetching products: category=1350380031, page=4, country=IN
+2025-11-04 13:00:19,765 - INFO - [PAGE] 5/5...
+2025-11-04 13:00:19,765 - INFO - [RapidAPI] Fetching products: category=1350380031, page=5, country=IN
+2025-11-04 13:00:22,505 - INFO - [RESULT] 120 products saved
+2025-11-04 13:00:25,505 - INFO - 
+[PROGRESS] Category 2/7
+2025-11-04 13:00:25,506 - INFO - 
+======================================================================
+[COLLECT] Electronics
+2025-11-04 13:00:25,506 - INFO - [PAGE] 1/5...
+2025-11-04 13:00:25,506 - INFO - [RapidAPI] Fetching products: category=976419031, page=1, country=IN
+2025-11-04 13:00:30,331 - INFO - [PAGE] 2/5...
+2025-11-04 13:00:30,331 - INFO - [RapidAPI] Fetching products: category=976419031, page=2, country=IN
+2025-11-04 13:00:35,066 - INFO - [PAGE] 3/5...
+2025-11-04 13:00:35,066 - INFO - [RapidAPI] Fetching products: category=976419031, page=3, country=IN
+2025-11-04 13:00:39,681 - INFO - [PAGE] 4/5...
+2025-11-04 13:00:39,682 - INFO - [RapidAPI] Fetching products: category=976419031, page=4, country=IN
+2025-11-04 13:00:44,451 - INFO - [PAGE] 5/5...
+2025-11-04 13:00:44,451 - INFO - [RapidAPI] Fetching products: category=976419031, page=5, country=IN
+2025-11-04 13:00:47,054 - INFO - [RESULT] 120 products saved
+2025-11-04 13:00:50,055 - INFO - 
+[PROGRESS] Category 3/7
+2025-11-04 13:00:50,055 - INFO - 
+======================================================================
+[COLLECT] Computers & Accessories
+2025-11-04 13:00:50,056 - INFO - [PAGE] 1/5...
+2025-11-04 13:00:50,056 - INFO - [RapidAPI] Fetching products: category=976392031, page=1, country=IN
+2025-11-04 13:00:55,070 - INFO - [PAGE] 2/5...
+2025-11-04 13:00:55,071 - INFO - [RapidAPI] Fetching products: category=976392031, page=2, country=IN
+2025-11-04 13:00:59,684 - INFO - [PAGE] 3/5...
+2025-11-04 13:00:59,684 - INFO - [RapidAPI] Fetching products: category=976392031, page=3, country=IN
+2025-11-04 13:01:04,385 - INFO - [PAGE] 4/5...
+2025-11-04 13:01:04,385 - INFO - [RapidAPI] Fetching products: category=976392031, page=4, country=IN
+2025-11-04 13:01:09,155 - INFO - [PAGE] 5/5...
+2025-11-04 13:01:09,155 - INFO - [RapidAPI] Fetching products: category=976392031, page=5, country=IN
+2025-11-04 13:01:11,684 - INFO - [RESULT] 120 products saved
+2025-11-04 13:01:14,685 - INFO - 
+[PROGRESS] Category 4/7
+2025-11-04 13:01:14,686 - INFO - 
+======================================================================
+[COLLECT] Cell Phones
+2025-11-04 13:01:14,686 - INFO - [PAGE] 1/5...
+2025-11-04 13:01:14,686 - INFO - [RapidAPI] Fetching products: category=1389401031, page=1, country=IN
+2025-11-04 13:01:19,389 - INFO - [PAGE] 2/5...
+2025-11-04 13:01:19,389 - INFO - [RapidAPI] Fetching products: category=1389401031, page=2, country=IN
+2025-11-04 13:01:23,755 - INFO - [PAGE] 3/5...
+2025-11-04 13:01:23,755 - INFO - [RapidAPI] Fetching products: category=1389401031, page=3, country=IN
+2025-11-04 13:01:28,590 - INFO - [PAGE] 4/5...
+2025-11-04 13:01:28,590 - INFO - [RapidAPI] Fetching products: category=1389401031, page=4, country=IN
+2025-11-04 13:01:33,087 - INFO - [PAGE] 5/5...
+2025-11-04 13:01:33,088 - INFO - [RapidAPI] Fetching products: category=1389401031, page=5, country=IN
+2025-11-04 13:01:33,408 - ERROR - [RapidAPI] HTTP 429: Too Many Requests
+2025-11-04 13:01:33,408 - ERROR - [RapidAPI] Response: {"message":"You have exceeded the MONTHLY quota for Requests on your current plan, BASIC. Upgrade your plan at https:\/\/rapidapi.com\/letscrape-6bRBa3QguO5\/api\/real-time-amazon-data"}
+2025-11-04 13:01:33,409 - INFO - [RESULT] 96 products saved
+2025-11-04 13:01:36,410 - INFO - 
+[PROGRESS] Category 5/7
+2025-11-04 13:01:36,410 - INFO - 
+======================================================================
+[COLLECT] Toys & Games
+2025-11-04 13:01:36,410 - INFO - [PAGE] 1/5...
+2025-11-04 13:01:36,410 - INFO - [RapidAPI] Fetching products: category=1350387031, page=1, country=IN
+2025-11-04 13:01:36,856 - ERROR - [RapidAPI] HTTP 429: Too Many Requests
+2025-11-04 13:01:36,856 - ERROR - [RapidAPI] Response: {"message":"You have exceeded the MONTHLY quota for Requests on your current plan, BASIC. Upgrade your plan at https:\/\/rapidapi.com\/letscrape-6bRBa3QguO5\/api\/real-time-amazon-data"}
+2025-11-04 13:01:36,857 - INFO - [RESULT] 0 products saved
+2025-11-04 13:01:39,857 - INFO - 
+[PROGRESS] Category 6/7
+2025-11-04 13:01:39,858 - INFO - 
+======================================================================
+[COLLECT] Health & Personal Care
+2025-11-04 13:01:39,858 - INFO - [PAGE] 1/5...
+2025-11-04 13:01:39,858 - INFO - [RapidAPI] Fetching products: category=1350384031, page=1, country=IN
+2025-11-04 13:01:40,253 - ERROR - [RapidAPI] HTTP 429: Too Many Requests
+2025-11-04 13:01:40,253 - ERROR - [RapidAPI] Response: {"message":"You have exceeded the MONTHLY quota for Requests on your current plan, BASIC. Upgrade your plan at https:\/\/rapidapi.com\/letscrape-6bRBa3QguO5\/api\/real-time-amazon-data"}
+2025-11-04 13:01:40,253 - INFO - [RESULT] 0 products saved
+2025-11-04 13:01:43,254 - INFO - 
+[PROGRESS] Category 7/7
+2025-11-04 13:01:43,254 - INFO - 
+======================================================================
+[COLLECT] Home & Kitchen
+2025-11-04 13:01:43,254 - INFO - [PAGE] 1/5...
+2025-11-04 13:01:43,254 - INFO - [RapidAPI] Fetching products: category=976442031, page=1, country=IN
+2025-11-04 13:01:43,586 - ERROR - [RapidAPI] HTTP 429: Too Many Requests
+2025-11-04 13:01:43,586 - ERROR - [RapidAPI] Response: {"message":"You have exceeded the MONTHLY quota for Requests on your current plan, BASIC. Upgrade your plan at https:\/\/rapidapi.com\/letscrape-6bRBa3QguO5\/api\/real-time-amazon-data"}
+2025-11-04 13:01:43,586 - INFO - [RESULT] 0 products saved
+2025-11-04 13:01:43,612 - INFO - 
+[STATS] Products: 1112, ASINs: 1031
+2025-11-04 13:01:43,613 - INFO - [ANALYTICS] Avg Sales: 156,939,024
+2025-11-04 13:01:43,613 - INFO - [COMPLETE] 456 products collected
+2025-11-04 13:01:43,614 - INFO - [DB] Disconnected
+
+2025-11-04 13:01:43,632 - __main__ - ERROR - [STDERR]
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 42: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1161, in main
+    cfg = Config()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 824, in __init__
+    logger.info("[CONFIG] \u2713 Loaded")
+Message: '[CONFIG] \u2713 Loaded'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1144, in collect_all
+    if self.db.connect() and self.db.create_tables():
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 863, in connect
+    logger.info("[DB] \u2713 Connected")
+Message: '[DB] \u2713 Connected'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1144, in collect_all
+    if self.db.connect() and self.db.create_tables():
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 939, in create_tables
+    logger.info("[DB] \u2713 Tables ready")
+Message: '[DB] \u2713 Tables ready'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 72066)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 70829)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 72066)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 71207)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 70927)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69884)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69062)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69884)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69884)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 76556)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69854)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69854)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69983)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 69473)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 70287)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 74215)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 74215)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 74215)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 44: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1124, in collect_category
+    response = self.api.get_products_by_category(
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rest_client.py", line 411, in get_products_by_category
+    logger.info(f"[RapidAPI] \u2713 Success: {products_count} products (total available: {total})")
+Message: '[RapidAPI] \u2713 Success: 24 products (total available: 74215)'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 38: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1132, in collect_category
+    saved = self.db.save_products(products)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1031, in save_products
+    logger.info(f"[DB] \u2713 Saved {len(tuples)} products with analytics")
+Message: '[DB] \u2713 Saved 24 products with analytics'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1163, in main
+    results = collector.collect_all()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1152, in collect_all
+    res = self.collect_category(cat_id, cat_name)
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1135, in collect_category
+    logger.info(f"[SAVED] \u2713 {saved} products")
+Message: '[SAVED] \u2713 24 products'
+Arguments: ()
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Python313\Lib\logging\__init__.py", line 1154, in emit
+    stream.write(msg + self.terminator)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u20b9' in position 56: character maps to <undefined>
+Call stack:
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1188, in <module>
+    main()
+  File "C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\rapidapi_amazon_collector.py", line 1169, in main
+    logger.info(f"[ANALYTICS] Avg Price: \u20b9{stats['avg_price']:.2f}")
+Message: '[ANALYTICS] Avg Price: \u20b91392.91'
+Arguments: ()
+
+2025-11-04 13:01:43,639 - __main__ - INFO - [SCHEDULER] SUCCESS - Collection completed successfully
+2025-11-04 13:01:43,639 - apscheduler.executors.default - INFO - Job "TEST: RapidAPI Collection at 13:00 PM (trigger: cron[hour='13', minute='0'], next run at: 2025-11-05 13:00:00 IST)" executed successfully

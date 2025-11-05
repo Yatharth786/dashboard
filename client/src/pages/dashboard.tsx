@@ -513,10 +513,11 @@
 //   );
 // }
 
-
-import { useState, useEffect } from "react";
+// ============================================
+// FILE 3: src/pages/dashboard.tsx (COMPLETE WITH ALL AI FEATURES)
+// ============================================
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
-import FiltersPanel from "@/components/dashboard/filters-panel";
 import MetricsCards from "@/components/dashboard/metrics-cards";
 import ChartsGrid from "@/components/dashboard/charts-grid";
 import ProductRankings from "@/components/dashboard/product-rankings";
@@ -677,6 +678,8 @@ import {
 //   );
 // }
 export default function Dashboard() {
+  const [user, setUser] = useState<any>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [notifications, setNotifications] = useState<
     { id: number; message: string; time: string }[]
@@ -818,4 +821,3 @@ export default function Dashboard() {
     </FiltersProvider>
   );
 }
-

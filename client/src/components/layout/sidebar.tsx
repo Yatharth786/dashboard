@@ -170,17 +170,21 @@
 // }
 
 
+// ============================================
+// FILE: src/components/layout/sidebar.tsx (UPDATED)
+// ============================================
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  ChartLine,
-  Home,
+import { 
+  ChartLine, 
   Crown,
-  Info,
-  Settings,
+  Home, 
+  Info, 
+  Settings, 
+  PieChart,
   LogOut,
   Menu,
   X,
@@ -191,6 +195,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import useAuth from "@/App";
+
 
 const SECTIONS = [
   {
@@ -232,10 +238,12 @@ export default function Sidebar() {
   };
 
   const getUserInitials = () => {
-    if (!user) return "U";
-    const first = user.firstName || user.name?.split(" ")[0] || "";
-    const last = user.lastName || user.name?.split(" ")[1] || "";
-    return `${first[0] || ""}${last[0] || ""}`.toUpperCase() || "U";
+    if (!user?.name) return "U";
+    const names = user.name.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return user.name[0].toUpperCase();
   };
 
   const getSubscriptionColor = (tier: string) => {

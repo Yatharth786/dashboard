@@ -1,3 +1,6 @@
+
+
+ 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Filter, X, RotateCcw } from "lucide-react";
 import { useFilters } from "./FiltersContext";
-
+ 
 interface FilterState {
   table: string;
   category: string;
@@ -19,7 +22,7 @@ interface FilterState {
   showTrendingOnly: boolean;
   sortBy: string;
 }
-
+ 
 const DATE_RANGES = [
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
@@ -27,7 +30,7 @@ const DATE_RANGES = [
   { value: "1y", label: "Last year" },
   { value: "all", label: "All time" },
 ];
-
+ 
 const SORT_OPTIONS = [
   { value: "sales_desc", label: "Sales (High to Low)" },
   { value: "sales_asc", label: "Sales (Low to High)" },
@@ -38,13 +41,12 @@ const SORT_OPTIONS = [
   { value: "price_asc", label: "Price (Low to High)" },
   { value: "trending", label: "Trending" },
 ];
-
+ 
 export default function FiltersPanel({ selectedSource }: { selectedSource: string }) {
   const { filters, setFilters, applyFilters: applyContextFilters } = useFilters();
   const [appliedFilters, setAppliedFilters] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
+ 
   // ------------------ Fetch Categories ------------------
   const fetchCategories = async (table: string) => {
     try {
@@ -52,9 +54,9 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
       const res = await fetch(`http://localhost:8000/categories?table=${table}`);
       const data = await res.json();
       const cats = data.map((c: any) => c.category);
-
+ 
       setCategories(["All Categories", ...cats]);
-
+ 
       // Reset category if current not in list
       setFilters(prev => {
         if (!["All Categories", ...cats].includes(prev.category)) {
@@ -69,18 +71,18 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     fetchCategories(filters.table);
   }, [filters.table]);
-
+ 
   // ------------------ Helpers ------------------
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     setFilters({ ...filters, [key]: value });
   };
-
+ 
   const formatPrice = (price: number) => (price >= 10000 ? `₹${(price / 1000).toFixed(0)}K` : `₹${price.toLocaleString()}`);
-
+ 
   const resetFilters = () => {
     const defaultFilters = {
       table: "flipkart",
@@ -94,13 +96,8 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
     
     setFilters(defaultFilters);
     setAppliedFilters([]);
-    
-    // Trigger filter application in context
-    if (applyContextFilters) {
-      applyContextFilters(defaultFilters);
-    }
   };
-
+ 
   const applyFilters = () => {
     const applied: string[] = [];
     applied.push(`Table: ${filters.table}`);
@@ -108,46 +105,21 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
     if (filters.priceRange[0] > 0 || filters.priceRange[1] < 5000000)
       applied.push(`Price: ${formatPrice(filters.priceRange[0])} - ${formatPrice(filters.priceRange[1])}`);
     if (filters.rating > 0) applied.push(`Rating: ${filters.rating}+ stars`);
-    if (filters.dateRange !== "all") applied.push(`Date: ${DATE_RANGES.find(d => d.value === filters.dateRange)?.label}`);
     if (filters.showTrendingOnly) applied.push("Trending Only");
-
+ 
     setAppliedFilters(applied);
-    
-    // ✅ THIS IS THE KEY FIX: Trigger filter application in context
-    if (applyContextFilters) {
-      applyContextFilters(filters);
-    }
-    
-    console.log("Filters applied:", filters);
   };
-
+ 
   const removeFilter = (filterToRemove: string) => {
     setAppliedFilters(prev => prev.filter(f => f !== filterToRemove));
-
-    let updatedFilters = { ...filters };
-
-    if (filterToRemove.startsWith("Table:")) {
-      updatedFilters.table = "flipkart";
-    } else if (filterToRemove.startsWith("Category:")) {
-      updatedFilters.category = "All Categories";
-    } else if (filterToRemove.startsWith("Price:")) {
-      updatedFilters.priceRange = [0, 5000000];
-    } else if (filterToRemove.startsWith("Rating:")) {
-      updatedFilters.rating = 0;
-    } else if (filterToRemove.startsWith("Date:")) {
-      updatedFilters.dateRange = "all";
-    } else if (filterToRemove === "Trending Only") {
-      updatedFilters.showTrendingOnly = false;
-    }
-
-    setFilters(updatedFilters);
-    
-    // ✅ Apply the updated filters immediately
-    if (applyContextFilters) {
-      applyContextFilters(updatedFilters);
-    }
+ 
+    if (filterToRemove.startsWith("Table:")) updateFilter("table", "flipkart");
+    else if (filterToRemove.startsWith("Category:")) updateFilter("category", "All Categories");
+    else if (filterToRemove.startsWith("Price:")) updateFilter("priceRange", [0, 5000000]);
+    else if (filterToRemove.startsWith("Rating:")) updateFilter("rating", 0);
+    else if (filterToRemove === "Trending Only") updateFilter("showTrendingOnly", false);
   };
-
+ 
   // ------------------ Render ------------------
   return (
     <Card className="bg-card rounded-lg border mb-6">
@@ -160,7 +132,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
           <RotateCcw className="h-4 w-4 mr-2" /> Reset
         </Button>
       </CardHeader>
-
+ 
       <CardContent className="space-y-6">
         {/* Applied Filters */}
         {appliedFilters.length > 0 && (
@@ -171,7 +143,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
                   onClick={() => removeFilter(filter)}
                 >
                   {filter} <X className="h-3 w-3 ml-1" />
@@ -181,7 +153,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
             <Separator className="mt-4" />
           </div>
         )}
-
+ 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Table Selector */}
           <div className="space-y-2">
@@ -200,7 +172,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
               </SelectContent>
             </Select>
           </div>
-
+ 
           {/* Category Selector */}
           <div className="space-y-2">
             <Label>Category</Label>
@@ -210,7 +182,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
               disabled={loading}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder={loading ? "Loading..." : "Select category"} />
+                <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -220,9 +192,8 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
                 ))}
               </SelectContent>
             </Select>
-            {loading && <p className="text-xs text-muted-foreground">Loading categories...</p>}
           </div>
-
+ 
           {/* Price Range */}
           <div className="space-y-2">
             <Label>Price Range</Label>
@@ -234,7 +205,6 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
                 max={100000}
                 step={1000}
                 className="w-full"
-                disabled={loading}
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>{formatPrice(filters.priceRange[0])}</span>
@@ -242,15 +212,11 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
               </div>
             </div>
           </div>
-
+ 
           {/* Rating */}
           <div className="space-y-2">
             <Label>Minimum Rating</Label>
-            <Select 
-              value={filters.rating.toString()} 
-              onValueChange={(v) => updateFilter("rating", parseFloat(v))}
-              disabled={loading}
-            >
+            <Select value={filters.rating.toString()} onValueChange={(v) => updateFilter("rating", parseFloat(v))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Ratings" />
               </SelectTrigger>
@@ -264,7 +230,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
               </SelectContent>
             </Select>
           </div>
-
+ 
           {/* Date Range */}
           <div className="space-y-2">
             <Label>Date Range</Label>
@@ -285,7 +251,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
               </SelectContent>
             </Select>
           </div>
-
+ 
           {/* Sort By */}
           <div className="space-y-2">
             <Label>Sort By</Label>
@@ -307,7 +273,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
             </Select>
           </div>
         </div>
-
+ 
         {/* Advanced Options */}
         <Separator />
         <div className="space-y-4">
@@ -326,13 +292,13 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
             />
           </div>
         </div>
-
+ 
         {/* Apply & Clear Buttons */}
         <div className="flex gap-2 pt-4">
-          <Button onClick={applyFilters} className="flex-1" disabled={loading}>
-            {loading ? "Loading..." : "Apply Filters"}
+          <Button onClick={applyFilters} className="flex-1">
+            Apply Filters
           </Button>
-          <Button variant="outline" onClick={resetFilters} disabled={loading}>
+          <Button variant="outline" onClick={resetFilters}>
             Clear All
           </Button>
         </div>
@@ -340,3 +306,4 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
     </Card>
   );
 }
+ 

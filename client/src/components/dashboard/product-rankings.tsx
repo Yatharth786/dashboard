@@ -233,6 +233,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAISummary } from "@/hooks/useAISummary";
 
 interface FilterState {
   category: string;
@@ -305,9 +306,6 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
   
   const [flipkartProducts, setFlipkartProducts] = useState<TrendingProduct[]>([]);
   const [amazonProducts, setAmazonProducts] = useState<TrendingProduct[]>([]);
-export default function ProductRankings({ filters }: ProductRankingsProps) {
-  const BASE_URL = "http://localhost:8000";
-  const [trending, setTrending] = useState<TrendingProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch trending products based on selected source

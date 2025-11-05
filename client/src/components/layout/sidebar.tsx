@@ -184,7 +184,6 @@ import {
   Home, 
   Info, 
   Settings, 
-  PieChart,
   LogOut,
   Menu,
   X,

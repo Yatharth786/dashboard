@@ -309,6 +309,7 @@ def get_top_items(
         return {
             "error": "Invalid table. Use 'flipkart' or 'rapidapi_amazon_products'."
         }
+ 
 @app.get("/forecast_all_products")
 def forecast_all_products(n_forecast_days: int = Query(30, description="Days to forecast"),
                           db: Session = Depends(get_db)):
@@ -364,18 +365,20 @@ def get_notifications(
 @app.get("/category/products/{category_name}")
 def get_category_products(
     category_name: str,
-    source: str = "all",  # amazon / flipkart / all
-    limit: int = 20,
+    source: str,  # must be 'amazon' or 'flipkart'
+    limit: Optional[int] = None,
     offset: int = 0,
     db: Session = Depends(get_db)
 ):
     category_name = category_name.strip().lower()
  
-    # ✅ Flipkart Query
+    # ✅ Flipkart Query (min_price and max_price are returned as NULL)
     flipkart_query = """
         SELECT
             title AS product_name,
             ROUND(AVG(price), 2) AS avg_price,
+            NULL AS min_price,
+            NULL AS max_price,
             SUM(reviews) AS total_reviews,
             ROUND(AVG(rating), 2) AS avg_rating,
             'Flipkart' AS source
@@ -389,18 +392,21 @@ def get_category_products(
         LIMIT :limit OFFSET :offset
     """
  
-    # ✅ Amazon Query
+    # ✅ Amazon Query (uses your real min_price and max_price columns)
     amazon_query = """
         SELECT
             product_title AS product_name,
             ROUND(AVG(product_price_numeric), 2) AS avg_price,
+            ROUND(AVG(min_price), 2) AS min_price,
+            ROUND(AVG(max_price), 2) AS max_price,
             SUM(product_num_ratings) AS total_reviews,
             ROUND(AVG(product_star_rating_numeric), 2) AS avg_rating,
             'Amazon' AS source
         FROM "rapidapi_amazon_products"
         WHERE LOWER(category_name) = LOWER(:category_name)
           AND product_title IS NOT NULL
-          AND product_price_numeric IS NOT NULL
+          AND min_price IS NOT NULL
+          AND max_price IS NOT NULL
           AND product_star_rating_numeric IS NOT NULL
           AND product_num_ratings IS NOT NULL
         GROUP BY product_title
@@ -408,35 +414,34 @@ def get_category_products(
         LIMIT :limit OFFSET :offset
     """
  
-    # ✅ Strict Source Selection
+    # ✅ Select Query based on Source
     if source.lower() == "flipkart":
         query = flipkart_query
     elif source.lower() == "amazon":
         query = amazon_query
     else:
-        # ✅ Separate categories by name-space (avoid same-name conflict)
-        query = f"""
-            SELECT * FROM (
-                {flipkart_query}
-            ) AS flipkart_data
-            UNION ALL
-            SELECT * FROM (
-                {amazon_query}
-            ) AS amazon_data
-            WHERE LOWER(amazon_data.source) != LOWER(flipkart_data.source)
-        """
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid source. Must be either 'amazon' or 'flipkart'."
+        )
  
-    rows = db.execute(
-        text(query),
-        {"category_name": category_name, "limit": limit, "offset": offset}
-    ).fetchall()
+    # ✅ Execute Query
+    try:
+        rows = db.execute(
+            text(query),
+            {"category_name": category_name, "limit": limit, "offset": offset}
+        ).fetchall()
+    except Exception as e:
+        print(f"❌ SQL Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
  
-    # ✅ Convert to dict
     products = [dict(row._mapping) for row in rows]
  
+    # ✅ Response
     return {
         "category": category_name,
         "source": source,
+        "total_products": len(products),
         "products": products
     }
  

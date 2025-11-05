@@ -14,12 +14,15 @@ export interface Filters {
 interface FiltersContextType {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+  applyFilters: (newFilters: Filters) => void;
+  appliedFilters: Filters;
+  filterVersion: number; // Used to trigger re-fetches
 }
 
 const FiltersContext = createContext<FiltersContextType | undefined>(undefined);
 
 export const FiltersProvider = ({ children }: { children: ReactNode }) => {
-  const [filters, setFilters] = useState<Filters>({
+  const defaultFilters: Filters = {
     table: "flipkart",
     category: "All Categories",
     priceRange: [0, 5000000],
@@ -27,10 +30,29 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
     dateRange: "30d",
     showTrendingOnly: false,
     sortBy: "sales_desc",
-  });
+  };
+
+  const [filters, setFilters] = useState<Filters>(defaultFilters);
+  const [appliedFilters, setAppliedFilters] = useState<Filters>(defaultFilters);
+  const [filterVersion, setFilterVersion] = useState(0);
+
+  // ✅ Function to apply filters and trigger data refresh
+  const applyFilters = (newFilters: Filters) => {
+    setAppliedFilters(newFilters);
+    setFilterVersion(prev => prev + 1); // Increment to trigger useEffect in consumers
+    console.log("Filters applied in context:", newFilters);
+  };
 
   return (
-    <FiltersContext.Provider value={{ filters, setFilters }}>
+    <FiltersContext.Provider 
+      value={{ 
+        filters, 
+        setFilters, 
+        applyFilters,
+        appliedFilters,
+        filterVersion 
+      }}
+    >
       {children}
     </FiltersContext.Provider>
   );

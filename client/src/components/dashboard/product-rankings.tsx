@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAISummary } from "@/hooks/useAISummary";
  
@@ -14,6 +14,8 @@ interface TrendingProduct {
   star_rating?: number;
   review_count?: number;
   reviews?: number;
+  price?: number;
+  actual_price?: number;
 }
  
 function ProductCard({ product, index, source }: { product: TrendingProduct; index: number; source: string }) {
@@ -70,9 +72,26 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
   useEffect(() => {
     const fetchTrendingProducts = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        if (selectedSource === "both") {
+        const queryParams = buildQueryParams();
+        const dataSource = appliedFilters.table || selectedSource;
+
+        console.log("🔍 ProductRankings - Fetching with:", {
+          dataSource,
+          queryParams,
+          filters: appliedFilters,
+          filterVersion
+        });
+
+        if (dataSource === "both") {
           // Fetch from BOTH sources
+          const flipkartUrl = `${BASE_URL}/top?table=flipkart&n=5${queryParams ? '&' + queryParams : ''}`;
+          const amazonUrl = `${BASE_URL}/top?table=amazon_reviews&n=5${queryParams ? '&' + queryParams : ''}`;
+          
+          console.log("📡 Fetching URLs:", { flipkartUrl, amazonUrl });
+
           const [flipkartRes, amazonRes] = await Promise.all([
             fetch(`${BASE_URL}/top?table=flipkart&n=5`),
             fetch(`${BASE_URL}/top?table=rapidapi_amazon_products&n=5`),
@@ -96,14 +115,20 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
  
         } else {
           // Fetch Flipkart only
-          const res = await fetch(`${BASE_URL}/top?table=flipkart&n=10`);
+          const url = `${BASE_URL}/top?table=flipkart&n=10${queryParams ? '&' + queryParams : ''}`;
+          console.log("📡 Fetching URL:", url);
+          
+          const res = await fetch(url);
+          console.log("📊 Flipkart response status:", res.status);
+          
           const json = await res.json();
          
           setFlipkartProducts(Array.isArray(json.data) ? json.data : []);
           setAmazonProducts([]);
         }
       } catch (error) {
-        console.error("Error fetching trending products:", error);
+        console.error("❌ Error fetching trending products:", error);
+        setError(error instanceof Error ? error.message : "Failed to load products");
         setFlipkartProducts([]);
         setAmazonProducts([]);
       } finally {
@@ -115,8 +140,9 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
   }, [selectedSource]); // ✅ Refetch when selectedSource changes
  
   // Determine display mode
-  const showBoth = selectedSource === "both";
-  const isAmazon = selectedSource === "amazon_reviews";
+  const dataSource = appliedFilters.table || selectedSource;
+  const showBoth = dataSource === "both";
+  const isAmazon = dataSource === "amazon_reviews";
   const isFlipkart = !isAmazon && !showBoth;
  
   // Combine products for "both" mode
@@ -153,6 +179,26 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
         </CardHeader>
  
         <CardContent className="p-0">
+          {/* Error Display */}
+          {error && (
+            <div className="mb-3 p-3 bg-destructive/10 text-destructive rounded-lg flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
+
+          {/* Active Filters Display */}
+          {activeFilters.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              <span className="text-xs text-muted-foreground">Filters:</span>
+              {activeFilters.map((filter, idx) => (
+                <Badge key={idx} variant="outline" className="text-xs">
+                  {filter}
+                </Badge>
+              ))}
+            </div>
+          )}
+
           {/* AI Summary */}
           {summaryLoading ? (
             <p className="text-sm text-muted-foreground mb-3">Generating AI summary...</p>
@@ -197,7 +243,8 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
  
                 {flipkartProducts.length === 0 && amazonProducts.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>No trending products available</p>
+                    <p>No trending products available with current filters</p>
+                    <p className="text-xs mt-2">Try adjusting your filters or check backend API</p>
                   </div>
                 )}
               </>

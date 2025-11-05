@@ -1,21 +1,34 @@
-from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY
+from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, DateTime
 from .database_config import Base
 from datetime import datetime
+from sqlalchemy.sql import func
+
+
 class User(Base):
     __tablename__ = "users"
- 
+    
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    email = Column(String(100), unique=True, index=True)
-    password_hash = Column(String)
-    business_name = Column(String(100))
-    location = Column(String(50))
-    business_interests = Column(ARRAY(String))
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, default=datetime.utcnow)
-    is_active = Column(Boolean, default=True)   # <-- THIS DOESN'T EXIST IN DB
- 
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    
+    # IMPORTANT: password_hash must be at least VARCHAR(255) for bcrypt
+    # Bcrypt hashes are 60 characters long but we use 255 for safety
+    password_hash = Column(String(255), nullable=False)
+    
+    business_name = Column(String(255), nullable=True)
+    location = Column(String(100), nullable=True)
+    business_interests = Column(ARRAY(String), nullable=True, default=[])
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Optional: Add is_active if you want to enable/disable accounts
+    # is_active = Column(Boolean, default=True)
+    
+    def __repr__(self):
+        return f"<User {self.email}>"
+    
 
 class AmazonReview(Base):
     __tablename__ = "Amazon_Reviews"   
@@ -47,114 +60,96 @@ class AmazonReview(Base):
 
 class Product(Base):
     __tablename__ = "flipkart"  
-
+ 
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(String(100), unique=True, index=True, nullable=True)
-    asin = Column(String(20), nullable=True)
+    asin = Column(String(20), unique=True, nullable=True)
     title = Column(Text, nullable=False)
-    brand = Column(String(200), nullable=True)
-    category = Column(String(200), nullable=True)
+    brand = Column(Text, nullable=True)
+    category = Column(Text, nullable=True)
     price = Column(Float, nullable=True)
     currency = Column(String(5), nullable=True)
-    original_price = Column(Float, nullable=True)
-    discount = Column(Float, nullable=True)
     rating = Column(Float, nullable=True)
     reviews = Column(Integer, nullable=True)
-    reviews_count = Column(Integer, nullable=True)
     availability = Column(Boolean, nullable=True)
-    is_bestseller = Column(Boolean, default=False)
-    is_deal = Column(Boolean, default=False)
     variation = Column(JSON, nullable=True)
     image_url = Column(Text, nullable=True)
-    product_url = Column(String(500), nullable=True)
-    description = Column(Text, nullable=True)
-    features = Column(JSON, nullable=True)
-    specifications = Column(JSON, nullable=True)
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    last_updated = Column(TIMESTAMP, nullable=True)
 
-class User(Base):
-    __tablename__ = "users"
-
+class AmazonProductDetails(Base):
+    __tablename__ = "amazon_product_details"
+    
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    email = Column(String(100), unique=True, index=True)
-    password_hash = Column(String)
-    business_name = Column(String(100))
-    location = Column(String(50))
-    business_interests = Column(ARRAY(String))
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
-    is_active = Column(Boolean, default=True)
+    asin = Column(String(20), unique=True, index=True, nullable=False)
+    product_title = Column(Text)
+    product_url = Column(Text)
+    product_photo = Column(Text)
+    product_price = Column(String(50))
+    product_price_numeric = Column(Float)
+    product_star_rating = Column(String(10))
+    product_star_rating_numeric = Column(Float)
+    product_num_ratings = Column(Integer)
+    category_name = Column(String(200))
+    sales_volume = Column(String(50))
+    country = Column(String(10))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-# ==================== DATAFORSEO MODELS (ADDED) ====================
-
-class DataForSEOTask(Base):
-    """Model for storing DataForSEO task information"""
-    __tablename__ = "dataforseo_tasks"
+class IndianProduct(Base):
+    __tablename__ = "indian_products"
     
-    id = Column(String(100), primary_key=True, index=True)  # Task ID from API
-    keyword = Column(String(200), nullable=False, index=True)
-    location_code = Column(Integer, default=2840)
-    language_code = Column(String(10), default='en_US')
-    depth = Column(Integer, default=100)
-    
-    # Task status
-    status_code = Column(Integer)
-    status_message = Column(Text)
-    
-    # Results
-    result_count = Column(Integer, default=0)
-    cost = Column(Float, default=0.0)  # API cost in USD
-    
-    # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    completed_at = Column(DateTime(timezone=True))
-    
-    # Metadata
-    error_message = Column(Text)
-
-class AmazonProduct(Base):
-    """Model for storing Amazon products from DataForSEO"""
-    __tablename__ = "amazon_products"
-    
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    task_id = Column(String(100), nullable=False, index=True)
-    
-    # Product identifiers
-    asin = Column(String(20), nullable=False, index=True)
-    keyword = Column(String(200), nullable=False, index=True)
-    
-    # Product details
-    type = Column(String(50))  # 'amazon_product', etc.
-    title = Column(Text)
+    id = Column(Integer, primary_key=True, index=True)
+    asin = Column(String(20), unique=True, index=True, nullable=False)
+    title = Column(Text, nullable=False)
+    brand = Column(String(200))
+    manufacturer = Column(String(200))
+    description = Column(Text)
+    key_features = Column(ARRAY(Text))
+    image_urls = Column(ARRAY(Text))
     url = Column(Text)
-    image_url = Column(Text)
     
     # Pricing
-    price_from = Column(Float)
-    price_to = Column(Float)
-    currency = Column(String(5), default='USD')
-    special_offers = Column(JSON)
+    price = Column(Float)
+    mrp = Column(Float)
+    discount_percentage = Column(Float)
     
-    # Ratings & Reviews
-    rating_value = Column(Float)
-    rating_votes = Column(Integer)
-    bought_past_month = Column(Integer)
+    # Sales estimates
+    sales_estimate_low = Column(Integer)
+    sales_estimate_high = Column(Integer)
+    revenue_estimate_low = Column(Float)
+    revenue_estimate_high = Column(Float)
     
-    # Rankings
-    rank_group = Column(Integer)
-    rank_absolute = Column(Integer)
-    position = Column(String(20))
+    # Ratings
+    rating = Column(Float)
+    number_of_ratings = Column(Integer)
     
-    # Badges
-    is_amazon_choice = Column(Boolean, default=False)
-    is_best_seller = Column(Boolean, default=False)
+    # Category
+    main_category = Column(String(200))
+    category = Column(Text)
+    bsr = Column(Integer)
     
-    # Additional info
-    delivery_info = Column(JSON)
+    # Specifications
+    model_number = Column(String(100))
+    color = Column(String(50))
+    size = Column(String(50))
+    weight = Column(String(50))
+    dimensions = Column(String(100))
+    
+    # Seller info
+    number_of_sellers = Column(Integer)
+    is_prime = Column(Boolean, default=False)
+    is_amazon_fulfilled = Column(Boolean, default=False)
+    availability = Column(String(100))
+    
+    # Deals
+    has_deal = Column(Boolean, default=False)
+    deal_type = Column(String(100))
+    promo_codes = Column(ARRAY(String))
+    
+    # Amazon fees
+    referral_fee = Column(Float)
+    fba_fee = Column(Float)
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_scraped_at = Column(DateTime)

@@ -43,13 +43,14 @@ const SORT_OPTIONS = [
 ];
  
 export default function FiltersPanel({ selectedSource }: { selectedSource: string }) {
-  const { filters, setFilters } = useFilters(); // ✅ Use context
+  const { filters, setFilters, applyFilters: applyContextFilters } = useFilters();
   const [appliedFilters, setAppliedFilters] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
  
   // ------------------ Fetch Categories ------------------
   const fetchCategories = async (table: string) => {
     try {
+      setLoading(true);
       const res = await fetch(`http://localhost:8000/categories?table=${table}`);
       const data = await res.json();
       const cats = data.map((c: any) => c.category);
@@ -65,6 +66,9 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
       });
     } catch (err) {
       console.error("Failed to fetch categories:", err);
+      setCategories(["All Categories"]);
+    } finally {
+      setLoading(false);
     }
   };
  
@@ -80,15 +84,17 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
   const formatPrice = (price: number) => (price >= 10000 ? `₹${(price / 1000).toFixed(0)}K` : `₹${price.toLocaleString()}`);
  
   const resetFilters = () => {
-    setFilters({
+    const defaultFilters = {
       table: "flipkart",
       category: "All Categories",
-      priceRange: [0, 5000000],
+      priceRange: [0, 5000000] as [number, number],
       rating: 0,
       dateRange: "30d",
       showTrendingOnly: false,
       sortBy: "sales_desc",
-    });
+    };
+    
+    setFilters(defaultFilters);
     setAppliedFilters([]);
   };
  
@@ -122,7 +128,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
           <Filter className="h-5 w-5 mr-2" />
           Filters & Settings
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={resetFilters}>
+        <Button variant="outline" size="sm" onClick={resetFilters} disabled={loading}>
           <RotateCcw className="h-4 w-4 mr-2" /> Reset
         </Button>
       </CardHeader>
@@ -152,7 +158,11 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
           {/* Table Selector */}
           <div className="space-y-2">
             <Label>Data Source</Label>
-            <Select value={filters.table} onValueChange={(v) => updateFilter("table", v)}>
+            <Select 
+              value={filters.table} 
+              onValueChange={(v) => updateFilter("table", v)}
+              disabled={loading}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select table" />
               </SelectTrigger>
@@ -166,7 +176,11 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
           {/* Category Selector */}
           <div className="space-y-2">
             <Label>Category</Label>
-            <Select value={filters.category} onValueChange={(v) => updateFilter("category", v)}>
+            <Select 
+              value={filters.category} 
+              onValueChange={(v) => updateFilter("category", v)}
+              disabled={loading}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -220,7 +234,11 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
           {/* Date Range */}
           <div className="space-y-2">
             <Label>Date Range</Label>
-            <Select value={filters.dateRange} onValueChange={(v) => updateFilter("dateRange", v)}>
+            <Select 
+              value={filters.dateRange} 
+              onValueChange={(v) => updateFilter("dateRange", v)}
+              disabled={loading}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select date range" />
               </SelectTrigger>
@@ -237,7 +255,11 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
           {/* Sort By */}
           <div className="space-y-2">
             <Label>Sort By</Label>
-            <Select value={filters.sortBy} onValueChange={(v) => updateFilter("sortBy", v)}>
+            <Select 
+              value={filters.sortBy} 
+              onValueChange={(v) => updateFilter("sortBy", v)}
+              disabled={loading}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -266,6 +288,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
             <Switch
               checked={filters.showTrendingOnly}
               onCheckedChange={(checked) => updateFilter("showTrendingOnly", checked)}
+              disabled={loading}
             />
           </div>
         </div>

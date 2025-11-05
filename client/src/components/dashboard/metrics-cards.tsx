@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, ShoppingCart, Star, MessageSquare } from "lucide-react";
+import { TrendingUp, ShoppingCart, Star, MessageSquare, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
  
 interface MetricCardProps {
@@ -54,9 +54,20 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        if (selectedSource === "both") {
-          // Fetch data from BOTH sources
+        // Determine which data source to use
+        const dataSource = appliedFilters.table || selectedSource;
+        
+        console.log("🔍 MetricsCards - Fetching with:", {
+          dataSource,
+          filters: appliedFilters,
+          filterVersion
+        });
+
+        if (dataSource === "both") {
+          // Fetch data from BOTH sources - NO FILTERS for summary endpoints
           const [flipkartStatsRes, amazonStatsRes, flipkartCatRes, amazonCatRes] = await Promise.all([
             fetch(`${BASE_URL}/analytics/summary`),
             fetch(`${BASE_URL}/rapidapi_amazon_products/statistics`),
@@ -111,7 +122,8 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
           setAmazonCategories([]);
         }
       } catch (error) {
-        console.error("Error fetching metrics:", error);
+        console.error("❌ Error fetching metrics:", error);
+        setError(error instanceof Error ? error.message : "Failed to load metrics");
         setFlipkartStats(null);
         setAmazonStats(null);
         setFlipkartCategories([]);
@@ -125,14 +137,16 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   }, [selectedSource]); // ✅ Refetch when selectedSource changes
  
   const formatNumber = (num: number) => {
+    if (!num || num === 0) return "0";
     if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
     if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
  
   // Calculate combined stats for "both" mode
-  const showBoth = selectedSource === "both";
-  const isAmazon = selectedSource === "amazon_reviews";
+  const dataSource = appliedFilters.table || selectedSource;
+  const showBoth = dataSource === "both";
+  const isAmazon = dataSource === "amazon_reviews";
   const isFlipkart = !isAmazon && !showBoth;
  
   let totalReviews = 0;
@@ -187,7 +201,7 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
     },
     {
       title: showBoth ? "Products (Both)" : isAmazon ? "Products (Amazon)" : "Products (Flipkart)",
-      value: totalProducts.toString(),
+      value: formatNumber(totalProducts),
       icon: <ShoppingCart className="text-green-600 h-6 w-6" />,
       color: "bg-green-100",
     },
@@ -200,18 +214,27 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   ];
  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {cards.map((card, index) => (
-        <MetricCard
-          key={index}
-          title={card.title}
-          value={card.value}
-          icon={card.icon}
-          color={card.color}
-          isLoading={isLoading}
-        />
-      ))}
-    </div>
+    <>
+      {error && (
+        <div className="mb-4 p-4 bg-destructive/10 text-destructive rounded-lg flex items-center gap-2">
+          <AlertCircle className="h-5 w-5" />
+          <span>Error loading metrics: {error}</span>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {cards.map((card, index) => (
+          <MetricCard
+            key={index}
+            title={card.title}
+            value={card.value}
+            icon={card.icon}
+            color={card.color}
+            isLoading={isLoading}
+          />
+        ))}
+      </div>
+    </>
   );
 }
  

@@ -153,18 +153,54 @@ def get_products(db: Session, limit: int, offset: int, category: str = None,
     result = db.execute(text(query), params)
     return [dict(row._mapping) for row in result]
 
-def get_summary(db: Session) -> Dict[str, Any]:
-    query = """
-    SELECT
-        COUNT(*) AS total_products,
-        AVG(price) AS avg_price,
-        AVG(rating) AS avg_rating,
-        SUM(reviews) AS total_reviews
-    FROM flipkart
-    """
+def get_summary(db: Session, source: str) -> Dict[str, Any]:
+    if source == "flipkart":
+        query = """
+        SELECT
+            COUNT(*) AS total_products,
+            AVG(price) AS avg_price,
+            AVG(rating) AS avg_rating,
+            SUM(reviews) AS total_reviews
+        FROM flipkart
+        """
+    elif source == "amazon":
+        query = """
+        SELECT
+            COUNT(*) AS total_products,
+            AVG(product_price_numeric) AS avg_price,
+            AVG(product_star_rating_numeric) AS avg_rating,
+            SUM(product_num_ratings) AS total_reviews
+        FROM rapidapi_amazon_products
+        """
+    elif source == "all":
+        query = """
+        SELECT
+            SUM(total_products) AS total_products,
+            AVG(avg_price) AS avg_price,
+            AVG(avg_rating) AS avg_rating,
+            SUM(total_reviews) AS total_reviews
+        FROM (
+            SELECT
+                COUNT(*) AS total_products,
+                AVG(price) AS avg_price,
+                AVG(rating) AS avg_rating,
+                SUM(reviews) AS total_reviews
+            FROM flipkart
+            UNION ALL
+            SELECT
+                COUNT(*) AS total_products,
+                AVG(product_price_numeric) AS avg_price,
+                AVG(product_star_rating_numeric) AS avg_rating,
+                SUM(product_num_ratings) AS total_reviews
+            FROM rapidapi_amazon_products
+        ) combined
+        """
+    else:
+        raise ValueError("Invalid source. Must be 'flipkart', 'amazon', or 'all'.")
+ 
     result = db.execute(text(query))
     return dict(result.mappings().first())
-
+ 
 def get_top_products(db: Session, n: int):
     return db.query(models.Product).order_by(models.Product.rating.desc()).limit(n).all()
 
@@ -182,31 +218,45 @@ def get_top_products_amazon(db: Session, n: int):
     )
     return [dict(product_title=r.product_title, avg_rating=r.avg_rating, review_count=r.review_count) for r in result]
 
-def get_category_analytics(db: Session) -> List[Dict[str, Any]]:
+def get_category_analytics(db):
     query = """
-    SELECT 
-        category AS category,
+    SELECT
+        category,
         COUNT(*) AS total_products,
         AVG(price) AS avg_price,
         AVG(rating) AS avg_rating,
-        SUM(reviews) AS total_reviews
-    FROM flipkart
-    GROUP BY category
-
-    UNION ALL
-
-    SELECT 
-        product_category AS category,
-        COUNT(*) AS total_products,
-        NULL AS avg_price,
-        AVG(star_rating) AS avg_rating,
-        SUM(total_votes) AS total_reviews
-    FROM "Amazon_Reviews"
-    GROUP BY product_category
+        SUM(reviews) AS total_reviews,
+        source
+    FROM (
+        -- Flipkart data
+        SELECT
+            category,
+            price,
+            rating,
+            reviews,
+            'flipkart' AS source
+        FROM flipkart
+        WHERE price IS NOT NULL AND rating IS NOT NULL
+ 
+        UNION ALL
+ 
+        -- Amazon data
+        SELECT
+            category_name AS category,
+            product_price_numeric AS price,
+            product_star_rating_numeric AS rating,
+            product_num_ratings AS reviews,
+            'amazon' AS source
+        FROM rapidapi_amazon_products
+        WHERE product_price_numeric IS NOT NULL
+          AND product_star_rating_numeric IS NOT NULL
+    ) combined
+    GROUP BY category, source
+    ORDER BY total_reviews DESC
     """
-
     result = db.execute(text(query))
     return [dict(row._mapping) for row in result]
+ 
 
 def lstm_forecast(series, steps=365):
     """Forecast next 'steps' points using LSTM."""

@@ -1,20 +1,34 @@
 from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, DateTime
 from .database_config import Base
 from datetime import datetime
+from sqlalchemy.sql import func
+
 
 class User(Base):
     __tablename__ = "users"
- 
+    
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50))
-    last_name = Column(String(50))
-    email = Column(String(100), unique=True, index=True)
-    password_hash = Column(String)
-    business_name = Column(String(100))
-    location = Column(String(50))
-    business_interests = Column(ARRAY(String))
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    
+    # IMPORTANT: password_hash must be at least VARCHAR(255) for bcrypt
+    # Bcrypt hashes are 60 characters long but we use 255 for safety
+    password_hash = Column(String(255), nullable=False)
+    
+    business_name = Column(String(255), nullable=True)
+    location = Column(String(100), nullable=True)
+    business_interests = Column(ARRAY(String), nullable=True, default=[])
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Optional: Add is_active if you want to enable/disable accounts
+    # is_active = Column(Boolean, default=True)
+    
+    def __repr__(self):
+        return f"<User {self.email}>"
+    
 
 class AmazonReview(Base):
     __tablename__ = "Amazon_Reviews"   

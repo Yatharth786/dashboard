@@ -1001,4 +1001,233 @@ def get_amazon_sentiment(db: Session = Depends(get_db)):
         return [dict(row) for row in result]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
- 
+    
+# ============================================
+# FIXED LOGIN ENDPOINT - Replace in Fastapi_main.py
+# ============================================
+
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+# ============================================
+# Pydantic Models
+# ============================================
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
+
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+    user: dict = None
+
+# ============================================
+# FIXED LOGIN ENDPOINT (without is_active check)
+# ============================================
+
+@app.post("/users/login", response_model=LoginResponse)
+def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+    """
+    Authenticate user and return user data if successful
+    """
+    try:
+        # Find user by email
+        user = db.query(models.User).filter(
+            models.User.email == login_data.email
+        ).first()
+        
+        # Check if user exists
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="No account found with this email. Please sign up first."
+            )
+        
+        # Verify password
+        if not verify_password(login_data.password, user.password_hash):
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect password. Please try again or reset your password."
+            )
+        
+        # Successful login
+        return {
+            "success": True,
+            "message": "Login successful",
+            "user": {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "business_name": user.business_name,
+                "location": user.location,
+                "business_interests": user.business_interests,
+                "created_at": str(user.created_at)
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Login error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Login failed: {str(e)}"
+        )
+
+# ============================================
+# FIXED SIGNUP ENDPOINT
+# ============================================
+
+@app.post("/users/signup")
+def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new user account
+    """
+    try:
+        # Check if email already exists
+        existing_user = db.query(models.User).filter(
+            models.User.email == user_data.email
+        ).first()
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=400, 
+                detail="Email already registered. Please login instead."
+            )
+        
+        # Hash the password
+        hashed_password = get_password_hash(user_data.password)
+        
+        # Create new user (without is_active field)
+        new_user = models.User(
+            first_name=user_data.first_name,
+            last_name=user_data.last_name,
+            email=user_data.email,
+            password_hash=hashed_password,
+            business_name=user_data.business_name,
+            location=user_data.location,
+            business_interests=user_data.business_interests
+        )
+        
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        return {
+            "id": new_user.id,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
+            "email": new_user.email,
+            "business_name": new_user.business_name,
+            "location": new_user.location,
+            "business_interests": new_user.business_interests,
+            "created_at": new_user.created_at,
+            "message": "Account created successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Signup error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+# ============================================
+# PASSWORD RESET ENDPOINT
+# ============================================
+
+@app.post("/users/reset-password")
+def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
+    """
+    Reset user password
+    """
+    try:
+        # Find user by email
+        user = db.query(models.User).filter(
+            models.User.email == reset_data.email
+        ).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="No account found with this email"
+            )
+        
+        # Update password
+        user.password_hash = get_password_hash(reset_data.new_password)
+        
+        db.commit()
+        return {
+            "success": True,
+            "message": "Password updated successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Password reset error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating password: {str(e)}"
+        )
+
+# ============================================
+# CHECK EMAIL ENDPOINT
+# ============================================
+
+@app.get("/users/check-email/{email}")
+def check_email_exists(email: str, db: Session = Depends(get_db)):
+    """
+    Check if an email is already registered
+    """
+    user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
+    
+    return {
+        "exists": user is not None,
+        "email": email,
+        "message": "Email is registered" if user else "Email is available"
+    }
+
+# ============================================
+# GET USER PROFILE ENDPOINT
+# ============================================
+
+@app.get("/users/profile/{email}")
+def get_user_profile(email: str, db: Session = Depends(get_db)):
+    """
+    Get user profile by email
+    """
+    user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "business_name": user.business_name,
+        "location": user.location,
+        "business_interests": user.business_interests,
+        "created_at": str(user.created_at)
+    }

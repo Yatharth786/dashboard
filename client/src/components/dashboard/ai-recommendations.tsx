@@ -29,7 +29,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
  
-  const BASE_URL = "http://localhost:8000";
+  const BASE_URL = "http://122.176.108.253:9001";
  
   const fetchAIRecommendations = async () => {
     setLoading(true);

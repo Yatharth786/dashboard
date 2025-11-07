@@ -50,7 +50,7 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
   // ------------------ Fetch Categories ------------------
   const fetchCategories = async (table: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/categories?table=${table}`);
+      const res = await fetch(`http://122.176.108.253:9001/categories?table=${table}`);
       const data = await res.json();
       const cats = data.map((c: any) => c.category);
  

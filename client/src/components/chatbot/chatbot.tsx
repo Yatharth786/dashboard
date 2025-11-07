@@ -71,7 +71,7 @@ export default function Chatbot() {
   // ----------------- Mutation -----------------
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await fetch("http://localhost:8000/ai/query", {
+      const response = await fetch("http://122.176.108.253:9001/ai/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

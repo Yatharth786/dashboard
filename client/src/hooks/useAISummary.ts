@@ -20,7 +20,7 @@
 //           data.slice(0, 10)
 //         )}\n\nQuestion: ${question}`;
 
-//         const res = await fetch("http://localhost:8000/ai/query", {
+//         const res = await fetch("http://122.176.108.253:9001/ai/query", {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
 //           body: JSON.stringify({ question: prompt, source, limit }),
@@ -64,7 +64,7 @@ export function useAISummary(question: string, source: string, data: any[], limi
           data
         )}\n\nQuestion: ${question}`;
  
-        const res = await fetch("http://localhost:8000/ai/query", {
+        const res = await fetch("http://122.176.108.253:9001/ai/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: prompt, source, limit }),

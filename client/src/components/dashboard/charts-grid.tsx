@@ -46,7 +46,7 @@ function ChartCard({ title, children, isLoading, summary }: ChartCardProps) {
 }
  
 export default function ChartsGrid({ selectedSource }: { selectedSource: string }) {
-  const BASE_URL = "http://localhost:8000";
+  const BASE_URL = "http://122.176.108.253:9001";
   const { filters } = useFilters(); // ✅ Get filters from context
  
   const [flipkartProducts, setFlipkartProducts] = useState<any[]>([]);

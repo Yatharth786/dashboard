@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAISummary } from "@/hooks/useAISummary";
+import { useFilters } from "./FiltersContext";
  
 interface TrendingProduct {
   product_title?: string;
@@ -63,10 +64,46 @@ function ProductCard({ product, index, source }: { product: TrendingProduct; ind
  
 export default function ProductRankings({ selectedSource }: { selectedSource: string }) {
   const BASE_URL = "http://localhost:8000";
+  const { filters, filterVersion } = useFilters();
  
   const [flipkartProducts, setFlipkartProducts] = useState<TrendingProduct[]>([]);
   const [amazonProducts, setAmazonProducts] = useState<TrendingProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+ 
+  // Build query params from filters
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    
+    if (filters.category && filters.category !== "All Categories") {
+      params.append("category", filters.category);
+    }
+    if (filters.priceRange) {
+      params.append("min_price", filters.priceRange[0].toString());
+      params.append("max_price", filters.priceRange[1].toString());
+    }
+    if (filters.rating > 0) {
+      params.append("min_rating", filters.rating.toString());
+    }
+    
+    return params.toString();
+  };
+
+  // Get active filter labels
+  useEffect(() => {
+    const active: string[] = [];
+    if (filters.category && filters.category !== "All Categories") {
+      active.push(`Category: ${filters.category}`);
+    }
+    if (filters.rating > 0) {
+      active.push(`Rating: ${filters.rating}+`);
+    }
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 100000) {
+      active.push(`Price: ₹${filters.priceRange[0]} - ₹${filters.priceRange[1]}`);
+    }
+    setActiveFilters(active);
+  }, [filters]);
  
   // Fetch trending products based on selected source
   useEffect(() => {
@@ -76,25 +113,25 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
       
       try {
         const queryParams = buildQueryParams();
-        const dataSource = appliedFilters.table || selectedSource;
+        const dataSource = filters.table || selectedSource;
 
         console.log("🔍 ProductRankings - Fetching with:", {
           dataSource,
           queryParams,
-          filters: appliedFilters,
+          filters,
           filterVersion
         });
 
         if (dataSource === "both") {
           // Fetch from BOTH sources
           const flipkartUrl = `${BASE_URL}/top?table=flipkart&n=5${queryParams ? '&' + queryParams : ''}`;
-          const amazonUrl = `${BASE_URL}/top?table=amazon_reviews&n=5${queryParams ? '&' + queryParams : ''}`;
+          const amazonUrl = `${BASE_URL}/top?table=rapidapi_amazon_products&n=5${queryParams ? '&' + queryParams : ''}`;
           
           console.log("📡 Fetching URLs:", { flipkartUrl, amazonUrl });
 
           const [flipkartRes, amazonRes] = await Promise.all([
-            fetch(`${BASE_URL}/top?table=flipkart&n=5`),
-            fetch(`${BASE_URL}/top?table=rapidapi_amazon_products&n=5`),
+            fetch(flipkartUrl),
+            fetch(amazonUrl),
           ]);
  
           const [flipkartJson, amazonJson] = await Promise.all([
@@ -105,9 +142,10 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
           setFlipkartProducts(Array.isArray(flipkartJson.data) ? flipkartJson.data : []);
           setAmazonProducts(Array.isArray(amazonJson.data) ? amazonJson.data : []);
  
-        } else if (selectedSource === "amazon_reviews") {
+        } else if (dataSource === "amazon_reviews") {
           // Fetch Amazon only
-          const res = await fetch(`${BASE_URL}/top?table=rapidapi_amazon_products&n=10`);
+          const url = `${BASE_URL}/top?table=rapidapi_amazon_products&n=10${queryParams ? '&' + queryParams : ''}`;
+          const res = await fetch(url);
           const json = await res.json();
          
           setFlipkartProducts([]);
@@ -137,10 +175,10 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
     };
  
     fetchTrendingProducts();
-  }, [selectedSource]); // ✅ Refetch when selectedSource changes
+  }, [selectedSource, filterVersion]); // ✅ Refetch when selectedSource or filters change
  
   // Determine display mode
-  const dataSource = appliedFilters.table || selectedSource;
+  const dataSource = filters.table || selectedSource;
   const showBoth = dataSource === "both";
   const isAmazon = dataSource === "amazon_reviews";
   const isFlipkart = !isAmazon && !showBoth;
@@ -268,4 +306,3 @@ export default function ProductRankings({ selectedSource }: { selectedSource: st
     </div>
   );
 }
- 

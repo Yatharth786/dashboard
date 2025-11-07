@@ -63,7 +63,7 @@ export default function Dashboard() {
           {/* Header Bar */}
           <header className="bg-white/70 backdrop-blur-xl border border-sky-100 shadow-lg rounded-2xl px-8 py-5 mb-6 flex items-center justify-between sticky top-4 z-20 mx-6">
             <div>
-              <h2 className="text-2xl font-bold text-sky-900">Dashboard</h2>
+              <h2 className="text-2xl font-bold text-sky-900 flex items-center gap-2">Dashboard <span className="w-6 h-4 inline-block"><img src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg"alt="Indian Flag"className="w-full h-full object-cover"/></span></h2>
               <p className="text-slate-600 text-sm">
                 Real-time analytics from your review database
               </p>

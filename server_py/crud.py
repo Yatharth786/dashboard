@@ -305,7 +305,7 @@ def get_flipkart_categories(db: Session):
     return [{"category": row.category} for row in rows]
 
 def get_amazon_categories(db: Session):
-    rows = db.execute(text('SELECT DISTINCT product_category AS category FROM "Amazon_Reviews"')).fetchall()
+    rows = db.execute(text('SELECT DISTINCT category_name AS category FROM "rapidapi_amazon_products"')).fetchall()
     return [{"category": row.category} for row in rows]
 
 def get_forecast_all_products(db: Session, n_forecast_days: int = 365):

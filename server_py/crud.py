@@ -255,8 +255,7 @@ def get_category_analytics(db):
     ORDER BY total_reviews DESC
     """
     result = db.execute(text(query))
-    return [dict(row._mapping) for row in result]
- 
+    return [dict(row._mapping) for row in result] 
 
 def lstm_forecast(series, steps=365):
     """Forecast next 'steps' points using LSTM."""

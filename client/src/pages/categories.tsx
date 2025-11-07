@@ -1,3 +1,4 @@
+ 
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import axios from "axios";
@@ -49,20 +50,16 @@ export default function Categories() {
       </div>
     );
  
-  // ✅ Filter categories correctly
-  // ✅ Filter categories based on data source
   const filteredCategories = categories.filter((cat) => {
     if (tableFilter === "all") return true;
     return cat.source === tableFilter;
   });
- 
  
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FBFF] via-[#E3F2FD] to-[#DFF5FF]">
       <Sidebar />
  
       <div className="ml-64 min-h-screen">
-        {/* Header */}
         <header className="bg-white/70 backdrop-blur-md border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
           <h2 className="text-2xl font-semibold text-slate-800">
             Category Analytics
@@ -72,10 +69,9 @@ export default function Categories() {
           </p>
         </header>
  
-        {/* Main */}
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-12">
-            {/* Page Header */}
+            {/* Header */}
             <div className="text-center space-y-6">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl mb-4 shadow-inner">
                 <Tag className="h-10 w-10 text-blue-500" />
@@ -84,8 +80,7 @@ export default function Categories() {
                 Product Categories
               </h1>
               <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-                Explore your store’s top-performing categories with insights into
-                pricing, ratings, and customer engagement.
+                Explore top-performing categories and jump directly to their product lists.
               </p>
             </div>
  
@@ -103,7 +98,7 @@ export default function Categories() {
               </select>
             </div>
  
-            {/* Category Grid */}
+            {/* Category Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCategories.map((cat, index) => (
                 <Card
@@ -138,7 +133,7 @@ export default function Categories() {
                     <button
                       onClick={() =>
                         setLocation(
-                          `/category-products/${encodeURIComponent(cat.category)}`
+                          `/category-products/${cat.source}/${encodeURIComponent(cat.category)}`
                         )
                       }
                       className="flex items-center justify-center mt-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg py-2 hover:from-blue-600 hover:to-cyan-600 shadow-md transition-all"
@@ -155,4 +150,5 @@ export default function Categories() {
     </div>
   );
 }
+ 
  

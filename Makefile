@@ -11,7 +11,7 @@ PORT=9001
 
 # Run the FastAPI app with reload enabled
 run:
-	$(UVICORN) $(APP_MODULE) --reload --host $(HOST) --port $(PORT)
+	$(UVICORN) $(APP_MODULE) --reload --host $(HOST) --port $(PORT) --reload
 
 # Remove __pycache__ and pyc files
 clean:

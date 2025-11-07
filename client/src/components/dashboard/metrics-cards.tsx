@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, ShoppingCart, Star, MessageSquare, AlertCircle } from "lucide-react";
+import { TrendingUp, ShoppingCart, Star, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFilters } from "@/components/dashboard/FiltersContext";
  
 interface MetricCardProps {
   title: string;
@@ -44,6 +45,7 @@ function MetricCard({ title, value, icon, color, isLoading }: MetricCardProps) {
  
 export default function MetricsCards({ selectedSource }: { selectedSource: string }) {
   const BASE_URL = "http://localhost:8000";
+  const { filters } = useFilters(); // ✅ Get filters from context
  
   const [flipkartStats, setFlipkartStats] = useState<any>(null);
   const [amazonStats, setAmazonStats] = useState<any>(null);
@@ -51,28 +53,49 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   const [amazonCategories, setAmazonCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
  
+  // ✅ Build query params from filters
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+   
+    if (filters.category && filters.category !== "All Categories") {
+      params.append("category", filters.category);
+    }
+   
+    if (filters.priceRange[0] > 0) {
+      params.append("min_price", filters.priceRange[0].toString());
+    }
+    if (filters.priceRange[1] < 5000000) {
+      params.append("max_price", filters.priceRange[1].toString());
+    }
+   
+    if (filters.rating > 0) {
+      params.append("min_rating", filters.rating.toString());
+    }
+   
+    if (filters.dateRange !== "all") {
+      params.append("date_range", filters.dateRange);
+    }
+   
+    if (filters.showTrendingOnly) {
+      params.append("trending_only", "true");
+    }
+   
+    return params.toString();
+  };
+ 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      setError(null);
-      
       try {
-        // Determine which data source to use
-        const dataSource = appliedFilters.table || selectedSource;
-        
-        console.log("🔍 MetricsCards - Fetching with:", {
-          dataSource,
-          filters: appliedFilters,
-          filterVersion
-        });
-
-        if (dataSource === "both") {
-          // Fetch data from BOTH sources - NO FILTERS for summary endpoints
+        const table = filters.table || selectedSource;
+        const queryParams = buildQueryParams();
+       
+        if (table === "both") {
           const [flipkartStatsRes, amazonStatsRes, flipkartCatRes, amazonCatRes] = await Promise.all([
-            fetch(`${BASE_URL}/analytics/summary`),
-            fetch(`${BASE_URL}/rapidapi_amazon_products/statistics`),
-            fetch(`${BASE_URL}/flipkart/categories`),
-            fetch(`${BASE_URL}/rapidapi_amazon_products/categories`),
+            fetch(`${BASE_URL}/analytics-summary?source=flipkart&${queryParams}`),
+            fetch(`${BASE_URL}/analytics-summary?source=amazon&${queryParams}`),
+            fetch(`${BASE_URL}/flipkart/categories?${queryParams}`),
+            fetch(`${BASE_URL}/rapidapi_amazon_products/categories?${queryParams}`),
           ]);
  
           const [flipkartStatsJson, amazonStatsJson, flipkartCatJson, amazonCatJson] = await Promise.all([
@@ -87,11 +110,10 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
           setFlipkartCategories(Array.isArray(flipkartCatJson) ? flipkartCatJson : []);
           setAmazonCategories(Array.isArray(amazonCatJson) ? amazonCatJson : []);
  
-        } else if (selectedSource === "amazon_reviews") {
-          // Fetch Amazon data only
+        } else if (table === "amazon_reviews") {
           const [statsRes, catsRes] = await Promise.all([
-            fetch(`${BASE_URL}/rapidapi_amazon_products/statistics`),
-            fetch(`${BASE_URL}/rapidapi_amazon_products/categories`),
+            fetch(`${BASE_URL}/analytics-summary?source=amazon&${queryParams}`),
+            fetch(`${BASE_URL}/rapidapi_amazon_products/categories?${queryParams}`),
           ]);
  
           const [statsJson, catsJson] = await Promise.all([
@@ -105,10 +127,9 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
           setAmazonCategories(Array.isArray(catsJson) ? catsJson : []);
  
         } else {
-          // Fetch Flipkart data only
           const [statsRes, catsRes] = await Promise.all([
-            fetch(`${BASE_URL}/analytics/summary`),
-            fetch(`${BASE_URL}/flipkart/categories`),
+            fetch(`${BASE_URL}/analytics-summary?source=flipkart&${queryParams}`),
+            fetch(`${BASE_URL}/flipkart/categories?${queryParams}`),
           ]);
  
           const [statsJson, catsJson] = await Promise.all([
@@ -122,8 +143,7 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
           setAmazonCategories([]);
         }
       } catch (error) {
-        console.error("❌ Error fetching metrics:", error);
-        setError(error instanceof Error ? error.message : "Failed to load metrics");
+        console.error("Error fetching metrics:", error);
         setFlipkartStats(null);
         setAmazonStats(null);
         setFlipkartCategories([]);
@@ -134,20 +154,17 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
     };
  
     fetchData();
-  }, [selectedSource]); // ✅ Refetch when selectedSource changes
+  }, [selectedSource, filters]); // ✅ Re-fetch when filters change
  
   const formatNumber = (num: number) => {
-    if (!num || num === 0) return "0";
     if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
     if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
  
-  // Calculate combined stats for "both" mode
-  const dataSource = appliedFilters.table || selectedSource;
-  const showBoth = dataSource === "both";
-  const isAmazon = dataSource === "amazon_reviews";
-  const isFlipkart = !isAmazon && !showBoth;
+  const table = filters.table || selectedSource;
+  const showBoth = table === "both";
+  const isAmazon = table === "amazon_reviews";
  
   let totalReviews = 0;
   let avgRating = 0;
@@ -155,31 +172,24 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   let totalCategories = 0;
  
   if (showBoth) {
-    // Combine both sources
     totalReviews = (flipkartStats?.total_reviews || 0) + (amazonStats?.total_reviews || 0);
-   
-    // Weighted average rating
     const flipkartTotal = flipkartStats?.total_reviews || 0;
     const amazonTotal = amazonStats?.total_reviews || 0;
     const flipkartRating = flipkartStats?.avg_rating || 0;
-    const amazonRating = amazonStats?.average_rating || 0;
-   
+    const amazonRating = amazonStats?.avg_rating || amazonStats?.average_rating || 0;
     if (totalReviews > 0) {
       avgRating = ((flipkartRating * flipkartTotal) + (amazonRating * amazonTotal)) / totalReviews;
     }
-   
     totalProducts = (flipkartStats?.total_products || 0) + (amazonStats?.total_products || 0);
     totalCategories = flipkartCategories.length + amazonCategories.length;
  
   } else if (isAmazon) {
-    // Amazon only
     totalReviews = amazonStats?.total_reviews || 0;
-    avgRating = amazonStats?.average_rating || 0;
+    avgRating = amazonStats?.avg_rating || amazonStats?.average_rating || 0;
     totalProducts = amazonStats?.total_products || 0;
     totalCategories = amazonCategories.length;
  
   } else {
-    // Flipkart only
     totalReviews = flipkartStats?.total_reviews || 0;
     avgRating = flipkartStats?.avg_rating || 0;
     totalProducts = flipkartStats?.total_products || 0;
@@ -201,7 +211,7 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
     },
     {
       title: showBoth ? "Products (Both)" : isAmazon ? "Products (Amazon)" : "Products (Flipkart)",
-      value: formatNumber(totalProducts),
+      value: totalProducts.toString(),
       icon: <ShoppingCart className="text-green-600 h-6 w-6" />,
       color: "bg-green-100",
     },
@@ -214,27 +224,17 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   ];
  
   return (
-    <>
-      {error && (
-        <div className="mb-4 p-4 bg-destructive/10 text-destructive rounded-lg flex items-center gap-2">
-          <AlertCircle className="h-5 w-5" />
-          <span>Error loading metrics: {error}</span>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {cards.map((card, index) => (
-          <MetricCard
-            key={index}
-            title={card.title}
-            value={card.value}
-            icon={card.icon}
-            color={card.color}
-            isLoading={isLoading}
-          />
-        ))}
-      </div>
-    </>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {cards.map((card, index) => (
+        <MetricCard
+          key={index}
+          title={card.title}
+          value={card.value}
+          icon={card.icon}
+          color={card.color}
+          isLoading={isLoading}
+        />
+      ))}
+    </div>
   );
 }
- 

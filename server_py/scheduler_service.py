@@ -87,7 +87,7 @@ def main():
     # SCHEDULE CONFIGURATION - TESTING MODE
     # ============================================================================
     
-    # **TESTING SCHEDULE**: Daily at 11:30 AM for verification
+    # **TESTING SCHEDULE**: Daily at 01:00 PM for verification
     scheduler.add_job(
         run_rapidapi_collection,
         CronTrigger(hour=13, minute=00),

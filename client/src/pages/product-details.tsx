@@ -74,7 +74,7 @@ export default function ProductDetails() {
   const [activeTab, setActiveTab] = useState("1y");
   const [isAmazon, setIsAmazon] = useState(false);
  
-  const BASE_URL = "http://localhost:8000";
+  const BASE_URL = "http://122.176.108.253:9001";
  
   useEffect(() => {
     if (!productName) return;

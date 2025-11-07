@@ -5,7 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFilters } from "@/components/dashboard/FiltersContext";
-
+import { useAISummary } from "@/hooks/useAISummary";
+ 
 interface TrendingProduct {
   product_title?: string;
   title?: string;
@@ -14,12 +15,8 @@ interface TrendingProduct {
   star_rating?: number;
   review_count?: number;
   reviews?: number;
-  price?: number;
-  product_price_numeric?: number;
-  category?: string;
-  category_name?: string;
 }
-
+ 
 function ProductCard({
   product,
   index,
@@ -35,21 +32,19 @@ function ProductCard({
     "from-blue-50 to-blue-100",
     "from-purple-50 to-purple-100",
   ];
-
+ 
   const productName = product.product_title || product.title || "Unknown Product";
   const reviewCount = product.review_count || product.reviews || 0;
   const rating = product.avg_rating || product.rating || product.star_rating || 0;
-  const price = product.price || product.product_price_numeric || 0;
-  const category = product.category || product.category_name || "N/A";
-
+ 
   return (
     <div
       className={cn(
-        "flex items-center justify-between p-3 rounded-lg bg-gradient-to-r",
+        "flex items-center justify-between p-3 rounded-lg bg-gradient-to-r gap-3",
         gradients[index % gradients.length]
       )}
     >
-      <div className="flex items-center space-x-3 flex-1">
+      <div className="flex items-center space-x-3 flex-1 min-w-0">
         <div
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0",
@@ -59,22 +54,16 @@ function ProductCard({
           {index + 1}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">
+          <p className="font-medium text-sm truncate" title={productName.replace(/"/g, "")}>
             {productName.replace(/"/g, "")}
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{reviewCount.toLocaleString()} reviews</span>
-            <span>•</span>
-            <span>⭐ {rating.toFixed(1)}</span>
-            <span>•</span>
-            <span>₹{price.toLocaleString()}</span>
-            <span>•</span>
-            <span className="truncate">{category}</span>
-          </div>
+          <p className="text-xs text-muted-foreground truncate">
+            {reviewCount} reviews • ⭐ {rating.toFixed(1)}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Badge variant="outline" className="text-xs">
+        <Badge variant="outline" className="text-xs whitespace-nowrap">
           {source === "flipkart" ? "Flipkart" : "Amazon"}
         </Badge>
         <TrendingUp className="h-5 w-5 text-green-600" />
@@ -82,7 +71,7 @@ function ProductCard({
     </div>
   );
 }
-
+ 
 export default function ProductRankings({
   selectedSource,
 }: {
@@ -90,11 +79,11 @@ export default function ProductRankings({
 }) {
   const BASE_URL = "http://localhost:8000";
   const { filters } = useFilters(); // ✅ Get filters from context
-
+ 
   const [flipkartProducts, setFlipkartProducts] = useState<TrendingProduct[]>([]);
   const [amazonProducts, setAmazonProducts] = useState<TrendingProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+ 
   // ✅ Build query params from filters
   const buildQueryParams = () => {
     const params = new URLSearchParams();
@@ -128,7 +117,7 @@ export default function ProductRankings({
    
     return params.toString();
   };
-
+ 
   useEffect(() => {
     const fetchTrendingProducts = async () => {
       setIsLoading(true);
@@ -141,12 +130,12 @@ export default function ProductRankings({
             fetch(`${BASE_URL}/top?table=flipkart&n=5&${queryParams}`),
             fetch(`${BASE_URL}/top?table=rapidapi_amazon_products&n=5&${queryParams}`),
           ]);
-
+ 
           const [flipkartJson, amazonJson] = await Promise.all([
             flipkartRes.json(),
             amazonRes.json(),
           ]);
-
+ 
           setFlipkartProducts(flipkartJson.data || []);
           setAmazonProducts(amazonJson.data || []);
         } else if (table === "amazon_reviews") {
@@ -168,20 +157,41 @@ export default function ProductRankings({
         setIsLoading(false);
       }
     };
-
+ 
     fetchTrendingProducts();
   }, [selectedSource, filters]); // ✅ Re-fetch when filters change
-
+ 
   const table = filters.table || selectedSource;
   const showBoth = table === "both";
   const isAmazon = table === "amazon_reviews";
-
+ 
   const allProducts = showBoth
     ? [...flipkartProducts, ...amazonProducts]
     : isAmazon
     ? amazonProducts
     : flipkartProducts;
-
+ 
+  // ✅ AI Summary with proper source detection
+  const question =
+    showBoth
+      ? "Compare top trending Flipkart and Amazon products with key performance differences."
+      : isAmazon
+      ? "Summarize key patterns and insights from top trending Amazon products."
+      : "Summarize key patterns and insights from top trending Flipkart products.";
+ 
+  const sourceTable = isAmazon
+    ? "rapidapi_amazon_products"
+    : table === "flipkart"
+    ? "flipkart"
+    : "combined_sources";
+ 
+  const { summary, loading: summaryLoading } = useAISummary(
+    question,
+    sourceTable,
+    allProducts,
+    allProducts.length
+  );
+ 
   return (
     <div className="grid grid-cols-1 gap-6 mb-8">
       <Card className="bg-card rounded-xl p-6 border hover:shadow-md transition-shadow">
@@ -193,50 +203,23 @@ export default function ProductRankings({
               ? "Top Trending Products (Amazon)"
               : "Top Trending Products (Flipkart)"}
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">
-              Live Data
-            </Badge>
-            {/* ✅ Show active filter count */}
-            {(filters.category !== "All Categories" ||
-              filters.priceRange[0] > 0 ||
-              filters.priceRange[1] < 5000000 ||
-              filters.rating > 0) && (
-              <Badge variant="outline" className="text-xs bg-blue-50">
-                Filtered
-              </Badge>
-            )}
-          </div>
+          <Badge variant="secondary" className="text-xs">
+            Live Data
+          </Badge>
         </CardHeader>
-
+ 
         <CardContent className="p-0">
-          {/* ✅ Show active filters summary */}
-          {(filters.category !== "All Categories" ||
-            filters.rating > 0 ||
-            filters.priceRange[0] > 0 ||
-            filters.priceRange[1] < 5000000) && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
-              <p className="font-medium mb-1">Active Filters:</p>
-              <div className="flex flex-wrap gap-2">
-                {filters.category !== "All Categories" && (
-                  <Badge variant="secondary" className="text-xs">
-                    Category: {filters.category}
-                  </Badge>
-                )}
-                {filters.rating > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    Rating: {filters.rating}+ ⭐
-                  </Badge>
-                )}
-                {(filters.priceRange[0] > 0 || filters.priceRange[1] < 5000000) && (
-                  <Badge variant="secondary" className="text-xs">
-                    Price: ₹{filters.priceRange[0].toLocaleString()} - ₹{filters.priceRange[1].toLocaleString()}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-
+          {/* ✅ AI Summary Section */}
+          {summaryLoading ? (
+            <p className="text-sm text-muted-foreground mb-3">
+              Generating Smart summary...
+            </p>
+          ) : summary ? (
+            <p className="text-sm font-medium mb-3 p-3 bg-muted/50 rounded-lg">
+              {summary}
+            </p>
+          ) : null}
+ 
           <div className="space-y-4">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, index) => (
@@ -270,7 +253,7 @@ export default function ProductRankings({
                     ))}
                   </>
                 )}
-
+ 
                 {amazonProducts.length > 0 && (
                   <>
                     <h3 className="text-sm font-semibold text-muted-foreground mt-4 mb-2">
@@ -286,13 +269,6 @@ export default function ProductRankings({
                     ))}
                   </>
                 )}
-
-                {flipkartProducts.length === 0 && amazonProducts.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p className="text-lg font-medium">No products found</p>
-                    <p className="text-sm mt-2">Try adjusting your filters</p>
-                  </div>
-                )}
               </>
             ) : allProducts.length > 0 ? (
               allProducts.map((product, index) => (
@@ -305,8 +281,7 @@ export default function ProductRankings({
               ))
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="text-lg font-medium">No products found</p>
-                <p className="text-sm mt-2">Try adjusting your filters</p>
+                <p>No trending products available</p>
               </div>
             )}
           </div>
@@ -315,3 +290,4 @@ export default function ProductRankings({
     </div>
   );
 }
+ 

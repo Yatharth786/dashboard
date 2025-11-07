@@ -30,7 +30,7 @@ export default function Categories() {
  
   useEffect(() => {
     axios
-      .get("http://localhost:8000/analytics/category")
+      .get("http://122.176.108.253:9001/analytics/category")
       .then((res) => setCategories(res.data.categories))
       .catch(() => setError("Failed to fetch category data"))
       .finally(() => setLoading(false));

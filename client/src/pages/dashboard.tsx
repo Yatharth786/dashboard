@@ -29,7 +29,7 @@ export default function Dashboard() {
   >([]);
   const [selectedSource, setSelectedSource] = useState("Amazon_Reviews");
  
-  const BASE_URL = "http://localhost:8000"; // 🔹 Change if deploying to remote FastAPI
+  const BASE_URL = "http://122.176.108.253:9001"; // 🔹 Change if deploying to remote FastAPI
  
   // Fetch notifications from FastAPI
   const fetchNotifications = async (source = selectedSource) => {

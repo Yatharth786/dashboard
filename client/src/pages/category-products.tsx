@@ -41,7 +41,7 @@ export default function CategoryProducts() {
  
     axios
       .get(
-        `http://localhost:8000/category/products/${encodeURIComponent(
+        `http://122.176.108.253:9001/category/products/${encodeURIComponent(
           decodedCategory
         )}?source=${source}&limit=${limit ?? 1000000}&offset=${(page - 1) * limit}`
       )

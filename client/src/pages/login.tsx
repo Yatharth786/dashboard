@@ -228,7 +228,7 @@
 //             <Button 
 //               variant="link" 
 //               className="p-0 h-auto text-xs"
-//               onClick={() => window.open('http://localhost:8000/docs', '_blank')}
+//               onClick={() => window.open('http://122.176.108.253:9001/docs', '_blank')}
 //             >
 //               API Docs
 //             </Button>
@@ -279,7 +279,7 @@ export default function Login() {
   const [isResetting, setIsResetting] = useState(false);
 
   // UPDATE THIS TO YOUR SERVER IP
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = "http://122.176.108.253:9001";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -615,7 +615,7 @@ export default function Login() {
             <Button 
               variant="link" 
               className="p-0 h-auto text-xs"
-              onClick={() => window.open('http://localhost:8000/docs', '_blank')}
+              onClick={() => window.open('http://122.176.108.253:9001/docs', '_blank')}
             >
               API Docs
             </Button>

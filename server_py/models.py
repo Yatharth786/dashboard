@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY
+from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, Numeric, DateTime
 from .database_config import Base
+from sqlalchemy.sql import func
 from datetime import datetime
 class User(Base):
     __tablename__ = "users"
@@ -63,3 +64,121 @@ class Product(Base):
     variation = Column(JSON, nullable=True)  # JSON column
     image_url = Column(Text, nullable=True)
     last_updated = Column(TIMESTAMP, nullable=True)
+
+
+class AmazonProductDetails(Base):
+    __tablename__ = "amazon_product_details"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(String(100))
+    title = Column(String(500))
+    category = Column(String(255))
+    subcategory = Column(String(255))
+    price = Column(Numeric(10, 2))
+    rating = Column(Numeric(3, 2))
+    reviews = Column(Integer)
+    seller_name = Column(String(255))
+    availability = Column(String(50))
+    competitor_price = Column(Numeric(10, 2))
+    promotion_flag = Column(Boolean)
+    estimated_demand = Column(Integer)
+    cost_price = Column(Numeric(10, 2))
+    profit_margin = Column(Numeric(5, 2))
+    event = Column(String(255))
+    event_impact = Column(String(50))
+    ad_spend = Column(Numeric(10, 2))
+    market_share = Column(Numeric(5, 2))
+    date = Column(TIMESTAMP, server_default=func.now())  
+
+
+class IndianProduct(Base):
+    __tablename__ = "indian_products"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    asin = Column(String, unique=True, index=True)
+    
+    # Basic Info
+    title = Column(Text)
+    brand = Column(String)
+    manufacturer = Column(String)
+    url = Column(Text)
+    image_urls = Column(JSON)  # Array of all images
+    description = Column(Text)
+    key_features = Column(JSON)  # Array of bullet points
+    
+    # Pricing (INR)
+    price = Column(Float)
+    mrp = Column(Float)  # Maximum Retail Price
+    discount_percentage = Column(Float)
+    
+    # 🔥 SALES & REVENUE (Daily estimates)
+    sales_estimate_low = Column(Integer)
+    sales_estimate_high = Column(Integer)
+    revenue_estimate_low = Column(Float)
+    revenue_estimate_high = Column(Float)
+    
+    # Ratings & Reviews
+    rating = Column(Float)
+    number_of_ratings = Column(Integer)
+    
+    # Category & Ranking
+    category = Column(JSON)  # Full category path
+    main_category = Column(String)
+    bsr = Column(JSON)  # Best Seller Rank in different categories
+    
+    # Product Specifications
+    model_number = Column(String)
+    part_number = Column(String)
+    color = Column(String)
+    size = Column(String)
+    weight = Column(String)
+    dimensions = Column(JSON)
+    
+    # Additional Details
+    is_prime = Column(Boolean, default=False)
+    is_amazon_fulfilled = Column(Boolean, default=False)
+    number_of_sellers = Column(Integer)
+    availability = Column(String)
+    
+    # Promotions & Deals
+    has_deal = Column(Boolean, default=False)
+    deal_type = Column(String)
+    promo_codes = Column(JSON)
+    
+    # Amazon Fees (for sellers)
+    referral_fee = Column(Float)
+    fba_fee = Column(Float)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_scraped_at = Column(DateTime)
+
+class RapidapiAmazonProducts(Base):
+    __tablename__ = "rapidapi_amazon_products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    asin = Column(String)
+    category_id = Column(String)
+    category_name = Column(String)
+    product_title = Column(String)
+    product_url = Column(String)
+    product_photo = Column(String)
+    product_price = Column(String)
+    product_price_numeric = Column(Float)
+    product_original_price = Column(String)
+    product_original_price_numeric = Column(Float)
+    product_star_rating = Column(String)
+    product_star_rating_numeric = Column(Float)
+    product_num_ratings = Column(Integer)
+    is_best_seller = Column(Boolean)
+    is_amazon_choice = Column(Boolean)
+    is_prime = Column(Boolean)
+    sales_volume = Column(String)
+    country = Column(String)
+    raw_data = Column(JSON)
+    created_at = Column(TIMESTAMP)
+    updated_at = Column(TIMESTAMP)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}    

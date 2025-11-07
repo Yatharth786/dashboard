@@ -199,7 +199,8 @@ function Router() {
       <Route path="/sales" component={Sales} />
       <Route path="/revenue" component={Revenue} />
       <Route path="/categories" component={Categories} />
-      <Route path="/category-products/:category" component={CategoryProducts} />
+      {/* /* <Route path="/category-products/:category" component={CategoryProducts} />  */}
+      <Route path="/category-products/:source/:category" component={CategoryProducts} />
       <Route path="/product/:productName" component={ProductDetails} /> 
 
       {/* Tools Pages */}

@@ -1,34 +1,8 @@
-from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, DateTime
+from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, Numeric, DateTime
 from .database_config import Base
-from datetime import datetime
 from sqlalchemy.sql import func
+from datetime import datetime
 
-
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    
-    # IMPORTANT: password_hash must be at least VARCHAR(255) for bcrypt
-    # Bcrypt hashes are 60 characters long but we use 255 for safety
-    password_hash = Column(String(255), nullable=False)
-    
-    business_name = Column(String(255), nullable=True)
-    location = Column(String(100), nullable=True)
-    business_interests = Column(ARRAY(String), nullable=True, default=[])
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Optional: Add is_active if you want to enable/disable accounts
-    # is_active = Column(Boolean, default=True)
-    
-    def __repr__(self):
-        return f"<User {self.email}>"
-    
 
 class AmazonReview(Base):
     __tablename__ = "Amazon_Reviews"   
@@ -75,77 +49,87 @@ class Product(Base):
     image_url = Column(Text, nullable=True)
     last_updated = Column(TIMESTAMP, nullable=True)
 
+
 class AmazonProductDetails(Base):
     __tablename__ = "amazon_product_details"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    asin = Column(String(20), unique=True, index=True, nullable=False)
-    product_title = Column(Text)
-    product_url = Column(Text)
-    product_photo = Column(Text)
-    product_price = Column(String(50))
-    product_price_numeric = Column(Float)
-    product_star_rating = Column(String(10))
-    product_star_rating_numeric = Column(Float)
-    product_num_ratings = Column(Integer)
-    category_name = Column(String(200))
-    sales_volume = Column(String(50))
-    country = Column(String(10))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    product_id = Column(String(100))
+    title = Column(String(500))
+    category = Column(String(255))
+    subcategory = Column(String(255))
+    price = Column(Numeric(10, 2))
+    rating = Column(Numeric(3, 2))
+    reviews = Column(Integer)
+    seller_name = Column(String(255))
+    availability = Column(String(50))
+    competitor_price = Column(Numeric(10, 2))
+    promotion_flag = Column(Boolean)
+    estimated_demand = Column(Integer)
+    cost_price = Column(Numeric(10, 2))
+    profit_margin = Column(Numeric(5, 2))
+    event = Column(String(255))
+    event_impact = Column(String(50))
+    ad_spend = Column(Numeric(10, 2))
+    market_share = Column(Numeric(5, 2))
+    date = Column(TIMESTAMP, server_default=func.now())  
+
 
 class IndianProduct(Base):
     __tablename__ = "indian_products"
     
     id = Column(Integer, primary_key=True, index=True)
-    asin = Column(String(20), unique=True, index=True, nullable=False)
-    title = Column(Text, nullable=False)
-    brand = Column(String(200))
-    manufacturer = Column(String(200))
-    description = Column(Text)
-    key_features = Column(ARRAY(Text))
-    image_urls = Column(ARRAY(Text))
-    url = Column(Text)
+    asin = Column(String, unique=True, index=True)
     
-    # Pricing
+    # Basic Info
+    title = Column(Text)
+    brand = Column(String)
+    manufacturer = Column(String)
+    url = Column(Text)
+    image_urls = Column(JSON)  # Array of all images
+    description = Column(Text)
+    key_features = Column(JSON)  # Array of bullet points
+    
+    # Pricing (INR)
     price = Column(Float)
-    mrp = Column(Float)
+    mrp = Column(Float)  # Maximum Retail Price
     discount_percentage = Column(Float)
     
-    # Sales estimates
+    # 🔥 SALES & REVENUE (Daily estimates)
     sales_estimate_low = Column(Integer)
     sales_estimate_high = Column(Integer)
     revenue_estimate_low = Column(Float)
     revenue_estimate_high = Column(Float)
     
-    # Ratings
+    # Ratings & Reviews
     rating = Column(Float)
     number_of_ratings = Column(Integer)
     
-    # Category
-    main_category = Column(String(200))
-    category = Column(Text)
-    bsr = Column(Integer)
+    # Category & Ranking
+    category = Column(JSON)  # Full category path
+    main_category = Column(String)
+    bsr = Column(JSON)  # Best Seller Rank in different categories
     
-    # Specifications
-    model_number = Column(String(100))
-    color = Column(String(50))
-    size = Column(String(50))
-    weight = Column(String(50))
-    dimensions = Column(String(100))
+    # Product Specifications
+    model_number = Column(String)
+    part_number = Column(String)
+    color = Column(String)
+    size = Column(String)
+    weight = Column(String)
+    dimensions = Column(JSON)
     
-    # Seller info
-    number_of_sellers = Column(Integer)
+    # Additional Details
     is_prime = Column(Boolean, default=False)
     is_amazon_fulfilled = Column(Boolean, default=False)
-    availability = Column(String(100))
+    number_of_sellers = Column(Integer)
+    availability = Column(String)
     
-    # Deals
+    # Promotions & Deals
     has_deal = Column(Boolean, default=False)
-    deal_type = Column(String(100))
-    promo_codes = Column(ARRAY(String))
+    deal_type = Column(String)
+    promo_codes = Column(JSON)
     
-    # Amazon fees
+    # Amazon Fees (for sellers)
     referral_fee = Column(Float)
     fba_fee = Column(Float)
     
@@ -153,3 +137,57 @@ class IndianProduct(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_scraped_at = Column(DateTime)
+
+class RapidapiAmazonProducts(Base):
+    __tablename__ = "rapidapi_amazon_products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    asin = Column(String)
+    category_id = Column(String)
+    category_name = Column(String)
+    product_title = Column(String)
+    product_url = Column(String)
+    product_photo = Column(String)
+    product_price = Column(String)
+    product_price_numeric = Column(Float)
+    product_original_price = Column(String)
+    product_original_price_numeric = Column(Float)
+    product_star_rating = Column(String)
+    product_star_rating_numeric = Column(Float)
+    product_num_ratings = Column(Integer)
+    is_best_seller = Column(Boolean)
+    is_amazon_choice = Column(Boolean)
+    is_prime = Column(Boolean)
+    sales_volume = Column(String)
+    country = Column(String)
+    raw_data = Column(JSON)
+    created_at = Column(TIMESTAMP)
+    updated_at = Column(TIMESTAMP)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}    
+    
+class User(Base):
+    __tablename__ = "users"
+   
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+   
+    # IMPORTANT: password_hash must be at least VARCHAR(255) for bcrypt
+    # Bcrypt hashes are 60 characters long but we use 255 for safety
+    password_hash = Column(String(255), nullable=False)
+   
+    business_name = Column(String(255), nullable=True)
+    location = Column(String(100), nullable=True)
+    business_interests = Column(ARRAY(String), nullable=True, default=[])
+   
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+   
+    # Optional: Add is_active if you want to enable/disable accounts
+    # is_active = Column(Boolean, default=True)
+   
+    def __repr__(self):
+        return f"<User {self.email}>"    

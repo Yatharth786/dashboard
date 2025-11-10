@@ -1,3 +1,4 @@
+
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from . import models
@@ -10,6 +11,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Dropout
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
+import torch
+import torch.nn as nn
 
 def get_reviews(db: Session, limit: int = 50, offset: int = 0):
     return db.query(models.AmazonReview).offset(offset).limit(limit).all()
@@ -153,6 +156,7 @@ def get_products(db: Session, limit: int, offset: int, category: str = None,
     result = db.execute(text(query), params)
     return [dict(row._mapping) for row in result]
 
+
 def get_summary(db: Session, source: str) -> Dict[str, Any]:
     if source == "flipkart":
         query = """
@@ -197,7 +201,7 @@ def get_summary(db: Session, source: str) -> Dict[str, Any]:
         """
     else:
         raise ValueError("Invalid source. Must be 'flipkart', 'amazon', or 'all'.")
- 
+
     result = db.execute(text(query))
     return dict(result.mappings().first())
  
@@ -220,7 +224,7 @@ def get_top_products_amazon(db: Session, n: int):
 
 def get_category_analytics(db):
     query = """
-    SELECT
+    SELECT 
         category,
         COUNT(*) AS total_products,
         AVG(price) AS avg_price,
@@ -229,83 +233,42 @@ def get_category_analytics(db):
         source
     FROM (
         -- Flipkart data
-        SELECT
-            category,
-            price,
-            rating,
-            reviews,
+        SELECT 
+            category, 
+            price, 
+            rating, 
+            reviews, 
             'flipkart' AS source
         FROM flipkart
         WHERE price IS NOT NULL AND rating IS NOT NULL
- 
+
         UNION ALL
- 
+
         -- Amazon data
-        SELECT
-            category_name AS category,
-            product_price_numeric AS price,
-            product_star_rating_numeric AS rating,
-            product_num_ratings AS reviews,
+        SELECT 
+            category_name AS category, 
+            product_price_numeric AS price, 
+            product_star_rating_numeric AS rating, 
+            product_num_ratings AS reviews, 
             'amazon' AS source
         FROM rapidapi_amazon_products
-        WHERE product_price_numeric IS NOT NULL
+        WHERE product_price_numeric IS NOT NULL 
           AND product_star_rating_numeric IS NOT NULL
     ) combined
     GROUP BY category, source
     ORDER BY total_reviews DESC
     """
     result = db.execute(text(query))
-    return [dict(row._mapping) for row in result] 
-
-def lstm_forecast(series, steps=365):
-    """Forecast next 'steps' points using LSTM."""
-    # Handle insufficient data
-    if len(series) < 10:
-        last_val = series.iloc[-1] if len(series) > 0 else 0
-        return np.array([last_val] * steps)
-
-    # Scale data
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(series.values.reshape(-1, 1))
-
-    # Prepare LSTM sequences
-    X, y = [], []
-    time_steps = 10
-    for i in range(time_steps, len(scaled_data)):
-        X.append(scaled_data[i - time_steps:i, 0])
-        y.append(scaled_data[i, 0])
-    X, y = np.array(X), np.array(y)
-    X = np.reshape(X, (X.shape[0], X.shape[1], 1))
-
-    # Build LSTM model
-    model = Sequential()
-    model.add(LSTM(50, return_sequences=True, input_shape=(X.shape[1], 1)))
-    model.add(LSTM(50))
-    model.add(Dense(1))
-    model.compile(optimizer="adam", loss="mean_squared_error")
-
-    # Train model
-    model.fit(X, y, epochs=20, batch_size=8, verbose=0)
-
-    # Forecast next steps
-    last_sequence = scaled_data[-time_steps:]
-    predictions = []
-    for _ in range(steps):
-        X_pred = np.reshape(last_sequence, (1, time_steps, 1))
-        next_val = model.predict(X_pred, verbose=0)
-        predictions.append(next_val[0, 0])
-        last_sequence = np.append(last_sequence[1:], next_val)
-    predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1)).flatten()
-
-    return predictions
+    return [dict(row._mapping) for row in result]
 
 def get_flipkart_categories(db: Session):
     rows = db.execute(text("SELECT DISTINCT category FROM flipkart")).fetchall()
     return [{"category": row.category} for row in rows]
 
 def get_amazon_categories(db: Session):
-    rows = db.execute(text('SELECT DISTINCT category_name AS category FROM "rapidapi_amazon_products"')).fetchall()
+    rows = db.execute(text("SELECT DISTINCT category_name AS category FROM rapidapi_amazon_products")).fetchall()
     return [{"category": row.category} for row in rows]
+
 
 def get_forecast_all_products(db: Session, n_forecast_days: int = 365):
     # 1️⃣ Get Flipkart products with price history
@@ -409,3 +372,86 @@ def get_forecast_all_products(db: Session, n_forecast_days: int = 365):
         "total_products": len(forecast_data),
         "data": forecast_data
     }
+
+
+class LSTMModel(nn.Module):
+    def __init__(self, input_size=1, hidden_size=50, num_layers=2, output_size=1):
+        super(LSTMModel, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = self.fc(out[:, -1, :])
+        return out
+
+
+# -------------------------------
+# Forecast Function
+# -------------------------------
+def lstm_forecast(data_series, last_date=None, n_future=365):
+    """
+    data_series: Pandas Series (numeric values like price or rating)
+    last_date: datetime of the most recent record (optional)
+    n_future: number of days to forecast
+    """
+    data_series = data_series.dropna()
+
+    # Handle small data series
+    if len(data_series) < 15:
+        avg_value = data_series.mean()
+        if last_date is None:
+            last_date = datetime.today()
+        future_dates = [(last_date + timedelta(days=i+1)).strftime("%Y-%m-%d") for i in range(n_future)]
+        return {
+            "forecast": [float(avg_value)] * n_future,
+            "dates": future_dates,
+            "note": "Insufficient data for LSTM, used average value"
+        }
+
+    # Normalize data
+    data = data_series.values.reshape(-1, 1)
+    scaler = MinMaxScaler()
+    data_scaled = scaler.fit_transform(data)
+
+    X, y = [], []
+    time_steps = 10
+    for i in range(len(data_scaled) - time_steps):
+        X.append(data_scaled[i:i + time_steps])
+        y.append(data_scaled[i + time_steps])
+    X, y = np.array(X), np.array(y)
+
+    X_t = torch.tensor(X, dtype=torch.float32)
+    y_t = torch.tensor(y, dtype=torch.float32)
+
+    model = LSTMModel()
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+    # Train model
+    for _ in range(50):
+        optimizer.zero_grad()
+        output = model(X_t)
+        loss = criterion(output, y_t)
+        loss.backward()
+        optimizer.step()
+
+    # Predict future
+    last_seq = X[-1:]
+    future_preds = []
+    model.eval()
+    for _ in range(n_future):
+        pred = model(torch.tensor(last_seq, dtype=torch.float32))
+        future_preds.append(pred.item())
+        new_seq = np.append(last_seq[:, 1:, :], [[pred.item()]], axis=1)
+        last_seq = new_seq
+
+    # Reverse normalization
+    future_preds = scaler.inverse_transform(np.array(future_preds).reshape(-1, 1)).flatten()
+
+    # Generate future dates
+    if last_date is None:
+        last_date = datetime.today()
+    future_dates = [(last_date + timedelta(days=i+1)).strftime("%Y-%m-%d") for i in range(n_future)]
+
+    return {"forecast": future_preds.tolist(), "dates": future_dates, "note": "LSTM forecast successful"}

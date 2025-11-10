@@ -1,6 +1,3 @@
-// // ============================================
-// // FILE 1: src/hooks/useAISummary.ts (UPDATED FOR OLLAMA)
-// // ============================================
 // import { useEffect, useState } from "react";
 
 // export function useAISummary(question: string, source: string, data: any[], limit: number) {
@@ -13,14 +10,16 @@
 //       setLoading(false);
 //       return;
 //     }
+
 //     const fetchSummary = async () => {
 //       setLoading(true);
 //       try {
-//         const prompt = `Analyze this ${source} data and provide 2-3 key actionable insights in brief bullet points (maximum 2 lines total):\n\nData: ${JSON.stringify(
-//           data.slice(0, 10)
+//         // Add "in two concise lines" to the question
+//         const prompt = `Summarize the following data in **maximum two lines** for quick insights:\n\nData: ${JSON.stringify(
+//           data
 //         )}\n\nQuestion: ${question}`;
 
-//         const res = await fetch("http://122.176.108.253:9001/ai/query", {
+//         const res = await fetch("http://localhost:8000/ai/query", {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
 //           body: JSON.stringify({ question: prompt, source, limit }),
@@ -43,6 +42,10 @@
 // }
 
 
+// Replace your src/hooks/useAISummary.ts with this
+
+import { useEffect, useState } from "react";
+
 import { useEffect, useState } from "react";
  
 export function useAISummary(question: string, source: string, data: any[], limit: number) {
@@ -59,31 +62,37 @@ export function useAISummary(question: string, source: string, data: any[], limi
     const fetchSummary = async () => {
       setLoading(true);
       try {
-        // Add "in two concise lines" to the question
-        const prompt = `Summarize the following data in **maximum two lines** for quick insights:\n\nData: ${JSON.stringify(
-          data
-        )}\n\nQuestion: ${question}`;
- 
-        const res = await fetch("http://122.176.108.253:9001/ai/query", {
+        // Simple 2-line question for better AI response
+        const simpleQuestion = `${question} Give answer in maximum 2 lines.`;
+
+        const res = await fetch("http://localhost:8000/ai/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: prompt, source, limit }),
+          body: JSON.stringify({ 
+            question: simpleQuestion, 
+            source: source, 
+            limit: limit 
+          }),
         });
- 
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
         const json = await res.json();
-        setSummary(json.answer || "");
+        setSummary(json.answer || "No insights available.");
       } catch (err) {
         console.error("AI summary error:", err);
-        setSummary("Unable to generate summary.");
+        setSummary("");
       } finally {
         setLoading(false);
       }
     };
- 
-    fetchSummary();
-  }, [question, source, data, limit]);
- 
+
+    // Small delay to prevent too many simultaneous calls
+    const timer = setTimeout(fetchSummary, 200);
+    return () => clearTimeout(timer);
+  }, [question, source, data.length, limit]);
+
   return { summary, loading };
 }
- 
- 

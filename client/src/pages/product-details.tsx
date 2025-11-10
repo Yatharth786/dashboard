@@ -1,4 +1,4 @@
- 
+
 import { useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import axios from "axios";
@@ -16,7 +16,7 @@ import {
 } from "chart.js";
 import Sidebar from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
- 
+
 ChartJS.register(
   LineElement,
   PointElement,
@@ -27,7 +27,7 @@ ChartJS.register(
   Title,
   Filler
 );
- 
+
 interface ProductData {
   product_name: string;
   product_id?: string | null;
@@ -37,6 +37,16 @@ interface ProductData {
   source?: string;
   min_price?: number | null;
   max_price?: number | null;
+}
+
+interface ForecastData {
+  forecast: number[];
+  dates: string[];
+}
+
+interface Tab {
+  key: string;
+  label: string;
 }
  
 interface ForecastData {
@@ -53,11 +63,11 @@ export default function ProductDetails() {
   const [match, params] = useRoute("/product/:productName");
   const productName = params?.productName ? decodeURIComponent(params.productName) : "";
   const [, setLocation] = useLocation();
- 
+
   const [fromCategory, setFromCategory] = useState("");
   const [fromPage, setFromPage] = useState(1);
   const [source, setSource] = useState("");
- 
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
@@ -66,16 +76,16 @@ export default function ProductDetails() {
       setSource(urlParams.get("source") || "");
     }
   }, []);
- 
+
   const [data, setData] = useState<ProductData | null>(null);
   const [forecast, setForecast] = useState<ForecastData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("1y");
   const [isAmazon, setIsAmazon] = useState(false);
- 
-  const BASE_URL = "http://122.176.108.253:9001";
- 
+
+  const BASE_URL = "http://localhost:8000";
+
   useEffect(() => {
     if (!productName) return;
     setLoading(true);
@@ -89,28 +99,28 @@ export default function ProductDetails() {
         const isAmazonProduct =
           productSource.toLowerCase() === "amazon" ||
           fromCategory.toLowerCase().includes("amazon");
- 
+
         setIsAmazon(isAmazonProduct);
       })
       .catch(() => setError("Failed to fetch product details"))
       .finally(() => setLoading(false));
   }, [productName, fromCategory]);
- 
+
   useEffect(() => {
     if (!productName || !data) return;
- 
+
     let endpoint = "";
     const cleanProductName = productName.replace(/['"%]/g, "").trim();
- 
+
     if (isAmazon && data.product_id) {
       endpoint = `${BASE_URL}/lstm_forecast/amazon/${encodeURIComponent(data.product_id)}`;
     } else if (isAmazon) {
       endpoint = `${BASE_URL}/lstm_forecast/amazon/${encodeURIComponent(cleanProductName)}`;
     } else {
       endpoint = `${BASE_URL}/lstm_forecast/flipkart/${encodeURIComponent(cleanProductName)}`;
- 
+
     }
- 
+
     axios
   .get(endpoint)
   .then((res) => {
@@ -121,16 +131,16 @@ export default function ProductDetails() {
         Array.isArray(res.data.forecast.forecast_dates) &&
         Array.isArray(res.data.forecast.forecast_sales)
       ) {
-       
- 
+        
+
         // Forecast data
         const forecastDates = res.data.forecast.forecast_dates;
         const forecastSales = res.data.forecast.forecast_sales;
- 
+
         // Merge both
         const allDates = [ ...forecastDates];
         const allSales = [ ...forecastSales];
- 
+
         setForecast({ dates: allDates, forecast: allSales });
       } else {
         setForecast(null);
@@ -148,7 +158,7 @@ export default function ProductDetails() {
     }
   })
   .catch(() => setForecast(null));
- 
+
     // axios
     //   .get(endpoint)
     //   .then((res) => {
@@ -167,7 +177,7 @@ export default function ProductDetails() {
     //   })
     //   .catch(() => setForecast(null));
   }, [productName, isAmazon, data]);
- 
+
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center text-sky-600 bg-gradient-to-br from-sky-50 via-white to-sky-100">
@@ -188,10 +198,10 @@ export default function ProductDetails() {
         No data available for this product.
       </div>
     );
- 
+
   let displayedForecast: number[] = [];
   let displayedDates: string[] = [];
- 
+
   if (forecast?.forecast && forecast?.dates) {
     switch (activeTab) {
       case "1w":
@@ -217,7 +227,7 @@ export default function ProductDetails() {
         break;
     }
   }
- 
+
   const chartData = {
     labels: displayedDates,
     datasets: [
@@ -234,7 +244,7 @@ export default function ProductDetails() {
       },
     ],
   };
- 
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -252,7 +262,7 @@ export default function ProductDetails() {
       y: { title: { display: true, text: isAmazon ? "Rating" : "Price (₹)" } },
     },
   };
- 
+
   const tabs: Tab[] = [
     { key: "1w", label: "1 Week" },
     { key: "1m", label: "1 Month" },
@@ -260,7 +270,7 @@ export default function ProductDetails() {
     { key: "6m", label: "6 Months" },
     { key: "1y", label: "1 Year" },
   ];
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 text-gray-900 transition-all">
       <Sidebar />
@@ -287,7 +297,7 @@ export default function ProductDetails() {
             ← Back
           </button>
         </header>
- 
+
         <div className="mb-6">
           <span
             className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
@@ -297,7 +307,7 @@ export default function ProductDetails() {
             {isAmazon ? "🛒 Amazon Product" : "🛍️ Flipkart Product"}
           </span>
         </div>
- 
+
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
@@ -338,6 +348,30 @@ export default function ProductDetails() {
  
           <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
             <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
+              <CardTitle className="text-sky-900 font-semibold">Minimum Price</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 text-center">
+              <p className="text-4xl font-bold text-emerald-500">
+                {data.min_price != null ? `₹${data.min_price.toFixed(2)}` : "N/A"}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Lowest observed</p>
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
+            <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
+              <CardTitle className="text-sky-900 font-semibold">Maximum Price</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 text-center">
+              <p className="text-4xl font-bold text-rose-500">
+                {data.max_price != null ? `₹${data.max_price.toFixed(2)}` : "N/A"}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Highest observed</p>
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
+            <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
               <CardTitle className="text-sky-900 font-semibold">Average Rating</CardTitle>
             </CardHeader>
             <CardContent className="p-6 text-center">
@@ -360,7 +394,7 @@ export default function ProductDetails() {
             </CardContent>
           </Card>
         </div>
- 
+
         {/* Line Chart */}
         <Card className="backdrop-blur-xl bg-white/90 border border-sky-100 shadow-xl rounded-3xl">
           <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl flex justify-between items-center">
@@ -381,7 +415,7 @@ export default function ProductDetails() {
               ))}
             </div>
           </CardHeader>
- 
+
           <CardContent className="p-6">
             {forecast && displayedForecast.length > 0 ? (
               <div style={{ height: "400px" }}>

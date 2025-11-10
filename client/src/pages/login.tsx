@@ -11,7 +11,7 @@
 // import { Separator } from "@/components/ui/separator";
 // import { Checkbox } from "@/components/ui/checkbox";
 // import { ChartLine } from "lucide-react";
-
+ 
 // export default function Login() {
 //   const [, setLocation] = useLocation();
 //   const { toast } = useToast();
@@ -21,10 +21,10 @@
 //   });
 //   const [isLoading, setIsLoading] = useState(false);
 //   const [rememberMe, setRememberMe] = useState(false);
-
+ 
 //   const handleSubmit = (e: React.FormEvent) => {
 //     e.preventDefault();
-    
+   
 //     if (!formData.email || !formData.password) {
 //       toast({
 //         title: "Missing fields",
@@ -33,14 +33,14 @@
 //       });
 //       return;
 //     }
-
+ 
 //     setIsLoading(true);
-
+ 
 //     // Simulate login
 //     setTimeout(() => {
 //       // Check if user exists in localStorage (from signup)
 //       const existingProfile = localStorage.getItem('userProfile');
-      
+     
 //       let user;
 //       if (existingProfile) {
 //         const profile = JSON.parse(existingProfile);
@@ -60,29 +60,29 @@
 //           loggedIn: true
 //         };
 //       }
-      
+     
 //       localStorage.setItem('user', JSON.stringify(user));
-      
+     
 //       if (rememberMe) {
 //         localStorage.setItem('rememberMe', 'true');
 //       }
-
+ 
 //       toast({
 //         title: "Welcome back!",
 //         description: "Successfully logged in to Amazon Reviews Analytics.",
 //       });
-      
+     
 //       setIsLoading(false);
 //       setLocation("/dashboard");
 //     }, 800);
 //   };
-
+ 
 //   const handleInputChange = (field: string) => (
 //     e: React.ChangeEvent<HTMLInputElement>
 //   ) => {
 //     setFormData(prev => ({ ...prev, [field]: e.target.value }));
 //   };
-
+ 
 //   const handleDemoLogin = () => {
 //     const user = {
 //       email: "demo@example.com",
@@ -93,15 +93,15 @@
 //       loggedIn: true
 //     };
 //     localStorage.setItem('user', JSON.stringify(user));
-    
+   
 //     toast({
 //       title: "Demo Login",
 //       description: "Logged in as demo user",
 //     });
-    
+   
 //     setLocation("/dashboard");
 //   };
-
+ 
 //   return (
 //     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
 //       <div className="w-full max-w-md">
@@ -113,7 +113,7 @@
 //           <h1 className="text-3xl font-bold text-foreground mb-2">Amazon Reviews Analytics</h1>
 //           <p className="text-muted-foreground">Real-time insights from your review data</p>
 //         </div>
-
+ 
 //         <Card className="border shadow-xl">
 //           <CardHeader className="text-center">
 //             <CardTitle className="text-2xl">Welcome Back</CardTitle>
@@ -124,15 +124,15 @@
          
 //           <CardContent className="space-y-6">
 //             {/* Demo Login Button */}
-//             <Button 
-//               variant="outline" 
+//             <Button
+//               variant="outline"
 //               className="w-full border-2 border-primary/50 hover:bg-primary/10"
 //               onClick={handleDemoLogin}
 //             >
 //               <ChartLine className="mr-2 h-4 w-4" />
 //               Continue as Demo User
 //             </Button>
-
+ 
 //             <div className="relative">
 //               <div className="absolute inset-0 flex items-center">
 //                 <Separator className="w-full" />
@@ -172,8 +172,8 @@
  
 //               <div className="flex items-center justify-between text-sm">
 //                 <div className="flex items-center space-x-2">
-//                   <Checkbox 
-//                     id="remember" 
+//                   <Checkbox
+//                     id="remember"
 //                     checked={rememberMe}
 //                     onCheckedChange={(checked) => setRememberMe(checked === true)}
 //                   />
@@ -185,17 +185,17 @@
 //                   Forgot password?
 //                 </Button>
 //               </div>
-
-//               <Button 
-//                 type="submit" 
-//                 className="w-full" 
+ 
+//               <Button
+//                 type="submit"
+//                 className="w-full"
 //                 disabled={isLoading}
 //                 size="lg"
 //               >
 //                 {isLoading ? "Signing in..." : "Sign In"}
 //               </Button>
 //             </form>
-
+ 
 //             {/* Signup Link */}
 //             <div className="text-center">
 //               <p className="text-sm text-muted-foreground">
@@ -207,7 +207,7 @@
 //                 </Link>
 //               </p>
 //             </div>
-
+ 
 //             {/* Info Note */}
 //             <div className="text-center pt-4 border-t">
 //               <p className="text-xs text-muted-foreground">
@@ -216,7 +216,7 @@
 //             </div>
 //           </CardContent>
 //         </Card>
-
+ 
 //         {/* Footer Links */}
 //         <div className="text-center mt-6 text-sm text-muted-foreground">
 //           <p>Powered by Amazon Reviews Database</p>
@@ -225,10 +225,10 @@
 //               <Button variant="link" className="p-0 h-auto text-xs">About</Button>
 //             </Link>
 //             {" • "}
-//             <Button 
-//               variant="link" 
+//             <Button
+//               variant="link"
 //               className="p-0 h-auto text-xs"
-//               onClick={() => window.open('http://122.176.108.253:9001/docs', '_blank')}
+//               onClick={() => window.open('http://localhost:8000/docs', '_blank')}
 //             >
 //               API Docs
 //             </Button>
@@ -238,7 +238,7 @@
 //     </div>
 //   );
 // }
-
+ 
 // ============================================
 // FILE: src/pages/login.tsx (FIXED FOR YOUR ALERT COMPONENT)
 // ============================================
@@ -261,7 +261,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-
+ 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -277,24 +277,24 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-
+ 
   // UPDATE THIS TO YOUR SERVER IP
-  const API_BASE_URL = "http://122.176.108.253:9001";
-
+  const API_BASE_URL = "http://localhost:8000";
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
-    
+   
     if (!formData.email || !formData.password) {
       setErrorMessage("Please fill in all required fields.");
       return;
     }
 
     setIsLoading(true);
-
+ 
     try {
       console.log("🔍 Attempting login for:", formData.email);
-      
+     
       const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: "POST",
         headers: {
@@ -306,13 +306,13 @@ export default function Login() {
           password: formData.password
         }),
       });
-
+ 
       console.log("📥 Response status:", response.status);
-
+ 
       if (!response.ok) {
         const errorData = await response.json();
         console.error("❌ Login error:", errorData);
-        
+       
         // Handle different error types
         if (response.status === 404) {
           setErrorMessage("No account found with this email. Please sign up first.");
@@ -324,14 +324,14 @@ export default function Login() {
         } else {
           setErrorMessage(errorData.detail || "Login failed. Please try again.");
         }
-        
+       
         setIsLoading(false);
         return;
       }
-
+ 
       const data = await response.json();
       console.log("✅ Login successful:", data);
-
+ 
       // Store user data
       const user = {
         id: data.user.id,
@@ -343,7 +343,7 @@ export default function Login() {
         loggedIn: true,
         createdAt: data.user.created_at
       };
-      
+     
       localStorage.setItem('user', JSON.stringify(user));
       
       if (rememberMe) {
@@ -358,11 +358,91 @@ export default function Login() {
       
       setIsLoading(false);
       setLocation("/dashboard");
-
+ 
     } catch (error: any) {
       console.error("❌ Network error:", error);
       setErrorMessage("Network error. Please check your connection and try again.");
       setIsLoading(false);
+    }
+  };
+ 
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      return;
+    }
+ 
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Password required",
+        description: "Please enter and confirm your new password",
+        variant: "destructive"
+      });
+      return;
+    }
+ 
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords match",
+        variant: "destructive"
+      });
+      return;
+    }
+ 
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters",
+        variant: "destructive"
+      });
+      return;
+    }
+ 
+    setIsResetting(true);
+ 
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: resetEmail,
+          new_password: newPassword
+        }),
+      });
+ 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Password reset failed");
+      }
+ 
+      const data = await response.json();
+     
+      toast({
+        title: "Password updated!",
+        description: "Your password has been successfully reset. Please login with your new password.",
+      });
+ 
+      setShowResetDialog(false);
+      setResetEmail("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setFormData({ ...formData, password: "" });
+ 
+    } catch (error: any) {
+      toast({
+        title: "Reset failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -495,13 +575,13 @@ export default function Login() {
           <CardContent className="space-y-6">
             {/* Error Alert - FIXED to use description prop */}
             {errorMessage && (
-              <Alert 
-                variant="destructive" 
+              <Alert
+                variant="destructive"
                 icon={<AlertCircle className="h-4 w-4" />}
                 description={errorMessage}
               />
             )}
-
+ 
             {/* Demo Login Button */}
             <Button 
               variant="outline" 
@@ -560,9 +640,9 @@ export default function Login() {
                     Remember me
                   </Label>
                 </div>
-                <Button 
+                <Button
                   type="button"
-                  variant="link" 
+                  variant="link"
                   className="p-0 h-auto text-primary text-sm"
                   onClick={() => {
                     setResetEmail(formData.email);
@@ -622,7 +702,7 @@ export default function Login() {
           </p>
         </div>
       </div>
-
+ 
       {/* Password Reset Dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <DialogContent>
@@ -632,7 +712,7 @@ export default function Login() {
               Enter your email and new password to reset your account password
             </DialogDescription>
           </DialogHeader>
-          
+         
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="reset-email">Email Address</Label>
@@ -644,7 +724,7 @@ export default function Login() {
                 onChange={(e) => setResetEmail(e.target.value)}
               />
             </div>
-            
+           
             <div className="space-y-2">
               <Label htmlFor="new-password">New Password</Label>
               <Input
@@ -656,7 +736,7 @@ export default function Login() {
                 minLength={6}
               />
             </div>
-            
+           
             <div className="space-y-2">
               <Label htmlFor="confirm-password">Confirm Password</Label>
               <Input
@@ -669,7 +749,7 @@ export default function Login() {
               />
             </div>
           </div>
-
+ 
           <DialogFooter>
             <Button
               variant="outline"

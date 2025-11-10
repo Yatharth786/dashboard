@@ -10,7 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { ChevronLeft, Star, ShoppingBag } from "lucide-react";
- 
+
 interface Product {
   product_name: string;
   avg_price: number;
@@ -32,16 +32,16 @@ export default function CategoryProducts() {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const limit = 12;
- 
+
   useEffect(() => {
     if (!source || !category) return;
- 
+
     const decodedCategory = decodeURIComponent(category.trim());
     setLoading(true);
- 
+
     axios
       .get(
-        `http://122.176.108.253:9001/category/products/${encodeURIComponent(
+        `http://localhost:8000/category/products/${encodeURIComponent(
           decodedCategory
         )}?source=${source}&limit=${limit ?? 1000000}&offset=${(page - 1) * limit}`
       )
@@ -55,11 +55,11 @@ export default function CategoryProducts() {
       .catch(() => setError("Failed to fetch products"))
       .finally(() => setLoading(false));
   }, [source, category, page]);
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FBFF] via-[#E3F2FD] to-[#DFF5FF]">
       <Sidebar />
- 
+
       <div className="ml-64 min-h-screen">
         {/* Sticky Header */}
         <header className="bg-white/70 backdrop-blur-md border-b border-slate-200 px-6 py-4 sticky top-0 z-10 flex items-center justify-between">
@@ -80,7 +80,7 @@ export default function CategoryProducts() {
             Explore top products in this category
           </p>
         </header>
- 
+
         {/* Main Content */}
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-10">
@@ -96,7 +96,7 @@ export default function CategoryProducts() {
                 Browse {source} products with ratings, reviews, and prices.
               </p>
             </div>
- 
+
             {/* Loading & Error States */}
             {loading ? (
               <div className="text-center text-slate-400 py-20 text-lg">
@@ -122,7 +122,7 @@ export default function CategoryProducts() {
                       Showing products for {decodeURIComponent(category || "")}
                     </CardDescription>
                   </CardHeader>
- 
+
                   <CardContent className="overflow-x-auto">
                     <table className="min-w-full text-sm border-collapse">
                       <thead>
@@ -160,7 +160,7 @@ export default function CategoryProducts() {
                             <td className="py-3 px-4">
                               {(page - 1) * limit + index + 1}
                             </td>
- 
+
                             {/* ✅ Clickable Product Name */}
                             <td className="py-3 px-4 font-medium text-slate-800">
                               <span
@@ -174,7 +174,7 @@ export default function CategoryProducts() {
                                 {p.product_name}
                               </span>
                             </td>
- 
+
                             <td className="py-3 px-4 text-emerald-600 font-semibold">
                               ₹{p.avg_price?.toLocaleString()}
                             </td>
@@ -204,7 +204,7 @@ export default function CategoryProducts() {
                     </table>
                   </CardContent>
                 </Card>
- 
+
                 {/* Pagination */}
                 <div className="flex justify-center items-center gap-4 mt-8">
                   <button

@@ -1,4 +1,4 @@
- 
+
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import axios from "axios";
@@ -49,7 +49,7 @@ export default function Categories() {
         {error}
       </div>
     );
- 
+
   const filteredCategories = categories.filter((cat) => {
     if (tableFilter === "all") return true;
     return cat.source === tableFilter;
@@ -68,7 +68,7 @@ export default function Categories() {
             Insights for all product categories in your store
           </p>
         </header>
- 
+
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-12">
             {/* Header */}
@@ -97,7 +97,7 @@ export default function Categories() {
                 <option value="amazon">Amazon</option>
               </select>
             </div>
- 
+
             {/* Category Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCategories.map((cat, index) => (

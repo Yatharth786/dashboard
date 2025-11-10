@@ -21,11 +21,11 @@ export default function Revenue() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [source, setSource] = useState<"flipkart" | "amazon" | "all">("flipkart");
   const [loading, setLoading] = useState<boolean>(false);
- 
+
   const fetchSummary = async (selectedSource: string) => {
     try {
       setLoading(true);
-      const res = await axios.get(`http://122.176.108.253:9001/analytics-summary?source=${selectedSource}`);
+      const res = await axios.get(`http://localhost:8000/analytics-summary?source=${selectedSource}`);
       setSummary(res.data);
     } catch (err) {
       console.error("Error fetching summary:", err);
@@ -33,11 +33,11 @@ export default function Revenue() {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     fetchSummary(source);
   }, [source]);
- 
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -51,7 +51,7 @@ export default function Revenue() {
               Key performance insights powered by AI
             </p>
           </div>
- 
+
           {/* 🔽 Dropdown */}
           <select
             value={source}
@@ -63,7 +63,7 @@ export default function Revenue() {
             <option value="all">All</option>
           </select>
         </header>
- 
+
         {/* Loading State */}
         {loading || !summary ? (
           <div className="flex h-[80vh] items-center justify-center text-muted-foreground">
@@ -83,7 +83,7 @@ export default function Revenue() {
                   ratings, and reviews — all updated in real-time.
                 </p>
               </div>
- 
+
               {/* Analytics Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-700/20">
@@ -99,7 +99,7 @@ export default function Revenue() {
                     </CardDescription>
                   </CardHeader>
                 </Card>
- 
+
                 <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-700/20">
                   <CardHeader className="flex flex-col items-center">
                     <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-3">
@@ -113,7 +113,7 @@ export default function Revenue() {
                     </CardDescription>
                   </CardHeader>
                 </Card>
- 
+
                 <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-700/20">
                   <CardHeader className="flex flex-col items-center">
                     <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center mb-3">
@@ -127,7 +127,7 @@ export default function Revenue() {
                     </CardDescription>
                   </CardHeader>
                 </Card>
- 
+
                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-700/20">
                   <CardHeader className="flex flex-col items-center">
                     <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-3">
@@ -142,7 +142,7 @@ export default function Revenue() {
                   </CardHeader>
                 </Card>
               </div>
- 
+
               {/* Insight Message */}
               <Card className="bg-gradient-to-r from-primary/10 to-purple-500/10 border-none">
                 <CardContent className="p-8 text-center">
@@ -163,7 +163,5 @@ export default function Revenue() {
     </div>
   );
 }
- 
- 
- 
- 
+
+

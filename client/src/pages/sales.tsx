@@ -1,11 +1,11 @@
- 
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, IndianRupee, ArrowUpDown } from "lucide-react";
- 
+
 // ✅ Unified interface for both Flipkart & Amazon
 interface TrendingProduct {
   id?: number;
@@ -33,18 +33,18 @@ export default function Sales() {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
- 
+
   useEffect(() => {
     fetchData();
   }, [source]);
- 
+
   const fetchData = () => {
     setLoading(true);
     const url =
       source === "flipkart"
-        ? "http://122.176.108.253:9001/top?table=flipkart&n=500"
-        : "http://122.176.108.253:9001/rapidapi/top-sales?limit=500";
- 
+        ? "http://localhost:8000/top?table=flipkart&n=500"
+        : "http://localhost:8000/rapidapi/top-sales?limit=500";
+
     axios
       .get(url)
       .then((res) => {
@@ -54,7 +54,7 @@ export default function Sales() {
       .catch(() => setError("Failed to fetch top products"))
       .finally(() => setLoading(false));
   };
- 
+
   // --- Sorting Logic ---
   const getFieldValue = (p: TrendingProduct, field: string) => {
     switch (field) {
@@ -68,7 +68,7 @@ export default function Sales() {
         return 0;
     }
   };
- 
+
   const sortedProducts = [...products].sort((a, b) => {
     const factor = sortOrder === "asc" ? 1 : -1;
     return (getFieldValue(a, sortField) - getFieldValue(b, sortField)) * factor;
@@ -123,7 +123,7 @@ export default function Sales() {
               Showing {source.charAt(0).toUpperCase() + source.slice(1)} Data
             </p>
           </div>
- 
+
           {/* Source Dropdown */}
           <select
             value={source}
@@ -147,7 +147,7 @@ export default function Sales() {
                 Analyze and sort by reviews, price, or rating for data-driven decisions.
               </p>
             </div>
- 
+
             {/* Sort Buttons */}
             <div className="flex justify-end gap-3">
               {["reviews", "price", "rating"].map((field) => (
@@ -222,7 +222,7 @@ export default function Sales() {
                 </table>
               </CardContent>
             </Card>
- 
+
             {/* Pagination */}
             <div className="flex justify-center items-center gap-3 mt-6">
               <Button

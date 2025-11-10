@@ -7,7 +7,7 @@ import {
   CheckCircle,
   Info
 } from "lucide-react"
-
+ 
 const alertVariants = cva(
   "relative w-full rounded-lg border p-4 flex items-start space-x-3",
   {
@@ -26,7 +26,7 @@ const alertVariants = cva(
     },
   }
 )
-
+ 
 const icons = {
   info: Info,
   success: CheckCircle,
@@ -34,7 +34,7 @@ const icons = {
   destructive: AlertCircle,
   default: Info
 }
-
+ 
 export interface AlertProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof alertVariants> {
@@ -42,7 +42,7 @@ export interface AlertProps
   description?: string
   icon?: React.ReactNode
 }
-
+ 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ className, variant, title, description, icon, children, ...props }, ref) => {
     const Icon = icons[variant ?? "default"]
@@ -62,7 +62,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   }
 )
 Alert.displayName = "Alert"
-
+ 
 // Additional exports for compatibility with shadcn/ui patterns
 const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
@@ -75,7 +75,7 @@ const AlertTitle = React.forwardRef<
   />
 ))
 AlertTitle.displayName = "AlertTitle"
-
+ 
 const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -87,5 +87,6 @@ const AlertDescription = React.forwardRef<
   />
 ))
 AlertDescription.displayName = "AlertDescription"
-
+ 
 export { Alert, AlertTitle, AlertDescription }
+ 

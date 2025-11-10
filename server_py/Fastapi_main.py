@@ -33,7 +33,7 @@ app.add_middleware(
 class AIQuery(BaseModel):
     question: str
     source: str  # "flipkart" or "amazon_reviews"
-    limit: Optional[int] = 50
+    limit: Optional[int] = None
     
 def decimal_to_float(obj):
     if isinstance(obj, (int, float)):
@@ -256,20 +256,124 @@ def analytics_by_category(db: Session = Depends(get_db)):
 
 #     return {"answer": answer}
 
+# @app.post("/ai/query")
+# def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
+#     limit = query.limit or 50
+#     source = query.source.lower()
+
+#     # -------------------- FLIPKART --------------------
+#     if source == "flipkart":
+#         rows = db.execute(
+#             text(f"""
+#             SELECT id, category, brand, title, price, rating
+#             FROM flipkart
+#             ORDER BY reviews DESC
+#             LIMIT {limit}
+#             """)
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "Flipkart"
+
+#     # -------------------- RAPIDAPI AMAZON PRODUCTS --------------------
+#     elif source == "rapidapi_amazon_products":
+#         rows = db.execute(
+#             text(f"""
+#             SELECT 
+#                 product_title,
+#                 category_name,
+#                 ROUND(AVG(product_star_rating_numeric), 2) AS avg_rating,
+#                 SUM(product_num_ratings) AS total_reviews,
+#                 ROUND(AVG(product_price_numeric), 2) AS avg_price,
+#                 COUNT(*) AS product_variants,
+#                 MAX(
+#                     CASE 
+#                         WHEN sales_volume LIKE '%M+%' THEN 
+#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000000) / 30
+#                         WHEN sales_volume LIKE '%K+%' THEN 
+#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000) / 30
+#                         ELSE 
+#                             CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) / 30
+#                     END
+#                 ) AS daily_sales
+#             FROM rapidapi_amazon_products
+#             WHERE product_title IS NOT NULL
+#             GROUP BY product_title, category_name
+#             HAVING SUM(product_num_ratings) IS NOT NULL
+#             ORDER BY total_reviews DESC NULLS LAST
+#             LIMIT {limit}
+#             """)
+#         ).all()
+
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "RapidAPI Amazon Products"
+
+#     # -------------------- INVALID SOURCE --------------------
+#     else:
+#         return {"error": "Invalid source. Use 'flipkart' or 'rapidapi_amazon_products'."}
+
+#     # Convert data to JSON for AI model
+#     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
+
+#     # Build AI prompt - shorter to avoid token limits
+#     prompt = f"""
+# {len(data_list)} records from {table_name}:
+
+# {data_json[:1500]}
+
+# Question: {query.question}
+# Answer in 2 clear, concise lines using only the data above.
+# """
+
+#     try:
+#         # Run Ollama Mistral
+#         result = subprocess.run(
+#             ["ollama", "run", "mistral"],
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=30  # Reduced timeout
+#         )
+
+#         raw_output = (result.stdout or result.stderr or "").strip()
+
+#         # Clean output
+#         clean_output = (
+#             raw_output.replace("<|MODEL_RESPONSE|>", "")
+#             .replace("</s>", "")
+#             .replace("```", "")
+#             .replace("json", "")
+#             .replace("Output:", "")
+#             .replace("Response:", "")
+#             .strip()
+#         )
+
+#         answer = clean_output if clean_output else "No insights available."
+
+#     except subprocess.TimeoutExpired:
+#         answer = "AI response timed out. Please try again."
+#     except FileNotFoundError:
+#         answer = "AI service unavailable. Ollama not found."
+#     except Exception as e:
+#         answer = f"Error generating summary: {str(e)}"
+
+#     # ✅ NO PRINT STATEMENTS - Summary will only go to frontend
+#     return {"answer": answer}
+
 @app.post("/ai/query")
 def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
-    limit = query.limit or 50
+    # ✅ REMOVED: limit = query.limit or 50
     source = query.source.lower()
 
     # -------------------- FLIPKART --------------------
     if source == "flipkart":
         rows = db.execute(
-            text(f"""
-            SELECT id, category, brand, title, price, rating
+            text("""
+            SELECT id, category, brand, title, price, rating, reviews
             FROM flipkart
             ORDER BY reviews DESC
-            LIMIT {limit}
-            """)
+            """)  # ✅ NO LIMIT
         ).all()
         data_list = [dict(row._mapping) for row in rows]
         table_name = "Flipkart"
@@ -277,7 +381,7 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
     # -------------------- RAPIDAPI AMAZON PRODUCTS --------------------
     elif source == "rapidapi_amazon_products":
         rows = db.execute(
-            text(f"""
+            text("""
             SELECT 
                 product_title,
                 category_name,
@@ -300,8 +404,7 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
             GROUP BY product_title, category_name
             HAVING SUM(product_num_ratings) IS NOT NULL
             ORDER BY total_reviews DESC NULLS LAST
-            LIMIT {limit}
-            """)
+            """)  # ✅ NO LIMIT
         ).all()
 
         data_list = [dict(row._mapping) for row in rows]
@@ -314,11 +417,12 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
     # Convert data to JSON for AI model
     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
 
-    # Build AI prompt - shorter to avoid token limits
+    # Build AI prompt
     prompt = f"""
-{len(data_list)} records from {table_name}:
+We have {len(data_list)} records in the {table_name} table.
 
-{data_json[:1500]}
+Data:
+{data_json[:3000]}  # ✅ First 3000 chars to avoid token limits
 
 Question: {query.question}
 Answer in 2 clear, concise lines using only the data above.
@@ -333,7 +437,7 @@ Answer in 2 clear, concise lines using only the data above.
             text=True,
             encoding="utf-8",
             errors="ignore",
-            timeout=30  # Reduced timeout
+            timeout=30
         )
 
         raw_output = (result.stdout or result.stderr or "").strip()
@@ -358,9 +462,8 @@ Answer in 2 clear, concise lines using only the data above.
     except Exception as e:
         answer = f"Error generating summary: {str(e)}"
 
-    # ✅ NO PRINT STATEMENTS - Summary will only go to frontend
+    # ✅ NO PRINT STATEMENTS
     return {"answer": answer}
-
 
 # @app.get("/top")
 # def get_top_items(

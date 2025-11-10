@@ -282,3 +282,4 @@ export default function FiltersPanel({ selectedSource }: { selectedSource: strin
     </Card>
   );
 }
+

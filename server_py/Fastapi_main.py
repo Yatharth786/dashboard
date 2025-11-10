@@ -24,7 +24,7 @@ app = FastAPI(title="Amazon Reviews API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: restrict in production
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # TODO: restrict in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -144,6 +144,118 @@ def analytics_by_category(db: Session = Depends(get_db)):
     categories = crud.get_category_analytics(db)
     return {"categories": categories}
 
+# @app.post("/ai/query")
+# def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
+#     limit = query.limit or 50
+#     source = query.source.lower()
+
+#     # -------------------- FLIPKART --------------------
+#     if source == "flipkart":
+#         rows = db.execute(
+#             text(f"""
+#             SELECT id, category, brand, title, price, rating
+#             FROM flipkart
+#             ORDER BY reviews DESC
+#             LIMIT {limit}
+#             """)
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "Flipkart"
+
+#     # -------------------- RAPIDAPI AMAZON PRODUCTS --------------------
+#     elif source == "rapidapi_amazon_products":
+#         rows = db.execute(
+#             text(f"""
+#             SELECT 
+#                 product_title,
+#                 category_name,
+#                 ROUND(AVG(product_star_rating_numeric), 2) AS avg_rating,
+#                 SUM(product_num_ratings) AS total_reviews,
+#                 ROUND(AVG(product_price_numeric), 2) AS avg_price,
+#                 COUNT(*) AS product_variants,
+#                 MAX(
+#                     CASE 
+#                         WHEN sales_volume LIKE '%M+%' THEN 
+#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000000) / 30
+#                         WHEN sales_volume LIKE '%K+%' THEN 
+#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000) / 30
+#                         ELSE 
+#                             CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) / 30
+#                     END
+#                 ) AS daily_sales
+#             FROM rapidapi_amazon_products
+#             WHERE product_title IS NOT NULL
+#             GROUP BY product_title, category_name
+#             HAVING SUM(product_num_ratings) IS NOT NULL
+#             ORDER BY total_reviews DESC NULLS LAST
+#             LIMIT {limit}
+#             """)
+#         ).all()
+
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "RapidAPI Amazon Products"
+
+#     # -------------------- INVALID SOURCE --------------------
+#     else:
+#         return {"error": "Invalid source. Use 'flipkart' or 'rapidapi_amazon_products'."}
+
+#     # ✅ Convert data to JSON for AI model
+#     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
+
+#     # ✅ Build AI prompt
+#     prompt = f"""
+# We have {len(data_list)} records in the {table_name} table.
+
+# Top {limit} entries:
+# {data_json}
+
+# Question: {query.question}
+# Please answer in simple, human-readable language using only the data above.
+# Return only clean text, no markdown or special symbols.
+# """
+
+#     try:
+#         # ✅ Run Ollama Mistral with proper cleanup and fallback
+#         result = subprocess.run(
+#             ["ollama", "run", "mistral"],
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=90
+#         )
+
+#         raw_output = (result.stdout or result.stderr or "").strip()
+
+#         # ✅ Clean unwanted tokens or artifacts
+#         clean_output = (
+#             raw_output.replace("<|MODEL_RESPONSE|>", "")
+#             .replace("</s>", "")
+#             .replace("```", "")
+#             .replace("json", "")
+#             .replace("Output:", "")
+#             .replace("Response:", "")
+#             .strip()
+#         )
+
+#         answer = clean_output if clean_output else "No insights available."
+
+#     except subprocess.TimeoutExpired:
+#         answer = "Error: AI response timed out."
+#     except Exception as e:
+#         answer = f"Error: {str(e)}"
+
+#     # ✅ (Optional) Debug log (safe to remove later)
+#     print("---- AI PROMPT ----")
+#     print(prompt)
+#     print("---- AI RAW OUTPUT ----")
+#     print(result.stdout)
+#     print("---- AI CLEAN OUTPUT ----")
+#     print(answer)
+
+#     return {"answer": answer}
+
 @app.post("/ai/query")
 def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
     limit = query.limit or 50
@@ -199,23 +311,21 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
     else:
         return {"error": "Invalid source. Use 'flipkart' or 'rapidapi_amazon_products'."}
 
-    # ✅ Convert data to JSON for AI model
+    # Convert data to JSON for AI model
     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
 
-    # ✅ Build AI prompt
+    # Build AI prompt - shorter to avoid token limits
     prompt = f"""
-We have {len(data_list)} records in the {table_name} table.
+{len(data_list)} records from {table_name}:
 
-Top {limit} entries:
-{data_json}
+{data_json[:1500]}
 
 Question: {query.question}
-Please answer in simple, human-readable language using only the data above.
-Return only clean text, no markdown or special symbols.
+Answer in 2 clear, concise lines using only the data above.
 """
 
     try:
-        # ✅ Run Ollama Mistral with proper cleanup and fallback
+        # Run Ollama Mistral
         result = subprocess.run(
             ["ollama", "run", "mistral"],
             input=prompt,
@@ -223,12 +333,12 @@ Return only clean text, no markdown or special symbols.
             text=True,
             encoding="utf-8",
             errors="ignore",
-            timeout=90
+            timeout=30  # Reduced timeout
         )
 
         raw_output = (result.stdout or result.stderr or "").strip()
 
-        # ✅ Clean unwanted tokens or artifacts
+        # Clean output
         clean_output = (
             raw_output.replace("<|MODEL_RESPONSE|>", "")
             .replace("</s>", "")
@@ -242,42 +352,224 @@ Return only clean text, no markdown or special symbols.
         answer = clean_output if clean_output else "No insights available."
 
     except subprocess.TimeoutExpired:
-        answer = "Error: AI response timed out."
+        answer = "AI response timed out. Please try again."
+    except FileNotFoundError:
+        answer = "AI service unavailable. Ollama not found."
     except Exception as e:
-        answer = f"Error: {str(e)}"
+        answer = f"Error generating summary: {str(e)}"
 
-    # ✅ (Optional) Debug log (safe to remove later)
-    print("---- AI PROMPT ----")
-    print(prompt)
-    print("---- AI RAW OUTPUT ----")
-    print(result.stdout)
-    print("---- AI CLEAN OUTPUT ----")
-    print(answer)
-
+    # ✅ NO PRINT STATEMENTS - Summary will only go to frontend
     return {"answer": answer}
 
 
+# @app.get("/top")
+# def get_top_items(
+#     table: str = Query(..., description="Choose 'flipkart' or 'rapidapi_amazon_products'"),
+#     n: int = Query(10, description="Number of top items to fetch"),
+#     db: Session = Depends(get_db),
+# ):
+#     table = table.lower()
+
+#     # ----------------------------- #
+#     # 🔹 Flipkart (same as before)
+#     # ----------------------------- #
+#     if table == "flipkart":
+#         data = crud.get_top_products(db, n)
+#         return {"table": "flipkart", "count": len(data), "data": data}
+
+#     # ----------------------------- #
+#     # 🔹 RapidAPI Amazon Products
+#     # ----------------------------- #
+#     elif table == "rapidapi_amazon_products":
+#         query = text("""
+#             SELECT 
+#                 asin,
+#                 product_title,
+#                 category_name,
+#                 product_url,
+#                 product_photo,
+#                 product_star_rating_numeric AS rating,
+#                 product_num_ratings AS reviews,
+#                 product_price_numeric AS price,
+#                 avg_price,
+#                 min_price,
+#                 max_price,
+#                 sales_volume
+#             FROM rapidapi_amazon_products
+#             WHERE 
+#                 product_title IS NOT NULL AND product_title != ''
+#                 AND product_star_rating_numeric IS NOT NULL
+#                 AND product_price_numeric IS NOT NULL
+#         """)
+#         result = db.execute(query).mappings().all()
+#         rows = [dict(r) for r in result]
+
+#         # ----------------------------- #
+#         # 🔹 Merge duplicates by ASIN or title
+#         # ----------------------------- #
+#         merged = {}
+#         for row in rows:
+#             key = row["asin"] or row["product_title"].strip()
+#             if key in merged:
+#                 m = merged[key]
+#                 # Average ratings and prices, sum reviews/sales
+#                 m["rating"] = (m["rating"] + row["rating"]) / 2 if row["rating"] else m["rating"]
+#                 m["price"] = (m["price"] + row["price"]) / 2 if row["price"] else m["price"]
+#                 m["reviews"] = (m["reviews"] or 0) + (row["reviews"] or 0)
+#                 m["sales_volume"] = (m["sales_volume"] or 0) + (row["sales_volume"] or 0)
+#             else:
+#                 merged[key] = row
+
+#         merged_list = list(merged.values())
+
+#         # ----------------------------- #
+#         # 🔹 Sort by highest reviews first, then by rating
+#         # ----------------------------- #
+#         merged_list.sort(
+#             key=lambda x: (
+#                 x.get("reviews", 0),
+#                 x.get("rating", 0)
+#             ),
+#             reverse=True
+#         )
+
+#         # Limit to top N
+#         top_items = merged_list[:n]
+
+#         return {
+#             "table": "rapidapi_amazon_products",
+#             "count": len(top_items),
+#             "data": top_items
+#         }
+
+#     # ----------------------------- #
+#     # 🔹 Invalid Input
+#     # ----------------------------- #
+#     else:
+#         return {
+#             "error": "Invalid table. Use 'flipkart' or 'rapidapi_amazon_products'."
+#         }
 
 @app.get("/top")
 def get_top_items(
     table: str = Query(..., description="Choose 'flipkart' or 'rapidapi_amazon_products'"),
     n: int = Query(10, description="Number of top items to fetch"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    min_price: Optional[float] = Query(None, description="Minimum price"),
+    max_price: Optional[float] = Query(None, description="Maximum price"),
+    min_rating: Optional[float] = Query(None, description="Minimum rating"),
+    date_range: Optional[str] = Query(None, description="Date range filter"),
+    trending_only: Optional[bool] = Query(False, description="Show only trending products"),
+    sort_by: Optional[str] = Query("sales_desc", description="Sort option"),
     db: Session = Depends(get_db),
 ):
     table = table.lower()
 
     # ----------------------------- #
-    # 🔹 Flipkart (same as before)
+    # 🔹 Flipkart
     # ----------------------------- #
     if table == "flipkart":
-        data = crud.get_top_products(db, n)
+        # Build WHERE clause
+        where_conditions = ["title IS NOT NULL", "rating IS NOT NULL"]
+        params = {"n": n}
+        
+        if category and category != "All Categories":
+            where_conditions.append("LOWER(category) = LOWER(:category)")
+            params["category"] = category
+        
+        if min_price is not None:
+            where_conditions.append("price >= :min_price")
+            params["min_price"] = min_price
+        
+        if max_price is not None:
+            where_conditions.append("price <= :max_price")
+            params["max_price"] = max_price
+        
+        if min_rating is not None:
+            where_conditions.append("rating >= :min_rating")
+            params["min_rating"] = min_rating
+        
+        # Build ORDER BY clause
+        order_by = "reviews DESC, rating DESC"
+        if sort_by == "sales_asc":
+            order_by = "reviews ASC"
+        elif sort_by == "profit_desc":
+            order_by = "price DESC"
+        elif sort_by == "profit_asc":
+            order_by = "price ASC"
+        elif sort_by == "rating_desc":
+            order_by = "rating DESC"
+        elif sort_by == "price_desc":
+            order_by = "price DESC"
+        elif sort_by == "price_asc":
+            order_by = "price ASC"
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query = text(f"""
+            SELECT 
+                id,
+                title,
+                category,
+                brand,
+                price,
+                rating,
+                reviews,
+                last_updated
+            FROM flipkart
+            WHERE {where_clause}
+            ORDER BY {order_by}
+            LIMIT :n
+        """)
+        
+        result = db.execute(query, params).mappings().all()
+        data = [dict(r) for r in result]
+        
         return {"table": "flipkart", "count": len(data), "data": data}
 
     # ----------------------------- #
     # 🔹 RapidAPI Amazon Products
     # ----------------------------- #
     elif table == "rapidapi_amazon_products":
-        query = text("""
+        # Build WHERE clause
+        where_conditions = [
+            "product_title IS NOT NULL",
+            "product_title != ''",
+            "product_star_rating_numeric IS NOT NULL",
+            "product_price_numeric IS NOT NULL"
+        ]
+        params = {"n": n}
+        
+        if category and category != "All Categories":
+            where_conditions.append("LOWER(category_name) = LOWER(:category)")
+            params["category"] = category
+        
+        if min_price is not None:
+            where_conditions.append("product_price_numeric >= :min_price")
+            params["min_price"] = min_price
+        
+        if max_price is not None:
+            where_conditions.append("product_price_numeric <= :max_price")
+            params["max_price"] = max_price
+        
+        if min_rating is not None:
+            where_conditions.append("product_star_rating_numeric >= :min_rating")
+            params["min_rating"] = min_rating
+        
+        # Build ORDER BY clause
+        order_by = "reviews DESC, rating DESC"
+        if sort_by == "sales_asc":
+            order_by = "reviews ASC"
+        elif sort_by == "rating_desc":
+            order_by = "rating DESC"
+        elif sort_by == "price_desc":
+            order_by = "price DESC"
+        elif sort_by == "price_asc":
+            order_by = "price ASC"
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query = text(f"""
             SELECT 
                 asin,
                 product_title,
@@ -292,66 +584,46 @@ def get_top_items(
                 max_price,
                 sales_volume
             FROM rapidapi_amazon_products
-            WHERE 
-                product_title IS NOT NULL AND product_title != ''
-                AND product_star_rating_numeric IS NOT NULL
-                AND product_price_numeric IS NOT NULL
+            WHERE {where_clause}
+            ORDER BY {order_by}
+            LIMIT :n
         """)
-        result = db.execute(query).mappings().all()
+        
+        result = db.execute(query, params).mappings().all()
         rows = [dict(r) for r in result]
-
-        # ----------------------------- #
-        # 🔹 Merge duplicates by ASIN or title
-        # ----------------------------- #
+        
+        # Merge duplicates by ASIN
         merged = {}
         for row in rows:
             key = row["asin"] or row["product_title"].strip()
             if key in merged:
                 m = merged[key]
-                # Average ratings and prices, sum reviews/sales
                 m["rating"] = (m["rating"] + row["rating"]) / 2 if row["rating"] else m["rating"]
                 m["price"] = (m["price"] + row["price"]) / 2 if row["price"] else m["price"]
                 m["reviews"] = (m["reviews"] or 0) + (row["reviews"] or 0)
-                m["sales_volume"] = (m["sales_volume"] or 0) + (row["sales_volume"] or 0)
             else:
                 merged[key] = row
-
-        merged_list = list(merged.values())
-
-        # ----------------------------- #
-        # 🔹 Sort by highest reviews first, then by rating
-        # ----------------------------- #
-        merged_list.sort(
-            key=lambda x: (
-                x.get("reviews", 0),
-                x.get("rating", 0)
-            ),
-            reverse=True
-        )
-
-        # Limit to top N
-        top_items = merged_list[:n]
-
+        
+        top_items = list(merged.values())[:n]
+        
         return {
             "table": "rapidapi_amazon_products",
             "count": len(top_items),
             "data": top_items
         }
 
-    # ----------------------------- #
-    # 🔹 Invalid Input
-    # ----------------------------- #
     else:
         return {
             "error": "Invalid table. Use 'flipkart' or 'rapidapi_amazon_products'."
         }
+
 @app.get("/forecast_all_products")
 def forecast_all_products(n_forecast_days: int = Query(30, description="Days to forecast"),
                           db: Session = Depends(get_db)):
     forecast_list = crud.get_forecast_all_products(db, n_forecast_days)
     return forecast_list
 
-
+# Replace your /notifications endpoint with this fixed version
 
 @app.get("/notifications")
 def get_notifications(
@@ -361,42 +633,62 @@ def get_notifications(
 ):
     table = table.lower()
 
-    if table == "flipkart":
-        query = text(f"""
-            SELECT id, title AS message, category, price
-            FROM flipkart
-            ORDER BY id DESC
-            LIMIT {limit}
-        """)
-        rows = db.execute(query).fetchall()
-        data = [
-            {
-                "id": row.id,
-                "message": f"New product added: {row.message} (₹{row.price})",
-                "time": "Just now",
-            }
-            for row in rows
-        ]
-    elif table == "amazon_reviews":
-        query = text(f"""
-            SELECT product_title, sales_volume, product_num_ratings
-            FROM rapidapi_amazon_products
-            ORDER BY sales_volume DESC
-            LIMIT {limit}
-        """)
-        rows = db.execute(query).fetchall()
-        data = [
-            {
-                "id": i + 1,
-                "message": f"New review: {row.review_headline} on {row.product_title}",
-                "time": str(row.sales_volume),
-            }
-            for i, row in enumerate(rows)
-        ]
-    else:
-        return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
+    try:
+        if table == "flipkart":
+            query = text(f"""
+                SELECT id, title AS message, category, price
+                FROM flipkart
+                ORDER BY id DESC
+                LIMIT {limit}
+            """)
+            rows = db.execute(query).fetchall()
+            data = [
+                {
+                    "id": row.id,
+                    "message": f"New product added: {row.message[:50]}... (₹{row.price:.2f})",
+                    "time": "Just now",
+                }
+                for row in rows
+            ]
+            
+        elif table == "amazon_reviews":
+            # ✅ FIXED: Use correct columns from rapidapi_amazon_products table
+            query = text(f"""
+                SELECT 
+                    product_title, 
+                    sales_volume, 
+                    product_num_ratings,
+                    product_star_rating_numeric
+                FROM rapidapi_amazon_products
+                WHERE product_title IS NOT NULL
+                  AND sales_volume IS NOT NULL
+                ORDER BY product_num_ratings DESC
+                LIMIT {limit}
+            """)
+            rows = db.execute(query).fetchall()
+            
+            data = [
+                {
+                    "id": i + 1,
+                    "message": f"Trending: {row.product_title[:60]}... ({row.sales_volume} sales)",
+                    "time": f"{row.product_num_ratings} ratings · {row.product_star_rating_numeric}★",
+                }
+                for i, row in enumerate(rows)
+            ]
+            
+        else:
+            return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
 
-    return {"table": table, "count": len(data), "data": data}
+        return {"table": table, "count": len(data), "data": data}
+        
+    except Exception as e:
+        print(f"❌ Notification Error: {str(e)}")
+        return {
+            "table": table, 
+            "count": 0, 
+            "data": [],
+            "error": str(e)
+        }
 
 @app.get("/category/products/{category_name}")
 def get_category_products(
@@ -566,21 +858,66 @@ def get_categories(table: str = Query("flipkart"), db: Session = Depends(get_db)
     else:
         return {"error": "Invalid table"}
     
+# @app.get("/flipkart/categories")
+# def get_flipkart_categories_distribution(db: Session = Depends(get_db)):
+#     """
+#     Return category distribution for Flipkart products
+#     """
+#     query = text("""
+#         SELECT 
+#             category,
+#             COUNT(*) as count
+#         FROM flipkart
+#         GROUP BY category
+#         ORDER BY count DESC
+#     """)
+    
+#     rows = db.execute(query).fetchall()
+#     categories = [{"category": row.category, "count": row.count} for row in rows]
+    
+#     return categories
+
 @app.get("/flipkart/categories")
-def get_flipkart_categories_distribution(db: Session = Depends(get_db)):
-    """
-    Return category distribution for Flipkart products
-    """
-    query = text("""
+def get_flipkart_categories_distribution(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # Build WHERE conditions
+    where_conditions = ["category IS NOT NULL"]
+    params = {}
+    
+    if category and category != "All Categories":
+        where_conditions.append("LOWER(category) = LOWER(:category)")
+        params["category"] = category
+    
+    if min_price is not None:
+        where_conditions.append("price >= :min_price")
+        params["min_price"] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("price <= :max_price")
+        params["max_price"] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("rating >= :min_rating")
+        params["min_rating"] = min_rating
+    
+    where_clause = " AND ".join(where_conditions)
+    
+    query = text(f"""
         SELECT 
             category,
             COUNT(*) as count
         FROM flipkart
+        WHERE {where_clause}
         GROUP BY category
         ORDER BY count DESC
     """)
     
-    rows = db.execute(query).fetchall()
+    rows = db.execute(query, params).fetchall()
     categories = [{"category": row.category, "count": row.count} for row in rows]
     
     return categories
@@ -688,16 +1025,126 @@ def forecast_sales(product_name: str):
     }
 
 
+# @app.get("/rapidapi/top-sales")
+# def get_top_sales_products(limit: int = 10, db: Session = Depends(get_db)):
+#     """
+#     Get top products by daily sales volume from rapidapi_amazon_products table.
+#     Merges similar products (same title) and aggregates their data.
+#     Converts monthly sales to daily average (divides by 30).
+#     Filters out products with NULL sales_volume, ratings, or prices.
+#     """
+#     try:
+#         query = text("""
+#         WITH sales_data AS (
+#             SELECT 
+#                 product_title,
+#                 category_name,
+#                 product_url,
+#                 product_photo,
+#                 product_price_numeric,
+#                 product_star_rating_numeric,
+#                 product_num_ratings,
+#                 sales_volume,
+#                 country,
+#                 CASE 
+#                     WHEN sales_volume LIKE '%M+%' THEN 
+#                         (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000000) / 30
+#                     WHEN sales_volume LIKE '%K+%' THEN 
+#                         (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000) / 30
+#                     ELSE 
+#                         CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) / 30
+#                 END as daily_sales
+#             FROM rapidapi_amazon_products
+#             WHERE sales_volume IS NOT NULL
+#                 AND product_star_rating_numeric IS NOT NULL 
+#                 AND product_price_numeric IS NOT NULL
+#                 AND product_num_ratings IS NOT NULL
+#                 AND product_num_ratings > 0
+#         )
+#         SELECT 
+#             product_title,
+#             STRING_AGG(DISTINCT category_name, ', ') as categories,
+#             MAX(product_url) as product_url,
+#             MAX(product_photo) as product_photo,
+#             ROUND(CAST(AVG(product_price_numeric) AS NUMERIC), 2) as avg_price,
+#             ROUND(CAST(AVG(product_star_rating_numeric) AS NUMERIC), 2) as avg_rating,
+#             SUM(product_num_ratings) as total_ratings,
+#             MAX(sales_volume) as sales_volume,
+#             MAX(country) as country,
+#             ROUND(CAST(SUM(daily_sales) AS NUMERIC), 0) as total_daily_sales,
+#             COUNT(*) as variant_count
+#         FROM sales_data
+#         WHERE daily_sales IS NOT NULL
+#         GROUP BY product_title
+#         ORDER BY total_daily_sales DESC NULLS LAST
+#         LIMIT :limit
+#         """)
+        
+#         rows = db.execute(query, {"limit": limit}).fetchall()
+        
+#         # Convert to list of dicts with proper formatting
+#         products = []
+#         for row in rows:
+#             product = dict(row._mapping)
+#             # Format the merged product info
+#             product['daily_sales'] = product.pop('total_daily_sales')
+#             product['category_name'] = product.pop('categories')  # Now contains all categories
+#             product['product_price'] = f"₹{product['avg_price']:.2f}" if product['avg_price'] else None
+#             product['product_star_rating'] = product['avg_rating']
+            
+#             # Add indicator if multiple variants were merged
+#             if product['variant_count'] > 1:
+#                 product['is_merged'] = True
+#                 product['merged_info'] = f"{product['variant_count']} variants combined"
+#             else:
+#                 product['is_merged'] = False
+            
+#             products.append(product)
+        
+#         return {"data": products, "count": len(products)}
+        
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error fetching top sales products: {str(e)}")
+
 @app.get("/rapidapi/top-sales")
-def get_top_sales_products(limit: int = 10, db: Session = Depends(get_db)):
-    """
-    Get top products by daily sales volume from rapidapi_amazon_products table.
-    Merges similar products (same title) and aggregates their data.
-    Converts monthly sales to daily average (divides by 30).
-    Filters out products with NULL sales_volume, ratings, or prices.
-    """
+def get_top_sales_products(
+    limit: int = 10,
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # Build WHERE conditions for the CTE
+    where_conditions = [
+        "sales_volume IS NOT NULL",
+        "product_star_rating_numeric IS NOT NULL",
+        "product_price_numeric IS NOT NULL",
+        "product_num_ratings IS NOT NULL",
+        "product_num_ratings > 0"
+    ]
+    params = {"limit": limit}
+    
+    if category and category != "All Categories":
+        where_conditions.append("LOWER(category_name) = LOWER(:category)")
+        params["category"] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params["min_price"] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params["max_price"] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating_numeric >= :min_rating")
+        params["min_rating"] = min_rating
+    
+    where_clause = " AND ".join(where_conditions)
+    
     try:
-        query = text("""
+        query = text(f"""
         WITH sales_data AS (
             SELECT 
                 product_title,
@@ -718,11 +1165,7 @@ def get_top_sales_products(limit: int = 10, db: Session = Depends(get_db)):
                         CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) / 30
                 END as daily_sales
             FROM rapidapi_amazon_products
-            WHERE sales_volume IS NOT NULL
-                AND product_star_rating_numeric IS NOT NULL 
-                AND product_price_numeric IS NOT NULL
-                AND product_num_ratings IS NOT NULL
-                AND product_num_ratings > 0
+            WHERE {where_clause}
         )
         SELECT 
             product_title,
@@ -743,19 +1186,16 @@ def get_top_sales_products(limit: int = 10, db: Session = Depends(get_db)):
         LIMIT :limit
         """)
         
-        rows = db.execute(query, {"limit": limit}).fetchall()
+        rows = db.execute(query, params).fetchall()
         
-        # Convert to list of dicts with proper formatting
         products = []
         for row in rows:
             product = dict(row._mapping)
-            # Format the merged product info
             product['daily_sales'] = product.pop('total_daily_sales')
-            product['category_name'] = product.pop('categories')  # Now contains all categories
+            product['category_name'] = product.pop('categories')
             product['product_price'] = f"₹{product['avg_price']:.2f}" if product['avg_price'] else None
             product['product_star_rating'] = product['avg_rating']
             
-            # Add indicator if multiple variants were merged
             if product['variant_count'] > 1:
                 product['is_merged'] = True
                 product['merged_info'] = f"{product['variant_count']} variants combined"
@@ -768,7 +1208,7 @@ def get_top_sales_products(limit: int = 10, db: Session = Depends(get_db)):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching top sales products: {str(e)}")
-    
+
 
 @app.get("/top")
 def get_top_products(table: str, n: int = 10, db: Session = Depends(get_db)):
@@ -791,59 +1231,204 @@ def get_top_products(table: str, n: int = 10, db: Session = Depends(get_db)):
 # -----------------------------
 # 🔹 2. Category Distribution
 # -----------------------------
+# @app.get("/rapidapi_amazon_products/categories")
+# def get_amazon_categories(db: Session = Depends(get_db)):
+#     try:
+#         query = text("""
+#             SELECT category_name, COUNT(*) as count
+#             FROM rapidapi_amazon_products
+#             WHERE category_name IS NOT NULL
+#               AND product_star_rating_numeric IS NOT NULL
+#               AND product_title IS NOT NULL
+#             GROUP BY category_name
+#             ORDER BY count DESC
+#         """)
+#         result = db.execute(query).mappings().all()
+#         return [dict(row) for row in result]
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/rapidapi_amazon_products/categories")
-def get_amazon_categories(db: Session = Depends(get_db)):
+def get_amazon_categories(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # Build WHERE conditions
+    where_conditions = [
+        "category_name IS NOT NULL",
+        "product_star_rating_numeric IS NOT NULL",
+        "product_title IS NOT NULL"
+    ]
+    params = {}
+    
+    if category and category != "All Categories":
+        where_conditions.append("LOWER(category_name) = LOWER(:category)")
+        params["category"] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params["min_price"] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params["max_price"] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating_numeric >= :min_rating")
+        params["min_rating"] = min_rating
+    
+    where_clause = " AND ".join(where_conditions)
+    
     try:
-        query = text("""
+        query = text(f"""
             SELECT category_name, COUNT(*) as count
             FROM rapidapi_amazon_products
-            WHERE category_name IS NOT NULL
-              AND product_star_rating_numeric IS NOT NULL
-              AND product_title IS NOT NULL
+            WHERE {where_clause}
             GROUP BY category_name
             ORDER BY count DESC
         """)
-        result = db.execute(query).mappings().all()
+        result = db.execute(query, params).mappings().all()
         return [dict(row) for row in result]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# @app.get("/rapidapi_amazon_products/ratings")
+# def get_amazon_ratings(db: Session = Depends(get_db)):
+#     """
+#     Returns star-rating wise distribution:
+#     - rating → product_star_rating_numeric (1 to 5)
+#     - count → number of products having that rating
+#     - total_user_ratings → sum of product_num_ratings across those products
+#     """
+#     try:
+#         query = text("""
+#             SELECT 
+#                 CAST(product_star_rating_numeric AS FLOAT) AS rating,
+#                 COUNT(*) AS count,
+#                 SUM(product_num_ratings) AS total_user_ratings
+#             FROM rapidapi_amazon_products
+#             WHERE product_star_rating_numeric IS NOT NULL
+#               AND product_star_rating_numeric > 0
+#               AND product_title IS NOT NULL
+#               AND product_num_ratings IS NOT NULL
+#             GROUP BY product_star_rating_numeric
+#             ORDER BY product_star_rating_numeric DESC
+#         """)
+#         result = db.execute(query).mappings().all()
+#         return [dict(row) for row in result]
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/rapidapi_amazon_products/ratings")
-def get_amazon_ratings(db: Session = Depends(get_db)):
-    """
-    Returns star-rating wise distribution:
-    - rating → product_star_rating_numeric (1 to 5)
-    - count → number of products having that rating
-    - total_user_ratings → sum of product_num_ratings across those products
-    """
+def get_amazon_ratings(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # Build WHERE conditions
+    where_conditions = [
+        "product_star_rating_numeric IS NOT NULL",
+        "product_star_rating_numeric > 0",
+        "product_title IS NOT NULL",
+        "product_num_ratings IS NOT NULL"
+    ]
+    params = {}
+    
+    if category and category != "All Categories":
+        where_conditions.append("LOWER(category_name) = LOWER(:category)")
+        params["category"] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params["min_price"] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params["max_price"] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating_numeric >= :min_rating")
+        params["min_rating"] = min_rating
+    
+    where_clause = " AND ".join(where_conditions)
+    
     try:
-        query = text("""
+        query = text(f"""
             SELECT 
                 CAST(product_star_rating_numeric AS FLOAT) AS rating,
                 COUNT(*) AS count,
                 SUM(product_num_ratings) AS total_user_ratings
             FROM rapidapi_amazon_products
-            WHERE product_star_rating_numeric IS NOT NULL
-              AND product_star_rating_numeric > 0
-              AND product_title IS NOT NULL
-              AND product_num_ratings IS NOT NULL
+            WHERE {where_clause}
             GROUP BY product_star_rating_numeric
             ORDER BY product_star_rating_numeric DESC
         """)
-        result = db.execute(query).mappings().all()
+        result = db.execute(query, params).mappings().all()
         return [dict(row) for row in result]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # -----------------------------
 # 🔹 4. Sentiment Simulation (Based on Rating)
 # -----------------------------
+# @app.get("/rapidapi_amazon_products/sentiment")
+# def get_amazon_sentiment(db: Session = Depends(get_db)):
+#     try:
+#         query = text("""
+#             SELECT
+#                 CASE
+#                     WHEN product_star_rating_numeric >= 4 THEN 'positive'
+#                     WHEN product_star_rating_numeric = 3 THEN 'neutral'
+#                     ELSE 'negative'
+#                 END as sentiment,
+#                 COUNT(*) as count
+#             FROM rapidapi_amazon_products
+#             WHERE product_star_rating_numeric IS NOT NULL
+#             GROUP BY sentiment
+#         """)
+#         result = db.execute(query).mappings().all()
+#         return [dict(row) for row in result]
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/rapidapi_amazon_products/sentiment")
-def get_amazon_sentiment(db: Session = Depends(get_db)):
+def get_amazon_sentiment(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    db: Session = Depends(get_db)
+):
+    # Build WHERE conditions
+    where_conditions = ["product_star_rating_numeric IS NOT NULL"]
+    params = {}
+    
+    if category and category != "All Categories":
+        where_conditions.append("LOWER(category_name) = LOWER(:category)")
+        params["category"] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params["min_price"] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params["max_price"] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating_numeric >= :min_rating")
+        params["min_rating"] = min_rating
+    
+    where_clause = " AND ".join(where_conditions)
+    
     try:
-        query = text("""
+        query = text(f"""
             SELECT
                 CASE
                     WHEN product_star_rating_numeric >= 4 THEN 'positive'
@@ -852,10 +1437,243 @@ def get_amazon_sentiment(db: Session = Depends(get_db)):
                 END as sentiment,
                 COUNT(*) as count
             FROM rapidapi_amazon_products
-            WHERE product_star_rating_numeric IS NOT NULL
+            WHERE {where_clause}
             GROUP BY sentiment
         """)
-        result = db.execute(query).mappings().all()
+        result = db.execute(query, params).mappings().all()
         return [dict(row) for row in result]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+   
+# ============================================
+# FIXED LOGIN ENDPOINT - Replace in Fastapi_main.py
+# ============================================
+ 
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
+ 
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+ 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+ 
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+ 
+# ============================================
+# Pydantic Models
+# ============================================
+ 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+ 
+class PasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
+ 
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+    user: dict = None
+ 
+# ============================================
+# FIXED LOGIN ENDPOINT (without is_active check)
+# ============================================
+ 
+@app.post("/users/login", response_model=LoginResponse)
+def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+    """
+    Authenticate user and return user data if successful
+    """
+    try:
+        # Find user by email
+        user = db.query(models.User).filter(
+            models.User.email == login_data.email
+        ).first()
+       
+        # Check if user exists
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="No account found with this email. Please sign up first."
+            )
+       
+        # Verify password
+        if not verify_password(login_data.password, user.password_hash):
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect password. Please try again or reset your password."
+            )
+       
+        # Successful login
+        return {
+            "success": True,
+            "message": "Login successful",
+            "user": {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "business_name": user.business_name,
+                "location": user.location,
+                "business_interests": user.business_interests,
+                "created_at": str(user.created_at)
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"âŒ Login error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Login failed: {str(e)}"
+        )
+ 
+# ============================================
+# FIXED SIGNUP ENDPOINT
+# ============================================
+ 
+@app.post("/users/signup")
+def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new user account
+    """
+    try:
+        # Check if email already exists
+        existing_user = db.query(models.User).filter(
+            models.User.email == user_data.email
+        ).first()
+       
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered. Please login instead."
+            )
+       
+        # Hash the password
+        hashed_password = get_password_hash(user_data.password)
+       
+        # Create new user (without is_active field)
+        new_user = models.User(
+            first_name=user_data.first_name,
+            last_name=user_data.last_name,
+            email=user_data.email,
+            password_hash=hashed_password,
+            business_name=user_data.business_name,
+            location=user_data.location,
+            business_interests=user_data.business_interests
+        )
+       
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+       
+        return {
+            "id": new_user.id,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
+            "email": new_user.email,
+            "business_name": new_user.business_name,
+            "location": new_user.location,
+            "business_interests": new_user.business_interests,
+            "created_at": new_user.created_at,
+            "message": "Account created successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"âŒ Signup error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+ 
+# ============================================
+# PASSWORD RESET ENDPOINT
+# ============================================
+ 
+@app.post("/users/reset-password")
+def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
+    """
+    Reset user password
+    """
+    try:
+        # Find user by email
+        user = db.query(models.User).filter(
+            models.User.email == reset_data.email
+        ).first()
+       
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="No account found with this email"
+            )
+       
+        # Update password
+        user.password_hash = get_password_hash(reset_data.new_password)
+       
+        db.commit()
+        return {
+            "success": True,
+            "message": "Password updated successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"âŒ Password reset error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating password: {str(e)}"
+        )
+ 
+# ============================================
+# CHECK EMAIL ENDPOINT
+# ============================================
+ 
+@app.get("/users/check-email/{email}")
+def check_email_exists(email: str, db: Session = Depends(get_db)):
+    """
+    Check if an email is already registered
+    """
+    user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
+   
+    return {
+        "exists": user is not None,
+        "email": email,
+        "message": "Email is registered" if user else "Email is available"
+    }
+ 
+# ============================================
+# GET USER PROFILE ENDPOINT
+# ============================================
+ 
+@app.get("/users/profile/{email}")
+def get_user_profile(email: str, db: Session = Depends(get_db)):
+    """
+    Get user profile by email
+    """
+    user = db.query(models.User).filter(
+        models.User.email == email
+    ).first()
+   
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+   
+    return {
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "business_name": user.business_name,
+        "location": user.location,
+        "business_interests": user.business_interests,
+        "created_at": str(user.created_at)
+    }
+ 

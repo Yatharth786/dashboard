@@ -206,13 +206,13 @@ function DashboardContent() {
       console.error("Error fetching notifications:", error);
     }
   };
-
+ 
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Auto-refresh every 30s
     return () => clearInterval(interval);
   }, [selectedSource]);
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-sky-100 flex">
       {/* Sidebar */}

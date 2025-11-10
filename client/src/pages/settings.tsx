@@ -85,7 +85,7 @@ export default function Settings() {
   const handleExportData = async () => {
     try {
       // Export reviews data from your backend
-      const response = await fetch('http://localhost:8000/Amazon_Reviews/reviews?limit=1000');
+      const response = await fetch('http://122.176.108.253:9001/Amazon_Reviews/reviews?limit=1000');
       const data = await response.json();
       
       // Create CSV or JSON file
@@ -369,9 +369,9 @@ export default function Settings() {
                     onClick={() => {
                       toast({
                         title: "API Documentation",
-                        description: "Access API docs at http://localhost:8000/docs",
+                        description: "Access API docs at http://122.176.108.253:9001/docs",
                       });
-                      window.open('http://localhost:8000/docs', '_blank');
+                      window.open('http://122.176.108.253:9001/docs', '_blank');
                     }}
                   >
                     View API Documentation
@@ -392,7 +392,7 @@ export default function Settings() {
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">API Endpoint:</span>
-                  <span className="font-mono">http://localhost:8000</span>
+                  <span className="font-mono">http://122.176.108.253:9001</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Database:</span>

@@ -46,17 +46,19 @@
 
 import { useEffect, useState } from "react";
 
+import { useEffect, useState } from "react";
+ 
 export function useAISummary(question: string, source: string, data: any[], limit: number) {
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-
+ 
   useEffect(() => {
     if (!data || data.length === 0) {
       setSummary("");
       setLoading(false);
       return;
     }
-
+ 
     const fetchSummary = async () => {
       setLoading(true);
       try {

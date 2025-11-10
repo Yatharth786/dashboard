@@ -289,7 +289,7 @@ export default function Login() {
       setErrorMessage("Please fill in all required fields.");
       return;
     }
- 
+
     setIsLoading(true);
  
     try {
@@ -345,17 +345,17 @@ export default function Login() {
       };
      
       localStorage.setItem('user', JSON.stringify(user));
-     
+      
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
         localStorage.setItem('savedEmail', formData.email);
       }
- 
+
       toast({
         title: "Welcome back!",
         description: `Successfully logged in as ${user.name}`,
       });
-     
+      
       setIsLoading(false);
       setLocation("/dashboard");
  
@@ -445,14 +445,94 @@ export default function Login() {
       setIsResetting(false);
     }
   };
- 
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Password required",
+        description: "Please enter and confirm your new password",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: resetEmail,
+          new_password: newPassword
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Password reset failed");
+      }
+
+      const data = await response.json();
+      
+      toast({
+        title: "Password updated!",
+        description: "Your password has been successfully reset. Please login with your new password.",
+      });
+
+      setShowResetDialog(false);
+      setResetEmail("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setFormData({ ...formData, password: "" });
+
+    } catch (error: any) {
+      toast({
+        title: "Reset failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleInputChange = (field: string) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
     setErrorMessage(""); // Clear error when user types
   };
- 
+
   const handleDemoLogin = () => {
     const user = {
       email: "demo@example.com",
@@ -463,15 +543,15 @@ export default function Login() {
       loggedIn: true
     };
     localStorage.setItem('user', JSON.stringify(user));
-   
+    
     toast({
       title: "Demo Login",
       description: "Logged in as demo user",
     });
-   
+    
     setLocation("/dashboard");
   };
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -483,7 +563,7 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-foreground mb-2">Amazon Reviews Analytics</h1>
           <p className="text-muted-foreground">Real-time insights from your review data</p>
         </div>
- 
+
         <Card className="border shadow-xl">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
@@ -503,15 +583,15 @@ export default function Login() {
             )}
  
             {/* Demo Login Button */}
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
               className="w-full border-2 border-primary/50 hover:bg-primary/10"
               onClick={handleDemoLogin}
             >
               <ChartLine className="mr-2 h-4 w-4" />
               Continue as Demo User
             </Button>
- 
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
@@ -551,8 +631,8 @@ export default function Login() {
  
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
+                  <Checkbox 
+                    id="remember" 
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />
@@ -572,17 +652,17 @@ export default function Login() {
                   Forgot password?
                 </Button>
               </div>
- 
-              <Button
-                type="submit"
-                className="w-full"
+
+              <Button 
+                type="submit" 
+                className="w-full" 
                 disabled={isLoading}
                 size="lg"
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
- 
+
             {/* Signup Link */}
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
@@ -594,7 +674,7 @@ export default function Login() {
                 </Link>
               </p>
             </div>
- 
+
             {/* Info Note */}
             <div className="text-center pt-4 border-t">
               <p className="text-xs text-muted-foreground">
@@ -603,7 +683,7 @@ export default function Login() {
             </div>
           </CardContent>
         </Card>
- 
+
         {/* Footer Links */}
         <div className="text-center mt-6 text-sm text-muted-foreground">
           <p>Powered by Amazon Reviews Database</p>
@@ -612,10 +692,10 @@ export default function Login() {
               <Button variant="link" className="p-0 h-auto text-xs">About</Button>
             </Link>
             {" • "}
-            <Button
-              variant="link"
+            <Button 
+              variant="link" 
               className="p-0 h-auto text-xs"
-              onClick={() => window.open('http://localhost:8000/docs', '_blank')}
+              onClick={() => window.open('http://122.176.108.253:9001/docs', '_blank')}
             >
               API Docs
             </Button>
@@ -690,4 +770,3 @@ export default function Login() {
     </div>
   );
 }
- 

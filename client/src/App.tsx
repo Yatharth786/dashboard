@@ -116,6 +116,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useState, useEffect, createContext, useContext } from "react";
 
 // Pages
+import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
@@ -193,6 +194,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
+      {/* Landing Page - ROOT */}
+      <Route path="/" component={Landing} />
       {/* Analytics Pages */}
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />

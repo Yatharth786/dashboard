@@ -987,7 +987,7 @@ interface RecommendationCardProps {
   description: string;
   gradient: string;
 }
-
+ 
 function RecommendationCard({ icon, title, description, gradient }: RecommendationCardProps) {
   return (
     <div className={`bg-gradient-to-br ${gradient} rounded-lg p-4 text-white`}>
@@ -999,105 +999,53 @@ function RecommendationCard({ icon, title, description, gradient }: Recommendati
     </div>
   );
 }
-
+ 
 export default function AIRecommendations({ selectedSource }: { selectedSource: string }) {
   const { filters } = useFilters(); // ✅ Get filters from context
   const [summary, setSummary] = useState<string>("");
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  const BASE_URL = "http://localhost:8000";
-
+ 
+  const BASE_URL = "http://122.176.108.253:9001";
+ 
   const fetchAIRecommendations = async () => {
     setLoading(true);
     try {
-      // ✅ Build filter context for AI prompt
-      let filterContext = "";
-      if (filters.category && filters.category !== "All Categories") {
-        filterContext += `Focusing on ${filters.category} category. `;
-      }
-      if (filters.priceRange[0] > 0 || filters.priceRange[1] < 5000000) {
-        filterContext += `Price range: ₹${filters.priceRange[0]} - ₹${filters.priceRange[1]}. `;
-      }
-      if (filters.rating > 0) {
-        filterContext += `Minimum rating: ${filters.rating}+ stars. `;
-      }
-      if (filters.showTrendingOnly) {
-        filterContext += `Only trending products. `;
-      }
-
-      // 🔹 Better prompts that include filter context
+      // 🔹 Prompts per source (amazon_reviews replaced by rapidapi_amazon_products)
       const prompts: Record<string, string> = {
-        flipkart: `${filterContext}Analyze Flipkart products and provide 1) overall market summary 2) top opportunity 3) pricing strategy. Keep each point to one line.`,
-        amazon_reviews: `${filterContext}Analyze Amazon products and provide 1) overall market summary 2) top opportunity 3) pricing strategy. Keep each point to one line.`,
-        rapidapi_amazon_products: `${filterContext}Analyze Amazon products and provide 1) overall market summary 2) top opportunity 3) pricing strategy. Keep each point to one line.`,
-        both: `${filterContext}Compare Flipkart and Amazon markets and provide 1) overall comparison summary 2) top opportunity 3) strategic recommendation. Keep each point to one line.`,
+        flipkart: `Provide a concise summary and 2 actionable recommendations for the Flipkart table based on sales, ratings, and price trends. Format the first line as summary and next two lines as separate recommendations.`,
+        rapidapi_amazon_products: `Provide a concise summary and 2 actionable recommendations for the rapidapi_amazon_products table based on product_price, product_star_rating, product_num_ratings, and daily_sales. Format the first line as summary and next two lines as separate recommendations.`,
+        both: `Provide a concise combined summary and 2 actionable recommendations comparing Flipkart and rapidapi_amazon_products data based on price, rating, and sales trends.`,
       };
-
-      // 🔹 Map source names
-      const sourceMap: Record<string, string> = {
-        flipkart: "flipkart",
-        amazon_reviews: "rapidapi_amazon_products",
-        rapidapi_amazon_products: "rapidapi_amazon_products",
-        both: "both",
-      };
-
-      const mappedSource = sourceMap[filters.table || selectedSource] || "flipkart";
-      const prompt = prompts[mappedSource] || prompts.flipkart;
-
-      // 🔹 Determine which source to query
-      const apiSource = (filters.table || selectedSource) === "both" 
-        ? "flipkart"
-        : (filters.table || selectedSource) === "amazon_reviews" 
-        ? "rapidapi_amazon_products" 
-        : (filters.table || selectedSource);
-
-      console.log("🤖 Fetching AI recommendations for:", apiSource, "with filters:", filterContext);
-
-      const res = await fetch(`${BASE_URL}/ai/query`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: prompt,
-          source: apiSource,
-          limit: 30,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const json = await res.json();
-      const answer = json.answer || "";
-
-      console.log("✅ AI Answer received:", answer);
-
-      // ✅ Parse the response
-      // Split by numbers (1), 2), 3)) or newlines
-      const lines = answer
-        .split(/\n+|\d+\)|\d+\./)
-        .map((l: string) => l.trim())
-        .filter((l: string) => l.length > 10); // Filter out empty or too short lines
-
-      if (lines.length >= 3) {
-        setSummary(lines[0]);
-        setRecommendations([lines[1], lines[2]]);
-      } else if (lines.length >= 1) {
-        setSummary(lines[0]);
-        setRecommendations([
-          "Focus on high-rated products to maximize customer satisfaction.",
-          "Optimize pricing strategy based on competitor analysis."
-        ]);
-      } else {
-        // Fallback if parsing fails
-        setSummary(answer.substring(0, 150) || "Market analysis shows positive trends across categories.");
-        setRecommendations([
-          "Focus on high-rated products to maximize customer satisfaction.",
-          "Optimize pricing strategy based on competitor analysis."
-        ]);
-      }
-
+ 
+      // 🔹 Select sources dynamically
+      const sources =
+        selectedSource === "both"
+          ? ["flipkart", "rapidapi_amazon_products"]
+          : [selectedSource];
+ 
+      const aiAnswers = await Promise.all(
+        sources.map(async (source) => {
+          const res = await fetch(`${BASE_URL}/ai/query`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              question: prompts[source],
+              source,
+              limit: 50,
+            }),
+          });
+          const json = await res.json();
+          return json.answer || "";
+        })
+      );
+ 
+      // 🔹 Combine results
+      const allText = aiAnswers.filter(Boolean).join("\n");
+      const lines = allText.split("\n").filter((line) => line.trim() !== "");
+ 
+      setSummary(lines[0] || "No summary available.");
+      setRecommendations(lines.slice(1, 3));
     } catch (err) {
       console.error("❌ AI recommendation error:", err);
       
@@ -1126,7 +1074,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     fetchAIRecommendations();
   }, [selectedSource, filters]); // ✅ Re-fetch when filters change
@@ -1143,7 +1091,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
       title: "Strategic Action",
     },
   ];
-
+ 
   return (
     <Card className="bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl p-6 border mb-6">
       <CardHeader className="flex flex-row items-center justify-between mb-4 p-0">
@@ -1166,7 +1114,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
             </p>
           </div>
         </div>
-
+ 
         <div className="flex items-center space-x-2">
           <Badge variant="secondary" className="ai-badge">
             AI Powered
@@ -1183,7 +1131,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
           </Button>
         </div>
       </CardHeader>
-
+ 
       <CardContent className="p-0">
         {/* Summary */}
         <div className="mb-6 p-4 bg-white/70 dark:bg-black/20 rounded-lg">
@@ -1202,7 +1150,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
             </p>
           )}
         </div>
-
+ 
         {/* Recommendations */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {loading

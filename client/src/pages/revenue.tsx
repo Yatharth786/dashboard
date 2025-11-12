@@ -9,14 +9,14 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Star, ShoppingBag } from "lucide-react";
-
+ 
 interface Summary {
   total_products: number;
   avg_price: number;
   avg_rating: number;
   total_reviews: number;
 }
-
+ 
 export default function Revenue() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [source, setSource] = useState<"flipkart" | "amazon" | "all">("flipkart");
@@ -41,7 +41,7 @@ export default function Revenue() {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-
+ 
       <div className="ml-64 min-h-screen">
         {/* Header */}
         <header className="bg-card border-b border-border px-6 py-4 flex justify-between items-center">

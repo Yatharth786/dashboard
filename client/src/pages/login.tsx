@@ -735,7 +735,7 @@ export default function Login() {
       setErrorMessage("Please fill in all required fields.");
       return;
     }
- 
+
     setIsLoading(true);
  
     try {
@@ -783,7 +783,7 @@ export default function Login() {
       };
      
       localStorage.setItem('user', JSON.stringify(user));
-     
+      
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
         localStorage.setItem('savedEmail', formData.email);
@@ -833,7 +833,7 @@ export default function Login() {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
     setErrorMessage("");
   };
- 
+
   const handleDemoLogin = () => {
     const user = {
       email: "demo@example.com",
@@ -846,7 +846,7 @@ export default function Login() {
     localStorage.setItem('user', JSON.stringify(user));
     setLocation("/dashboard");
   };
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated Background */}
@@ -922,7 +922,7 @@ export default function Login() {
               <TrendingUp className="mr-2 h-4 w-4" />
               Try Demo Account
             </Button>
- 
+
             <div className="relative">
               <Separator className="w-full" />
               <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-900 px-4 text-sm text-gray-500">
@@ -957,8 +957,8 @@ export default function Login() {
  
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
+                  <Checkbox 
+                    id="remember" 
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />

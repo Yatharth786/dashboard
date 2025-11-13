@@ -1,290 +1,13 @@
-// import { useState } from "react";
-// import { Link, useLocation } from "wouter";
-// import { useToast } from "@/hooks/use-toast";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label";
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { Checkbox } from "@/components/ui/checkbox";
-// import { ChartLine } from "lucide-react";
- 
-// interface SignupFormData {
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   password: string;
-//   businessName: string;
-//   location: string;
-//   businessInterests: string[];
-// }
- 
-// const LOCATIONS = [
-//   { value: "mumbai", label: "Mumbai, India" },
-//   { value: "delhi", label: "Delhi, India" },
-//   { value: "bangalore", label: "Bangalore, India" },
-//   { value: "chennai", label: "Chennai, India" },
-//   { value: "kolkata", label: "Kolkata, India" },
-//   { value: "pune", label: "Pune, India" },
-//   { value: "hyderabad", label: "Hyderabad, India" },
-//   { value: "other", label: "Other" },
-// ];
- 
-// const BUSINESS_INTERESTS = [
-//   { id: "electronics", label: "Electronics & Technology" },
-//   { id: "fashion", label: "Fashion & Apparel" },
-//   { id: "home", label: "Home & Kitchen" },
-//   { id: "beauty", label: "Beauty & Personal Care" },
-//   { id: "sports", label: "Sports & Fitness" },
-//   { id: "books", label: "Books & Media" },
-//   { id: "automotive", label: "Automotive" },
-//   { id: "health", label: "Health & Wellness" },
-//   { id: "toys", label: "Toys & Games" },
-//   { id: "grocery", label: "Grocery & Food" },
-//   { id: "office", label: "Office Supplies" },
-//   { id: "pet", label: "Pet Supplies" },
-// ];
- 
-// export default function Signup() {
-//   const [, setLocation] = useLocation();
-//   const { toast } = useToast();
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [formData, setFormData] = useState<SignupFormData>({
-//     firstName: "",
-//     lastName: "",
-//     email: "",
-//     password: "",
-//     businessName: "",
-//     location: "",
-//     businessInterests: []
-//   });
-//   const [agreedToTerms, setAgreedToTerms] = useState(false);
- 
-//   // UPDATE THIS TO YOUR SERVER IP
-//   const API_BASE_URL = "http://localhost:8000";
- 
-//   const handleInputChange = (field: keyof SignupFormData) => (
-//     e: React.ChangeEvent<HTMLInputElement>
-//   ) => {
-//     setFormData(prev => ({ ...prev, [field]: e.target.value }));
-//   };
- 
-//   const handleLocationChange = (value: string) => {
-//     setFormData(prev => ({ ...prev, location: value }));
-//   };
- 
-//   const handleInterestToggle = (interestId: string) => {
-//     setFormData(prev => {
-//       const interests = prev.businessInterests.includes(interestId)
-//         ? prev.businessInterests.filter(id => id !== interestId)
-//         : [...prev.businessInterests, interestId];
-//       return { ...prev, businessInterests: interests };
-//     });
-//   };
- 
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
- 
-//     if (!agreedToTerms) {
-//       toast({ title: "Terms required", description: "Please agree to the Terms.", variant: "destructive" });
-//       return;
-//     }
- 
-//     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-//       toast({ title: "Missing fields", description: "Fill all required fields.", variant: "destructive" });
-//       return;
-//     }
- 
-//     if (!formData.location) {
-//       toast({ title: "Location required", description: "Select your location.", variant: "destructive" });
-//       return;
-//     }
- 
-//     if (formData.businessInterests.length === 0) {
-//       toast({ title: "Select interests", description: "Select at least one.", variant: "destructive" });
-//       return;
-//     }
- 
-//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-//     if (!emailRegex.test(formData.email)) {
-//       toast({ title: "Invalid Email", description: "Enter valid email.", variant: "destructive" });
-//       return;
-//     }
- 
-//     if (formData.password.length < 6) {
-//       toast({ title: "Password too short", description: "Min 6 characters.", variant: "destructive" });
-//       return;
-//     }
- 
-//     setIsLoading(true);
- 
-//     try {
-//       console.log("📤 Sending to:", `${API_BASE_URL}/users/signup`);
-     
-//       const response = await fetch(`${API_BASE_URL}/users/signup`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           "Accept": "application/json"
-//         },
-//         body: JSON.stringify({
-//           first_name: formData.firstName,
-//           last_name: formData.lastName,
-//           email: formData.email,
-//           password: formData.password,
-//           business_name: formData.businessName || null,
-//           location: formData.location,
-//           business_interests: formData.businessInterests
-//         }),
-//       });
- 
-//       console.log("📥 Status:", response.status);
- 
-//       if (!response.ok) {
-//         const errorData = await response.json();
-//         console.error("❌ Error:", errorData);
-//         throw new Error(errorData.detail || "Signup failed");
-//       }
- 
-//       const userData = await response.json();
-//       console.log("✅ Success:", userData);
- 
-//       toast({
-//         title: "Account created!",
-//         description: `Welcome, ${userData.first_name}!`,
-//       });
- 
-//       localStorage.setItem("user", JSON.stringify({
-//         id: userData.id,
-//         name: `${userData.first_name} ${userData.last_name}`,
-//         email: userData.email,
-//         businessName: userData.business_name,
-//         location: userData.location,
-//         businessInterests: userData.business_interests,
-//         loggedIn: true,
-//         createdAt: userData.created_at
-//       }));
-     
-//       setTimeout(() => setLocation("/dashboard"), 500);
- 
-//     } catch (err: any) {
-//       console.error("❌ Error:", err);
-//       toast({ title: "Signup failed", description: err.message, variant: "destructive" });
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
- 
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
-//       <div className="w-full max-w-2xl">
-//         <div className="text-center mb-8">
-//           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
-//             <ChartLine className="text-primary-foreground h-8 w-8" />
-//           </div>
-//           <h1 className="text-3xl font-bold mb-2">Insydz</h1>
-//           <p className="text-muted-foreground">Start your analytics journey</p>
-//         </div>
- 
-//         <Card className="border shadow-xl">
-//           <CardHeader className="text-center">
-//             <CardTitle className="text-2xl">Create Account</CardTitle>
-//             <CardDescription>Join and get personalized insights</CardDescription>
-//           </CardHeader>
- 
-//           <CardContent>
-//             <form onSubmit={handleSubmit} className="space-y-6">
-//               <div className="grid grid-cols-2 gap-4">
-//                 <div className="space-y-2">
-//                   <Label htmlFor="firstName">First Name *</Label>
-//                   <Input id="firstName" placeholder="John" value={formData.firstName} onChange={handleInputChange("firstName")} required />
-//                 </div>
-//                 <div className="space-y-2">
-//                   <Label htmlFor="lastName">Last Name *</Label>
-//                   <Input id="lastName" placeholder="Doe" value={formData.lastName} onChange={handleInputChange("lastName")} required />
-//                 </div>
-//               </div>
- 
-//               <div className="space-y-2">
-//                 <Label htmlFor="email">Email *</Label>
-//                 <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={handleInputChange("email")} required />
-//               </div>
- 
-//               <div className="space-y-2">
-//                 <Label htmlFor="password">Password *</Label>
-//                 <Input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange("password")} required minLength={6} />
-//                 <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
-//               </div>
- 
-//               <div className="space-y-2">
-//                 <Label htmlFor="businessName">Business Name (Optional)</Label>
-//                 <Input id="businessName" placeholder="Your Business" value={formData.businessName} onChange={handleInputChange("businessName")} />
-//               </div>
- 
-//               <div className="space-y-2">
-//                 <Label htmlFor="location">Location *</Label>
-//                 <Select value={formData.location} onValueChange={handleLocationChange} required>
-//                   <SelectTrigger>
-//                     <SelectValue placeholder="Select location" />
-//                   </SelectTrigger>
-//                   <SelectContent>
-//                     {LOCATIONS.map((loc) => (
-//                       <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
-//                     ))}
-//                   </SelectContent>
-//                 </Select>
-//               </div>
- 
-//               <div className="space-y-3">
-//                 <Label className="text-base">Business Interests *</Label>
-//                 <p className="text-sm text-muted-foreground">Select at least one</p>
-//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-4 border rounded-lg bg-muted/30">
-//                   {BUSINESS_INTERESTS.map((interest) => (
-//                     <div key={interest.id} className="flex items-center space-x-2">
-//                       <Checkbox id={interest.id} checked={formData.businessInterests.includes(interest.id)} onCheckedChange={() => handleInterestToggle(interest.id)} />
-//                       <Label htmlFor={interest.id} className="text-sm font-normal cursor-pointer">{interest.label}</Label>
-//                     </div>
-//                   ))}
-//                 </div>
-//                 {formData.businessInterests.length > 0 && (
-//                   <p className="text-sm text-primary font-medium">
-//                     ✓ {formData.businessInterests.length} selected
-//                   </p>
-//                 )}
-//               </div>
- 
-//               <div className="flex items-start space-x-2">
-//                 <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked === true)} />
-//                 <Label htmlFor="terms" className="text-sm cursor-pointer">
-//                   I agree to <span className="text-primary underline">Terms</span> and <span className="text-primary underline">Privacy</span>
-//                 </Label>
-//               </div>
- 
-//               <Button type="submit" className="w-full" disabled={isLoading} size="lg">
-//                 {isLoading ? "Creating..." : "Create Account"}
-//               </Button>
-//             </form>
- 
-//             <p className="text-center text-sm text-muted-foreground mt-6">
-//               Have an account? <Link href="/login"><Button variant="link" className="p-0 h-auto text-primary">Sign in</Button></Link>
-//             </p>
-//           </CardContent>
-//         </Card>
-//       </div>
-//     </div>
-//   );
-// }
-
-
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TrendingUp, ArrowLeft, Sparkles, CheckCircle2 } from "lucide-react";
+import { ChartLine } from "lucide-react";
  
 interface SignupFormData {
   firstName: string;
@@ -324,6 +47,7 @@ const BUSINESS_INTERESTS = [
  
 export default function Signup() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<SignupFormData>({
     firstName: "",
@@ -336,6 +60,7 @@ export default function Signup() {
   });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
  
+  // UPDATE THIS TO YOUR SERVER IP
   const API_BASE_URL = "http://localhost:8000";
  
   const handleInputChange = (field: keyof SignupFormData) => (
@@ -357,16 +82,45 @@ export default function Signup() {
     });
   };
  
-  const handleSubmit = async () => {
-    if (!agreedToTerms || !formData.firstName || !formData.lastName || 
-        !formData.email || !formData.password || !formData.location || 
-        formData.businessInterests.length === 0) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+ 
+    if (!agreedToTerms) {
+      toast({ title: "Terms required", description: "Please agree to the Terms.", variant: "destructive" });
+      return;
+    }
+ 
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      toast({ title: "Missing fields", description: "Fill all required fields.", variant: "destructive" });
+      return;
+    }
+ 
+    if (!formData.location) {
+      toast({ title: "Location required", description: "Select your location.", variant: "destructive" });
+      return;
+    }
+ 
+    if (formData.businessInterests.length === 0) {
+      toast({ title: "Select interests", description: "Select at least one.", variant: "destructive" });
+      return;
+    }
+ 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({ title: "Invalid Email", description: "Enter valid email.", variant: "destructive" });
+      return;
+    }
+ 
+    if (formData.password.length < 6) {
+      toast({ title: "Password too short", description: "Min 6 characters.", variant: "destructive" });
       return;
     }
  
     setIsLoading(true);
  
     try {
+      console.log("📤 Sending to:", `${API_BASE_URL}/users/signup`);
+     
       const response = await fetch(`${API_BASE_URL}/users/signup`, {
         method: "POST",
         headers: {
@@ -384,11 +138,21 @@ export default function Signup() {
         }),
       });
  
+      console.log("📥 Status:", response.status);
+ 
       if (!response.ok) {
-        throw new Error("Signup failed");
+        const errorData = await response.json();
+        console.error("❌ Error:", errorData);
+        throw new Error(errorData.detail || "Signup failed");
       }
  
       const userData = await response.json();
+      console.log("✅ Success:", userData);
+ 
+      toast({
+        title: "Account created!",
+        description: `Welcome, ${userData.first_name}!`,
+      });
  
       localStorage.setItem("user", JSON.stringify({
         id: userData.id,
@@ -404,122 +168,64 @@ export default function Signup() {
       setTimeout(() => setLocation("/dashboard"), 500);
  
     } catch (err: any) {
-      // Handle error
+      console.error("❌ Error:", err);
+      toast({ title: "Signup failed", description: err.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-300/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '700ms' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-rose-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1000ms' }}></div>
-      </div>
-
-      <div className="w-full max-w-3xl relative z-10">
-        {/* Back Button */}
-        <button
-          onClick={() => setLocation("/")}
-          className="mb-6 flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
-        </button>
-
-        {/* Logo Header */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl mb-4 shadow-lg transform hover:scale-110 transition-transform">
-            <TrendingUp className="text-white h-8 w-8" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
+            <ChartLine className="text-primary-foreground h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent mb-2">
-            Join Insydz
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">Start your analytics journey today</p>
+          <h1 className="text-3xl font-bold mb-2">Insydz</h1>
+          <p className="text-muted-foreground">Start your analytics journey</p>
         </div>
  
-        <Card className="border-0 shadow-2xl backdrop-blur-xl bg-white/70 dark:bg-gray-900/70">
-          <CardHeader className="text-center space-y-2">
-            <CardTitle className="text-2xl">Create Your Account</CardTitle>
-            <CardDescription className="flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-500" />
-              Get personalized insights in minutes
-            </CardDescription>
+        <Card className="border shadow-xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Create Account</CardTitle>
+            <CardDescription>Join and get personalized insights</CardDescription>
           </CardHeader>
  
           <CardContent>
-            <div className="space-y-6">
-              {/* Name Fields */}
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-medium">First Name *</Label>
-                  <Input 
-                    id="firstName" 
-                    placeholder="John" 
-                    value={formData.firstName} 
-                    onChange={handleInputChange("firstName")}
-                    className="h-11 border-gray-300 focus:border-purple-500"
-                  />
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input id="firstName" placeholder="John" value={formData.firstName} onChange={handleInputChange("firstName")} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-medium">Last Name *</Label>
-                  <Input 
-                    id="lastName" 
-                    placeholder="Doe" 
-                    value={formData.lastName} 
-                    onChange={handleInputChange("lastName")}
-                    className="h-11 border-gray-300 focus:border-purple-500"
-                  />
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input id="lastName" placeholder="Doe" value={formData.lastName} onChange={handleInputChange("lastName")} required />
                 </div>
               </div>
  
-              {/* Email & Password */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email Address *</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="your@email.com" 
-                  value={formData.email} 
-                  onChange={handleInputChange("email")}
-                  className="h-11 border-gray-300 focus:border-purple-500"
-                />
+                <Label htmlFor="email">Email *</Label>
+                <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={handleInputChange("email")} required />
               </div>
  
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={formData.password} 
-                  onChange={handleInputChange("password")}
-                  minLength={6}
-                  className="h-11 border-gray-300 focus:border-purple-500"
-                />
-                <p className="text-xs text-gray-500">Minimum 6 characters</p>
+                <Label htmlFor="password">Password *</Label>
+                <Input id="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange("password")} required minLength={6} />
+                <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
               </div>
  
-              {/* Business Name */}
               <div className="space-y-2">
-                <Label htmlFor="businessName" className="text-sm font-medium">Business Name (Optional)</Label>
-                <Input 
-                  id="businessName" 
-                  placeholder="Your Business" 
-                  value={formData.businessName} 
-                  onChange={handleInputChange("businessName")}
-                  className="h-11 border-gray-300 focus:border-purple-500"
-                />
+                <Label htmlFor="businessName">Business Name (Optional)</Label>
+                <Input id="businessName" placeholder="Your Business" value={formData.businessName} onChange={handleInputChange("businessName")} />
               </div>
  
-              {/* Location */}
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-sm font-medium">Location *</Label>
-                <Select value={formData.location} onValueChange={handleLocationChange}>
-                  <SelectTrigger className="h-11 border-gray-300 focus:border-purple-500">
-                    <SelectValue placeholder="Select your location" />
+                <Label htmlFor="location">Location *</Label>
+                <Select value={formData.location} onValueChange={handleLocationChange} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
                     {LOCATIONS.map((loc) => (
@@ -529,79 +235,44 @@ export default function Signup() {
                 </Select>
               </div>
  
-              {/* Business Interests */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Business Interests *</Label>
-                <p className="text-sm text-gray-500">Select at least one category</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto p-4 border border-gray-300 rounded-lg bg-white/50 dark:bg-gray-800/50">
+                <Label className="text-base">Business Interests *</Label>
+                <p className="text-sm text-muted-foreground">Select at least one</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-4 border rounded-lg bg-muted/30">
                   {BUSINESS_INTERESTS.map((interest) => (
                     <div key={interest.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={interest.id} 
-                        checked={formData.businessInterests.includes(interest.id)} 
-                        onCheckedChange={() => handleInterestToggle(interest.id)}
-                        className="border-gray-400"
-                      />
-                      <Label htmlFor={interest.id} className="text-sm font-normal cursor-pointer">
-                        {interest.label}
-                      </Label>
+                      <Checkbox id={interest.id} checked={formData.businessInterests.includes(interest.id)} onCheckedChange={() => handleInterestToggle(interest.id)} />
+                      <Label htmlFor={interest.id} className="text-sm font-normal cursor-pointer">{interest.label}</Label>
                     </div>
                   ))}
                 </div>
                 {formData.businessInterests.length > 0 && (
-                  <p className="text-sm text-purple-600 font-medium flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {formData.businessInterests.length} selected
+                  <p className="text-sm text-primary font-medium">
+                    ✓ {formData.businessInterests.length} selected
                   </p>
                 )}
               </div>
  
-              {/* Terms Agreement */}
-              <div className="flex items-start space-x-2 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                <Checkbox 
-                  id="terms" 
-                  checked={agreedToTerms} 
-                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-                  className="mt-1"
-                />
-                <Label htmlFor="terms" className="text-sm cursor-pointer leading-relaxed">
-                  I agree to the <span className="text-purple-600 font-semibold underline">Terms of Service</span> and <span className="text-purple-600 font-semibold underline">Privacy Policy</span>
+              <div className="flex items-start space-x-2">
+                <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked === true)} />
+                <Label htmlFor="terms" className="text-sm cursor-pointer">
+                  I agree to <span className="text-primary underline">Terms</span> and <span className="text-primary underline">Privacy</span>
                 </Label>
               </div>
  
-              {/* Submit Button */}
-              <Button
-                onClick={handleSubmit}
-                className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Creating Account...
-                  </span>
-                ) : "Create Account"}
+              <Button type="submit" className="w-full" disabled={isLoading} size="lg">
+                {isLoading ? "Creating..." : "Create Account"}
               </Button>
-            </div>
+            </form>
  
-            {/* Login Link */}
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-              Already have an account?{" "}
-              <button
-                onClick={() => setLocation("/login")}
-                className="text-purple-600 hover:text-purple-700 font-semibold hover:underline"
-              >
-                Sign in
-              </button>
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Have an account? <Link href="/login"><Button variant="link" className="p-0 h-auto text-primary">Sign in</Button></Link>
             </p>
           </CardContent>
         </Card>
-
-        {/* Footer */}
-        <div className="text-center mt-6 text-sm text-gray-600 dark:text-gray-400">
-          <p className="font-medium">Powered by Insydz Analytics</p>
-        </div>
       </div>
     </div>
   );
 }
+
+

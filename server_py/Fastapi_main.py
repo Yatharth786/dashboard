@@ -43,6 +43,7 @@ def decimal_to_float(obj):
     except Exception:
         return str(obj)
 
+
 @app.get("/")
 def read_root():
     return {"message": "Amazon Reviews API running"}
@@ -67,8 +68,6 @@ def get_product_reviews(product_id: str, limit: int = 20, db: Session = Depends(
 @app.get("/Amazon_Reviews/search/{query}", response_model=List[schemas.AmazonReview])
 def search_reviews(query: str, limit: int = 50, db: Session = Depends(get_db)):
     return crud.search_reviews(db, query, limit)
-
-
 
 @app.get("/rapidapi_amazon_products/statistics")
 def get_statistics(db: Session = Depends(get_db)):

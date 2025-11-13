@@ -20,13 +20,13 @@ interface Product {
   avg_rating: number;
   source: string;
 }
-
+ 
 export default function CategoryProducts() {
   const [match, params] = useRoute("/category-products/:source/:category");
   const source = params?.source;
   const category = params?.category;
   const [, setLocation] = useLocation();
-
+ 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -232,3 +232,5 @@ export default function CategoryProducts() {
     </div>
   );
 }
+ 
+ 

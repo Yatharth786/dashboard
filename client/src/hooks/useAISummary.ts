@@ -102,7 +102,7 @@ import { useEffect, useState } from "react";
 export function useAISummary(question: string, source: string, data: any[], triggerKey: number) {
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-
+ 
   useEffect(() => {
     console.log("🔍 useAISummary called:", { question, source, dataLength: data?.length });
 
@@ -112,7 +112,7 @@ export function useAISummary(question: string, source: string, data: any[], trig
       setLoading(false);
       return;
     }
-
+ 
     const fetchSummary = async () => {
       setLoading(true);
       try {

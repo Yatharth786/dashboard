@@ -289,7 +289,7 @@ export default function Login() {
       setErrorMessage("Please fill in all required fields.");
       return;
     }
- 
+
     setIsLoading(true);
  
     try {
@@ -345,7 +345,7 @@ export default function Login() {
       };
      
       localStorage.setItem('user', JSON.stringify(user));
-     
+      
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
         localStorage.setItem('savedEmail', formData.email);
@@ -452,7 +452,7 @@ export default function Login() {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
     setErrorMessage(""); // Clear error when user types
   };
- 
+
   const handleDemoLogin = () => {
     const user = {
       email: "demo@example.com",
@@ -471,7 +471,7 @@ export default function Login() {
    
     setLocation("/dashboard");
   };
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -511,7 +511,7 @@ export default function Login() {
               <ChartLine className="mr-2 h-4 w-4" />
               Continue as Demo User
             </Button>
- 
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
@@ -551,8 +551,8 @@ export default function Login() {
  
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
+                  <Checkbox 
+                    id="remember" 
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
                   />

@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+fetch_changes.log
 # Distribution / packaging
 .Python
 build/
@@ -26,6 +26,12 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# node.js
+#
+node_modules/
+npm-debug.log
+yarn-error.log
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -70,3 +76,5 @@ test.db
 *.swp
 *.swo
 *~
+
+fetch_changes.log

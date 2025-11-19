@@ -327,7 +327,7 @@ import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFilters } from "@/components/dashboard/FiltersContext";
 import { useAISummary } from "@/hooks/useAISummary";
-
+ 
 interface TrendingProduct {
   product_title?: string;
   title?: string;
@@ -353,11 +353,11 @@ function ProductCard({
     "from-blue-50 to-blue-100",
     "from-purple-50 to-purple-100",
   ];
-
+ 
   const productName = product.product_title || product.title || "Unknown Product";
   const reviewCount = product.review_count || product.reviews || 0;
   const rating = product.avg_rating || product.rating || product.star_rating || 0;
-
+ 
   return (
     <div
       className={cn(
@@ -451,7 +451,7 @@ export default function ProductRankings({
             fetch(`${BASE_URL}/top?table=flipkart&n=5&${queryParams}`),
             fetch(`${BASE_URL}/top?table=rapidapi_amazon_products&n=5&${queryParams}`),
           ]);
-
+ 
           const [flipkartJson, amazonJson] = await Promise.all([
             flipkartRes.json(),
             amazonRes.json(),
@@ -478,7 +478,7 @@ export default function ProductRankings({
         setIsLoading(false);
       }
     };
-
+ 
     fetchTrendingProducts();
   }, [selectedSource, filters]); // ✅ Re-fetch when filters change
 
@@ -512,7 +512,7 @@ export default function ProductRankings({
     allProducts,
     allProducts.length
   );
-
+ 
   return (
     <div className="grid grid-cols-1 gap-6 mb-8">
       <Card className="bg-card rounded-xl p-6 border hover:shadow-md transition-shadow">
@@ -528,7 +528,7 @@ export default function ProductRankings({
             Live Data
           </Badge>
         </CardHeader>
-
+ 
         <CardContent className="p-0">
           {/* ✅ AI Summary Section */}
           {summaryLoading ? (
@@ -540,7 +540,7 @@ export default function ProductRankings({
               {summary}
             </p>
           ) : null}
-
+ 
           <div className="space-y-4">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, index) => (
@@ -611,3 +611,4 @@ export default function ProductRankings({
     </div>
   );
 }
+ 

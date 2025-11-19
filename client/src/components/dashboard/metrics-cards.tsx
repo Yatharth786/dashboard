@@ -223,7 +223,7 @@ interface MetricCardProps {
   color: string;
   isLoading?: boolean;
 }
-
+ 
 function MetricCard({ title, value, icon, color, isLoading }: MetricCardProps) {
   if (isLoading) {
     return (
@@ -238,7 +238,7 @@ function MetricCard({ title, value, icon, color, isLoading }: MetricCardProps) {
       </Card>
     );
   }
-
+ 
   return (
     <Card className="metric-card bg-card rounded-xl p-6 border shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-4">
@@ -252,7 +252,7 @@ function MetricCard({ title, value, icon, color, isLoading }: MetricCardProps) {
     </Card>
   );
 }
-
+ 
 export default function MetricsCards({ selectedSource }: { selectedSource: string }) {
   const BASE_URL = "http://localhost:8000";
   const { filters } = useFilters(); // ✅ Get filters from context
@@ -307,14 +307,14 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
             fetch(`${BASE_URL}/flipkart/categories?${queryParams}`),
             fetch(`${BASE_URL}/rapidapi_amazon_products/categories?${queryParams}`),
           ]);
-
+ 
           const [flipkartStatsJson, amazonStatsJson, flipkartCatJson, amazonCatJson] = await Promise.all([
             flipkartStatsRes.json(),
             amazonStatsRes.json(),
             flipkartCatRes.json(),
             amazonCatRes.json(),
           ]);
-
+ 
           setFlipkartStats(flipkartStatsJson);
           setAmazonStats(amazonStatsJson);
           setFlipkartCategories(Array.isArray(flipkartCatJson) ? flipkartCatJson : []);
@@ -325,28 +325,28 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
             fetch(`${BASE_URL}/analytics-summary?source=amazon&${queryParams}`),
             fetch(`${BASE_URL}/rapidapi_amazon_products/categories?${queryParams}`),
           ]);
-
+ 
           const [statsJson, catsJson] = await Promise.all([
             statsRes.json(),
             catsRes.json(),
           ]);
-
+ 
           setFlipkartStats(null);
           setAmazonStats(statsJson);
           setFlipkartCategories([]);
           setAmazonCategories(Array.isArray(catsJson) ? catsJson : []);
-
+ 
         } else {
           const [statsRes, catsRes] = await Promise.all([
             fetch(`${BASE_URL}/analytics-summary?source=flipkart&${queryParams}`),
             fetch(`${BASE_URL}/flipkart/categories?${queryParams}`),
           ]);
-
+ 
           const [statsJson, catsJson] = await Promise.all([
             statsRes.json(),
             catsRes.json(),
           ]);
-
+ 
           setFlipkartStats(statsJson);
           setAmazonStats(null);
           setFlipkartCategories(Array.isArray(catsJson) ? catsJson : []);
@@ -362,7 +362,7 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
         setIsLoading(false);
       }
     };
-
+ 
     fetchData();
   }, [selectedSource, filters]); // ✅ Re-fetch when filters change
 
@@ -380,7 +380,7 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
   let avgRating = 0;
   let totalProducts = 0;
   let totalCategories = 0;
-
+ 
   if (showBoth) {
     totalReviews = (flipkartStats?.total_reviews || 0) + (amazonStats?.total_reviews || 0);
     const flipkartTotal = flipkartStats?.total_reviews || 0;
@@ -392,20 +392,20 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
     }
     totalProducts = (flipkartStats?.total_products || 0) + (amazonStats?.total_products || 0);
     totalCategories = flipkartCategories.length + amazonCategories.length;
-
+ 
   } else if (isAmazon) {
     totalReviews = amazonStats?.total_reviews || 0;
     avgRating = amazonStats?.avg_rating || amazonStats?.average_rating || 0;
     totalProducts = amazonStats?.total_products || 0;
     totalCategories = amazonCategories.length;
-
+ 
   } else {
     totalReviews = flipkartStats?.total_reviews || 0;
     avgRating = flipkartStats?.avg_rating || 0;
     totalProducts = flipkartStats?.total_products || 0;
     totalCategories = flipkartCategories.length;
   }
-
+ 
   const cards = [
     {
       title: showBoth ? "Total Reviews (Both)" : isAmazon ? "Total Reviews (Amazon)" : "Total Reviews (Flipkart)",
@@ -432,7 +432,7 @@ export default function MetricsCards({ selectedSource }: { selectedSource: strin
       color: "bg-purple-100",
     },
   ];
-
+ 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {cards.map((card, index) => (

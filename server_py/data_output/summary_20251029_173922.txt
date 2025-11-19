@@ -1,0 +1,13 @@
+======================================================================
+DataForSEO Collection Summary - India
+======================================================================
+
+Collection Date: 2025-10-29 17:39:22
+Location: 2356 (India)
+Language: en_US
+Keywords: laptop, smartphone, headphones, smartwatch, tablet
+Successful: 5/5
+Total Products: 575
+Estimated Cost: $0.575
+Time Taken: 18m 55s
+Output Directory: C:\Users\AFI-02-AI\Desktop\TrendSensei\server_py\data_output

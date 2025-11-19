@@ -390,7 +390,7 @@ function DashboardContent() {
       console.error("Error fetching notifications:", error);
     }
   };
-
+ 
   useEffect(() => {
     fetchNotifications(selectedSource);
     const interval = setInterval(() => fetchNotifications(selectedSource), 30000);

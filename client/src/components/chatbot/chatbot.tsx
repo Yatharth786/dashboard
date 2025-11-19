@@ -371,42 +371,99 @@ export default function Chatbot() {
   const inputRef = useRef<HTMLInputElement>(null);
  
   // ----------------- Mutation -----------------
+  // ----------------- Mutation -----------------
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await fetch("http://122.176.108.253:9001/ai/query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: message,
-          source: selectedSource,
-          limit: 50,
-        }),
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      const aiMessage: ChatMessage = {
-        id: Date.now().toString(),
-        message: data.answer,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    },
-    onError: () => {
-      const errorMessage: ChatMessage = {
-        id: Date.now().toString(),
-        message:
-          "⚠️ I'm having trouble fetching data. Please make sure your FastAPI server is running.",
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-      setIsTyping(false);
-    },
-  });
- 
+      const controller = new AbortController();
+
+    // ⏳ FRONTEND TIMEOUT = 60 seconds
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      try {
+        const response = await fetch("http://localhost:8000/ai/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: message,
+            source: selectedSource,
+            limit: 50,
+          }),
+          signal: controller.signal, // <-- important!
+        });
+
+        clearTimeout(timeoutId);
+
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeoutId); // always clear timeout
+        throw error; // let react-query handle onError
+      }
+   },
+
+   onSuccess: (data) => {
+     const aiMessage: ChatMessage = {
+       id: Date.now().toString(),
+       message: data.answer,
+       isUser: false,
+       timestamp: new Date(),
+     };
+     setMessages((prev) => [...prev, aiMessage]);
+     setIsTyping(false);
+   },
+
+   onError: (err) => {
+     const errorMessage: ChatMessage = {
+       id: Date.now().toString(),
+       message:
+         err?.name === "AbortError"
+           ? "⚠️ AI response timed out (60s). Please try again."
+           : "⚠️ I'm having trouble contacting the AI server.",
+       isUser: false,
+       timestamp: new Date(),
+     };
+
+     setMessages((prev) => [...prev, errorMessage]);
+     setIsTyping(false);
+   },
+  }); 
+
+
+  // const chatMutation = useMutation({
+  //   mutationFn: async (message: string) => {
+  //     const response = await fetch("http://localhost:8000/ai/query", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         question: message,
+  //         source: selectedSource,
+  //         limit: 50,
+  //       }),
+  //     });
+  //     return response.json();
+  //   },
+  //   onSuccess: (data) => {
+  //     const aiMessage: ChatMessage = {
+  //       id: Date.now().toString(),
+  //       message: data.answer,
+  //       isUser: false,
+  //       timestamp: new Date(),
+  //     };
+  //     setMessages((prev) => [...prev, aiMessage]);
+  //     setIsTyping(false);
+  //   },
+  //   onError: () => {
+  //     const errorMessage: ChatMessage = {
+  //       id: Date.now().toString(),
+  //       message:
+  //         "⚠️ I'm having trouble fetching data. Please make sure your FastAPI server is running.",
+  //       isUser: false,
+  //       timestamp: new Date(),
+  //     };
+  //     setMessages((prev) => [...prev, errorMessage]);
+  //     setIsTyping(false);
+  //   },
+  // });
+
   // ----------------- Scrolling -----------------
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

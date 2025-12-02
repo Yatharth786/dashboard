@@ -164,7 +164,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Tag, BarChart2, Star, ChevronRight } from "lucide-react";
-
+ 
 interface Category {
   category: string;
   total_products: number;
@@ -173,7 +173,7 @@ interface Category {
   total_reviews: number;
   source: string;
 }
-
+ 
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,19 +186,19 @@ export default function Categories() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/analytics/category")
+      .get("http://122.176.108.253:9001/analytics/category")
       .then((res) => setCategories(res.data.categories))
       .catch(() => setError("Failed to fetch category data"))
       .finally(() => setLoading(false));
   }, []);
-
+ 
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center text-slate-400">
         Loading categories...
       </div>
     );
-
+ 
   if (error)
     return (
       <div className="flex h-screen items-center justify-center text-red-500">
@@ -210,7 +210,7 @@ export default function Categories() {
     if (tableFilter === "all") return true;
     return cat.source === tableFilter;
   });
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FBFF] via-[#E3F2FD] to-[#DFF5FF] flex flex-col lg:flex-row">
       {/* Mobile Sidebar */}
@@ -339,3 +339,5 @@ export default function Categories() {
     </div>
   );
 }
+ 
+ 

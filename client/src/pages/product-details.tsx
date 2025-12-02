@@ -838,7 +838,17 @@ interface Tab {
   key: string;
   label: string;
 }
-
+ 
+interface ForecastData {
+  forecast: number[];
+  dates: string[];
+}
+ 
+interface Tab {
+  key: string;
+  label: string;
+}
+ 
 export default function ProductDetails() {
   const [match, params] = useRoute("/product/:productName");
   const productName = params?.productName ? decodeURIComponent(params.productName) : "";
@@ -890,7 +900,7 @@ export default function ProductDetails() {
     if (!productName) return;
     setLoading(true);
     setError("");
-
+ 
     axios
       .get<ProductData>(`${BASE_URL}/product/${encodeURIComponent(productName)}`)
       .then((res) => {
@@ -963,14 +973,14 @@ export default function ProductDetails() {
         <p className="text-sm sm:text-base">Loading product details...</p>
       </div>
     );
-
+ 
   if (error)
     return (
       <div className="flex h-screen items-center justify-center text-red-600 bg-gradient-to-br from-sky-50 via-white to-sky-100 px-4">
         <p className="text-sm sm:text-base">{error}</p>
       </div>
     );
-
+ 
   if (!data)
     return (
       <div className="flex h-screen items-center justify-center text-gray-500 bg-gradient-to-br from-sky-50 via-white to-sky-100 px-4">
@@ -1127,7 +1137,31 @@ export default function ProductDetails() {
               <p className="text-xs sm:text-sm text-gray-500 mt-1">Based on market data</p>
             </CardContent>
           </Card>
-
+ 
+          <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
+            <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
+              <CardTitle className="text-sky-900 font-semibold">Minimum Price</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 text-center">
+              <p className="text-4xl font-bold text-emerald-500">
+                {data.min_price != null ? `₹${data.min_price.toFixed(2)}` : "N/A"}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Lowest observed</p>
+            </CardContent>
+          </Card>
+ 
+          <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
+            <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
+              <CardTitle className="text-sky-900 font-semibold">Maximum Price</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 text-center">
+              <p className="text-4xl font-bold text-rose-500">
+                {data.max_price != null ? `₹${data.max_price.toFixed(2)}` : "N/A"}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Highest observed</p>
+            </CardContent>
+          </Card>
+ 
           <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
             <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
               <CardTitle className="text-sky-900 font-semibold text-base sm:text-lg">Minimum Price</CardTitle>
@@ -1163,7 +1197,7 @@ export default function ProductDetails() {
               <p className="text-xs sm:text-sm text-gray-500 mt-1">Customer satisfaction</p>
             </CardContent>
           </Card>
-
+ 
           <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
             <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
               <CardTitle className="text-sky-900 font-semibold text-base sm:text-lg">Total Reviews</CardTitle>

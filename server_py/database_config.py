@@ -9,11 +9,10 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import create_engine, text 
 
-load_dotenv()
-logger = logging.getLogger(__name__)
+# ✅ Remote Postgres database (update with your actual creds if different)
+DATABASE_URL = "Empty"
 
 # Database URL - get directly from environment
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://seller-db:Seller!db@122.176.108.253:9001/db1")
 
 # Remove quotes if present in DATABASE_URL
 if DATABASE_URL.startswith('"') and DATABASE_URL.endswith('"'):

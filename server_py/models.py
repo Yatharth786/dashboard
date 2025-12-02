@@ -8,8 +8,7 @@ class AmazonReview(Base):
     __tablename__ = "Amazon_Reviews"   
 
     review_id = Column(String, primary_key=True, index=True)
-
-    product_id = Column(String)
+    product_id = Column(String, index=True)
     market_place = Column(Text)
     customer_id = Column(String)
     product_parent = Column(String)
@@ -22,7 +21,7 @@ class AmazonReview(Base):
     verified_purchase = Column(Text)
     review_headline = Column(Text)
     review_body = Column(Text)
-    review_date = Column(Text)   # stored as text in DB
+    review_date = Column(Text)
     Sentiment_pc = Column(Text)
     review_month = Column(Text)
     review_day = Column(Text)
@@ -33,12 +32,11 @@ class AmazonReview(Base):
     rating_4 = Column("4 rating", Integer)
     rating_5 = Column("5 rating", Integer)
 
-
 class Product(Base):
     __tablename__ = "flipkart"  
-
+ 
     id = Column(Integer, primary_key=True, index=True)
-    asin = Column(String(20), unique=True, nullable=False)
+    asin = Column(String(20), unique=True, nullable=True)
     title = Column(Text, nullable=False)
     brand = Column(Text, nullable=True)
     category = Column(Text, nullable=True)
@@ -47,7 +45,7 @@ class Product(Base):
     rating = Column(Float, nullable=True)
     reviews = Column(Integer, nullable=True)
     availability = Column(Boolean, nullable=True)
-    variation = Column(JSON, nullable=True)  # JSON column
+    variation = Column(JSON, nullable=True)
     image_url = Column(Text, nullable=True)
     last_updated = Column(TIMESTAMP, nullable=True)
 

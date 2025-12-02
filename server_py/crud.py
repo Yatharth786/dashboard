@@ -6,8 +6,9 @@ from sqlalchemy import text
 from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Dropout
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
 import torch
@@ -30,11 +31,6 @@ def search_reviews(db: Session, query: str, limit: int = 50):
             models.AmazonReview.review_body.ilike(f"%{query}%")
         )
     ).limit(limit).all()
-
-# def get_review_statistics(db: Session):
-#     total = db.query(func.count(models.AmazonReview.review_id)).scalar()
-#     avg_rating = db.query(func.avg(models.AmazonReview.star_rating)).scalar()
-#     return {"total_reviews": total, "average_rating": float(avg_rating) if avg_rating else None}
 
 def get_review_statistics(db: Session):
     query = text("""
@@ -208,7 +204,7 @@ def get_summary(db: Session, source: str) -> Dict[str, Any]:
 
     result = db.execute(text(query))
     return dict(result.mappings().first())
-
+ 
 def get_top_products(db: Session, n: int):
     return db.query(models.Product).order_by(models.Product.rating.desc()).limit(n).all()
 
@@ -277,10 +273,10 @@ def get_amazon_categories(db: Session):
 def get_forecast_all_products(db: Session, n_forecast_days: int = 365):
     # 1️⃣ Get Flipkart products with price history
     flipkart_query = """
-        SELECT title AS product_name, price, date
+        SELECT title AS product_name, price, last_updated as date
         FROM flipkart
-        WHERE price IS NOT NULL AND date IS NOT NULL
-        ORDER BY date ASC
+        WHERE price IS NOT NULL AND last_updated IS NOT NULL
+        ORDER BY last_updated ASC
     """
     flipkart_df = pd.read_sql(text(flipkart_query), db.bind)
 

@@ -23,7 +23,7 @@ interface TrendingProduct {
   source?: string;
   product_price?: string;     // Amazon formatted price
 }
-
+ 
 export default function Sales() {
   const [products, setProducts] = useState<TrendingProduct[]>([]);
   const [source, setSource] = useState<"flipkart" | "amazon">("flipkart");
@@ -73,13 +73,13 @@ export default function Sales() {
     const factor = sortOrder === "asc" ? 1 : -1;
     return (getFieldValue(a, sortField) - getFieldValue(b, sortField)) * factor;
   });
-
+ 
   // --- Pagination Logic ---
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProducts = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
-
+ 
   const toggleSort = (field: "reviews" | "price" | "rating") => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -88,32 +88,32 @@ export default function Sales() {
       setSortOrder("desc");
     }
   };
-
+ 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
-
+ 
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center text-slate-400">
         Loading {source} top product data...
       </div>
     );
-
+ 
   if (error)
     return (
       <div className="flex h-screen items-center justify-center text-red-500">
         {error}
       </div>
     );
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FBFF] via-[#ECF5FF] to-[#E0F2FE]">
       <Sidebar />
-
+ 
       <div className="ml-64 min-h-screen transition-all">
         {/* Header */}
         <header className="bg-white/70 backdrop-blur-md border-b border-slate-200 px-6 py-4 sticky top-0 z-10 flex justify-between items-center">
@@ -134,7 +134,7 @@ export default function Sales() {
             <option value="amazon">Amazon</option>
           </select>
         </header>
-
+ 
         {/* Main Content */}
         <div className="p-6">
           <div className="max-w-7xl mx-auto space-y-8">
@@ -167,7 +167,7 @@ export default function Sales() {
                 </Button>
               ))}
             </div>
-
+ 
             {/* Product Table */}
             <Card className="shadow-sm border border-slate-200 rounded-2xl overflow-hidden backdrop-blur-md bg-white/80">
               <CardHeader>
@@ -177,7 +177,7 @@ export default function Sales() {
                   ({sortOrder === "asc" ? "Low → High" : "High → Low"})
                 </CardTitle>
               </CardHeader>
-
+ 
               <CardContent className="overflow-x-auto">
                 <table className="w-full text-sm text-slate-700">
                   <thead className="bg-slate-100 text-slate-700 uppercase text-xs font-semibold">
@@ -249,3 +249,5 @@ export default function Sales() {
     </div>
   );
 }
+ 
+ 

@@ -182,7 +182,7 @@ interface Summary {
   avg_rating: number;
   total_reviews: number;
 }
-
+ 
 export default function Revenue() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [source, setSource] = useState<"flipkart" | "amazon" | "all">("flipkart");

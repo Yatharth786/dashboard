@@ -326,7 +326,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
+ 
 interface ChatMessage {
   id: string;
   message: string;
@@ -334,7 +334,7 @@ interface ChatMessage {
   timestamp: Date;
   suggestions?: string[];
 }
-
+ 
 const QUICK_QUESTIONS = [
   "What products are trending now?",
   "Best profit margins?",
@@ -343,14 +343,14 @@ const QUICK_QUESTIONS = [
   "Market opportunities?",
   "Price optimization tips?",
 ];
-
+ 
 const SUGGESTION_ICONS = {
   trending: <TrendingUp className="h-3 w-3" />,
   profit: <DollarSign className="h-3 w-3" />,
   sales: <BarChart3 className="h-3 w-3" />,
   default: <Sparkles className="h-3 w-3" />,
 };
-
+ 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -369,7 +369,7 @@ export default function Chatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
+ 
   // ----------------- Mutation -----------------
   // ----------------- Mutation -----------------
   const chatMutation = useMutation({
@@ -468,42 +468,42 @@ export default function Chatbot() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
+ 
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
-
+ 
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isOpen]);
-
+ 
   // ----------------- Send Message -----------------
   const sendMessage = (messageText?: string) => {
     const text = messageText || inputMessage.trim();
     if (!text) return;
-
+ 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       message: text,
       isUser: true,
       timestamp: new Date(),
     };
-
+ 
     setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
     setIsTyping(true);
     chatMutation.mutate(text);
   };
-
+ 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     });
-
+ 
   const getSuggestionIcon = (suggestion: string) => {
     const lower = suggestion.toLowerCase();
     if (lower.includes("trend")) return SUGGESTION_ICONS.trending;
@@ -511,7 +511,7 @@ export default function Chatbot() {
     if (lower.includes("sales")) return SUGGESTION_ICONS.sales;
     return SUGGESTION_ICONS.default;
   };
-
+ 
   // ----------------- Render -----------------
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -525,7 +525,7 @@ export default function Chatbot() {
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </Button>
-
+ 
       {/* Chat Window */}
       {isOpen && (
         <Card className="absolute bottom-16 right-0 w-80 h-[26rem] shadow-2xl border border-gray-200 overflow-hidden flex flex-col rounded-2xl">
@@ -558,7 +558,7 @@ export default function Chatbot() {
               <X className="h-4 w-4" />
             </Button>
           </CardHeader>
-
+ 
           {/* Messages */}
           <CardContent className="flex-1 flex flex-col overflow-hidden">
             <ScrollArea className="flex-1 p-3" ref={scrollContainerRef}>
@@ -586,7 +586,7 @@ export default function Chatbot() {
                     </div>
                   </div>
                 ))}
-
+ 
                 {/* Typing Indicator */}
                 {isTyping && (
                   <div className="flex justify-start">
@@ -608,11 +608,11 @@ export default function Chatbot() {
                     </div>
                   </div>
                 )}
-
+ 
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
-
+ 
             {/* Input Section */}
             <div className="border-t bg-background p-3 space-y-2">
               {/* Source Selector */}
@@ -626,11 +626,11 @@ export default function Chatbot() {
                 <SelectContent>
                   <SelectItem value="flipkart">🛍 Flipkart</SelectItem>
                   <SelectItem value="rapidapi_amazon_products">
-                    💬 Amazon 
+                    💬 Amazon
                   </SelectItem>
                 </SelectContent>
               </Select>
-
+ 
               <div className="flex space-x-2">
                 <Input
                   ref={inputRef}

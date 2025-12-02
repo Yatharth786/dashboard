@@ -174,7 +174,7 @@ export function useAISummary(
 ) {
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-
+ 
   useEffect(() => {
     console.log("🔍 useAISummary called:", { question, source, dataLength: data?.length, filters });
 
@@ -184,7 +184,7 @@ export function useAISummary(
       setLoading(false);
       return;
     }
-
+ 
     const fetchSummary = async () => {
       setLoading(true);
 

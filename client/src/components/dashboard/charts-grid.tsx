@@ -2545,16 +2545,15 @@ import { useFilters } from "@/components/dashboard/FiltersContext";
 import { useAISummary } from "@/hooks/useAISummary";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
-
+ 
 interface ChartCardProps {
   title: string;
   children: React.ReactNode;
   isLoading?: boolean;
   summary?: string;
-  summaryLoading?: boolean;
 }
-
-function ChartCard({ title, children, isLoading, summary, summaryLoading }: ChartCardProps) {
+ 
+function ChartCard({ title, children, isLoading, summary }: ChartCardProps) {
   return (
     <Card className="bg-card rounded-xl p-6 border hover:shadow-md transition-shadow">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -2580,7 +2579,7 @@ function ChartCard({ title, children, isLoading, summary, summaryLoading }: Char
     </Card>
   );
 }
-
+ 
 export default function ChartsGrid({ selectedSource }: { selectedSource: string }) {
   const BASE_URL = "http://localhost:8000";
   const { filters } = useFilters();
@@ -2889,7 +2888,7 @@ export default function ChartsGrid({ selectedSource }: { selectedSource: string 
       },
     ],
   };
-
+ 
   const flipkartReviewsChart = {
     labels: flipkartProducts.map((p) => truncateName(p.title || "Unknown")),
     datasets: [
@@ -2911,7 +2910,7 @@ export default function ChartsGrid({ selectedSource }: { selectedSource: string 
       },
     ],
   };
-
+ 
   const amazonCategoriesChart = {
     labels: amazonCategories.map((c) => c.category || c.category_name || "Unknown"),
     datasets: [
@@ -2923,7 +2922,7 @@ export default function ChartsGrid({ selectedSource }: { selectedSource: string 
       },
     ],
   };
-
+ 
   const ratingsChart = {
     labels: ratings.map((r) => `${r.rating}★`),
     datasets: [
@@ -2934,7 +2933,7 @@ export default function ChartsGrid({ selectedSource }: { selectedSource: string 
       },
     ],
   };
-
+ 
   const sentimentsChart = {
     labels: sentiments.map((s) => s.sentiment || "Unknown"),
     datasets: [

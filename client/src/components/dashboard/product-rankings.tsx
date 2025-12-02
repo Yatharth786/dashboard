@@ -510,9 +510,17 @@ export default function ProductRankings({
     question,
     sourceTable,
     allProducts,
-    allProducts.length
-  );
- 
+    allProducts.length,
+    filters  // ✅ Pass filters from context
+  );  
+
+  // const { summary, loading: summaryLoading } = useAISummary(
+  //   question,
+  //   sourceTable,
+  //   allProducts,
+  //   allProducts.length
+  // );
+
   return (
     <div className="grid grid-cols-1 gap-6 mb-8">
       <Card className="bg-card rounded-xl p-6 border hover:shadow-md transition-shadow">

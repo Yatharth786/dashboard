@@ -9,6 +9,7 @@ export interface Filters {
   dateRange: string;
   showTrendingOnly: boolean;
   sortBy: string;
+  topN: number;
 }
 
 interface FiltersContextType {
@@ -27,6 +28,7 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
     dateRange: "30d",
     showTrendingOnly: false,
     sortBy: "sales_desc",
+    topN: 5
   });
 
   return (

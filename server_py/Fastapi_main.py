@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text, inspect
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import subprocess, json
 from pydantic import BaseModel
 import uvicorn
@@ -20,7 +20,7 @@ from .database_config import get_db, engine
 import requests, traceback
 models.Base.metadata.create_all(bind=engine)
 from .models import AmazonProductDetails
-app = FastAPI(title="Amazon Reviews API", version="1.0.0")
+app = FastAPI(title="API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,15 +34,21 @@ class AIQuery(BaseModel):
     question: str
     source: str  # "flipkart" or "amazon_reviews"
     limit: Optional[int] = None
-    
-def decimal_to_float(obj):
-    if isinstance(obj, (int, float)):
-        return obj
-    try:
-        return float(obj)
-    except Exception:
-        return str(obj)
+    filters: Optional[Dict[str, Any]] = {}
 
+class AIChartAnalysis(BaseModel):
+    question: str
+    source: str
+    chartData: List[Dict[str, Any]]  # ✅ Exact data from frontend charts
+    filters: Optional[Dict[str, Any]] = {}
+
+# def decimal_to_float(obj):
+#     if isinstance(obj, (int, float)):
+#         return obj
+#     try:
+#         return float(obj)
+#     except Exception:
+#         return str(obj)
 
 @app.get("/")
 def read_root():
@@ -198,118 +204,6 @@ def analytics_by_category(db: Session = Depends(get_db)):
 #     else:
 #         return {"error": "Invalid source. Use 'flipkart' or 'rapidapi_amazon_products'."}
 
-#     # ✅ Convert data to JSON for AI model
-#     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
-
-#     # ✅ Build AI prompt
-#     prompt = f"""
-# We have {len(data_list)} records in the {table_name} table.
-
-# Top {limit} entries:
-# {data_json}
-
-# Question: {query.question}
-# Please answer in simple, human-readable language using only the data above.
-# Return only clean text, no markdown or special symbols.
-# """
-
-#     try:
-#         # ✅ Run Ollama Mistral with proper cleanup and fallback
-#         result = subprocess.run(
-#             ["ollama", "run", "mistral"],
-#             input=prompt,
-#             capture_output=True,
-#             text=True,
-#             encoding="utf-8",
-#             errors="ignore",
-#             timeout=90
-#         )
-
-#         raw_output = (result.stdout or result.stderr or "").strip()
-
-#         # ✅ Clean unwanted tokens or artifacts
-#         clean_output = (
-#             raw_output.replace("<|MODEL_RESPONSE|>", "")
-#             .replace("</s>", "")
-#             .replace("```", "")
-#             .replace("json", "")
-#             .replace("Output:", "")
-#             .replace("Response:", "")
-#             .strip()
-#         )
-
-#         answer = clean_output if clean_output else "No insights available."
-
-#     except subprocess.TimeoutExpired:
-#         answer = "Error: AI response timed out."
-#     except Exception as e:
-#         answer = f"Error: {str(e)}"
-
-#     # ✅ (Optional) Debug log (safe to remove later)
-#     print("---- AI PROMPT ----")
-#     print(prompt)
-#     print("---- AI RAW OUTPUT ----")
-#     print(result.stdout)
-#     print("---- AI CLEAN OUTPUT ----")
-#     print(answer)
-
-#     return {"answer": answer}
-
-# @app.post("/ai/query")
-# def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
-#     limit = query.limit or 50
-#     source = query.source.lower()
-
-#     # -------------------- FLIPKART --------------------
-#     if source == "flipkart":
-#         rows = db.execute(
-#             text(f"""
-#             SELECT id, category, brand, title, price, rating
-#             FROM flipkart
-#             ORDER BY reviews DESC
-#             LIMIT {limit}
-#             """)
-#         ).all()
-#         data_list = [dict(row._mapping) for row in rows]
-#         table_name = "Flipkart"
-
-#     # -------------------- RAPIDAPI AMAZON PRODUCTS --------------------
-#     elif source == "rapidapi_amazon_products":
-#         rows = db.execute(
-#             text(f"""
-#             SELECT 
-#                 product_title,
-#                 category_name,
-#                 ROUND(AVG(product_star_rating_numeric), 2) AS avg_rating,
-#                 SUM(product_num_ratings) AS total_reviews,
-#                 ROUND(AVG(product_price_numeric), 2) AS avg_price,
-#                 COUNT(*) AS product_variants,
-#                 MAX(
-#                     CASE 
-#                         WHEN sales_volume LIKE '%M+%' THEN 
-#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000000) / 30
-#                         WHEN sales_volume LIKE '%K+%' THEN 
-#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000) / 30
-#                         ELSE 
-#                             CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) / 30
-#                     END
-#                 ) AS daily_sales
-#             FROM rapidapi_amazon_products
-#             WHERE product_title IS NOT NULL
-#             GROUP BY product_title, category_name
-#             HAVING SUM(product_num_ratings) IS NOT NULL
-#             ORDER BY total_reviews DESC NULLS LAST
-#             LIMIT {limit}
-#             """)
-#         ).all()
-
-#         data_list = [dict(row._mapping) for row in rows]
-#         table_name = "RapidAPI Amazon Products"
-
-#     # -------------------- INVALID SOURCE --------------------
-#     else:
-#         return {"error": "Invalid source. Use 'flipkart' or 'rapidapi_amazon_products'."}
-
 #     # Convert data to JSON for AI model
 #     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
 
@@ -358,29 +252,181 @@ def analytics_by_category(db: Session = Depends(get_db)):
 #         answer = f"Error generating summary: {str(e)}"
 
 #     # ✅ NO PRINT STATEMENTS - Summary will only go to frontend
+# #     return {"answer": answer}
+
+# @app.post("/ai/query")
+# def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
+#     # ✅ REMOVED: limit = query.limit or 50
+#     source = query.source.lower()
+
+#     # -------------------- FLIPKART --------------------
+#     if source == "flipkart":
+#         rows = db.execute(
+#             text("""
+#             SELECT id, category, brand, title, price, rating, reviews
+#             FROM flipkart
+#             ORDER BY reviews DESC
+#             """)  # ✅ NO LIMIT
+#         ).all()
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "Flipkart"
+
+#     # -------------------- RAPIDAPI AMAZON PRODUCTS --------------------
+#     elif source == "rapidapi_amazon_products":
+#         rows = db.execute(
+#             text("""
+#             SELECT 
+#                 product_title,
+#                 category_name,
+#                 ROUND(AVG(product_star_rating_numeric), 2) AS avg_rating,
+#                 SUM(product_num_ratings) AS total_reviews,
+#                 ROUND(AVG(product_price_numeric), 2) AS avg_price,
+#                 COUNT(*) AS product_variants,
+#                 MAX(
+#                     CASE 
+#                         WHEN sales_volume LIKE '%M+%' THEN 
+#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000000) / 30
+#                         WHEN sales_volume LIKE '%K+%' THEN 
+#                             (CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) * 1000) / 30
+#                         ELSE 
+#                             CAST(REGEXP_REPLACE(sales_volume, '[^0-9.]', '', 'g') AS FLOAT) / 30
+#                     END
+#                 ) AS daily_sales
+#             FROM rapidapi_amazon_products
+#             WHERE product_title IS NOT NULL
+#             GROUP BY product_title, category_name
+#             HAVING SUM(product_num_ratings) IS NOT NULL
+#             ORDER BY total_reviews DESC NULLS LAST
+#             """)  # ✅ NO LIMIT
+#         ).all()
+
+#         data_list = [dict(row._mapping) for row in rows]
+#         table_name = "RapidAPI Amazon Products"
+
+#     # -------------------- INVALID SOURCE --------------------
+#     else:
+#         return {"error": "Invalid source. Use 'flipkart' or 'rapidapi_amazon_products'."}
+
+#     # Convert data to JSON for AI model
+#     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
+
+#     # Build AI prompt
+#     prompt = f"""
+# We have {len(data_list)} records in the {table_name} table.
+
+# Data:
+# {data_json[:3000]}  # ✅ First 3000 chars to avoid token limits
+
+# Question: {query.question}
+# Answer in 2 clear, concise lines using only the data above.
+# """
+
+#     try:
+#         # Run Ollama Mistral
+#         result = subprocess.run(
+#             ["ollama", "run", "mistral"],
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=30
+#         )
+
+#         raw_output = (result.stdout or result.stderr or "").strip()
+
+#         # Clean output
+#         clean_output = (
+#             raw_output.replace("<|MODEL_RESPONSE|>", "")
+#             .replace("</s>", "")
+#             .replace("```", "")
+#             .replace("json", "")
+#             .replace("Output:", "")
+#             .replace("Response:", "")
+#             .strip()
+#         )
+
+#         answer = clean_output if clean_output else "No insights available."
+
+#     except subprocess.TimeoutExpired:
+#         answer = "AI response timed out. Please try again."
+#     except FileNotFoundError:
+#         answer = "AI service unavailable. Ollama not found."
+#     except Exception as e:
+#         answer = f"Error generating summary: {str(e)}"
+
+#     # ✅ NO PRINT STATEMENTS
 #     return {"answer": answer}
+
+def build_where_clause(filters: Dict[str, Any], source: str) -> str:
+    """Build SQL WHERE clause from filters"""
+    conditions = []
+    
+    # Category filter
+    if filters.get("category") and filters["category"] != "All Categories":
+        category = filters["category"].replace("'", "''")  # Escape single quotes
+        if source == "flipkart":
+            conditions.append(f"category = '{category}'")
+        else:  # Amazon
+            conditions.append(f"category_name = '{category}'")
+    
+    # Price range filter
+    price_range = filters.get("priceRange", [0, 5000000])
+    price_min = price_range[0] if isinstance(price_range, list) else 0
+    price_max = price_range[1] if isinstance(price_range, list) else 5000000
+    
+    if price_min > 0:
+        price_field = "price" if source == "flipkart" else "product_price_numeric"
+        conditions.append(f"{price_field} >= {price_min}")
+    
+    if price_max < 5000000:
+        price_field = "price" if source == "flipkart" else "product_price_numeric"
+        conditions.append(f"{price_field} <= {price_max}")
+    
+    # Rating filter
+    rating = filters.get("rating", 0)
+    if rating > 0:
+        if source == "flipkart":
+            conditions.append(f"rating >= {rating}")
+        else:  # Amazon
+            conditions.append(f"product_star_rating_numeric >= {rating}")
+    
+    # Trending only filter (only for Amazon with sales data)
+    if filters.get("showTrendingOnly") and source != "flipkart":
+        conditions.append("sales_volume IS NOT NULL AND sales_volume != ''")
+    
+    return " AND ".join(conditions) if conditions else "1=1"
+
+
 
 @app.post("/ai/query")
 def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
-    # ✅ REMOVED: limit = query.limit or 50
     source = query.source.lower()
+    filters = query.filters or {}
+    
+    # Build WHERE clause
+    where_clause = build_where_clause(filters, source)
+    
+    print(f"🔍 AI Query - Source: {source}")
+    print(f"📊 Filters: {filters}")
+    print(f"📝 WHERE clause: {where_clause}")
 
     # -------------------- FLIPKART --------------------
     if source == "flipkart":
-        rows = db.execute(
-            text("""
+        sql = f"""
             SELECT id, category, brand, title, price, rating, reviews
             FROM flipkart
+            WHERE {where_clause}
             ORDER BY reviews DESC
-            """)  # ✅ NO LIMIT
-        ).all()
+        """
+        
+        rows = db.execute(text(sql)).all()
         data_list = [dict(row._mapping) for row in rows]
         table_name = "Flipkart"
 
     # -------------------- RAPIDAPI AMAZON PRODUCTS --------------------
     elif source == "rapidapi_amazon_products":
-        rows = db.execute(
-            text("""
+        sql = f"""
             SELECT 
                 product_title,
                 category_name,
@@ -399,13 +445,13 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
                     END
                 ) AS daily_sales
             FROM rapidapi_amazon_products
-            WHERE product_title IS NOT NULL
+            WHERE product_title IS NOT NULL AND {where_clause}
             GROUP BY product_title, category_name
             HAVING SUM(product_num_ratings) IS NOT NULL
             ORDER BY total_reviews DESC NULLS LAST
-            """)  # ✅ NO LIMIT
-        ).all()
-
+        """
+        
+        rows = db.execute(text(sql)).all()
         data_list = [dict(row._mapping) for row in rows]
         table_name = "RapidAPI Amazon Products"
 
@@ -415,16 +461,35 @@ def ask_ai(query: AIQuery, db: Session = Depends(get_db)):
 
     # Convert data to JSON for AI model
     data_json = json.dumps(data_list, indent=2, default=decimal_to_float)
+    
+    # ✅ Include filter context in prompt
+    filter_text = ""
+    if filters:
+        filter_parts = []
+        if filters.get("category") and filters["category"] != "All Categories":
+            filter_parts.append(f"Category: {filters['category']}")
+        if filters.get("priceRange"):
+            pr = filters["priceRange"]
+            if isinstance(pr, list) and len(pr) == 2:
+                if pr[0] > 0 or pr[1] < 5000000:
+                    filter_parts.append(f"Price: ₹{pr[0]:,} - ₹{pr[1]:,}")
+        if filters.get("rating", 0) > 0:
+            filter_parts.append(f"Min Rating: {filters['rating']}★")
+        if filters.get("showTrendingOnly"):
+            filter_parts.append("Trending products only")
+        
+        if filter_parts:
+            filter_text = f"\n\nFilters Applied: {', '.join(filter_parts)}"
 
-    # Build AI prompt
+    # Build AI prompt with filter context
     prompt = f"""
-We have {len(data_list)} records in the {table_name} table.
+We have {len(data_list)} records in the {table_name} table.{filter_text}
 
 Data:
-{data_json[:3000]}  # ✅ First 3000 chars to avoid token limits
+{data_json[:3000]}
 
 Question: {query.question}
-Answer in 2 clear, concise lines using only the data above.
+Answer in 2 clear, concise lines using only the filtered data above.
 """
 
     try:
@@ -461,96 +526,366 @@ Answer in 2 clear, concise lines using only the data above.
     except Exception as e:
         answer = f"Error generating summary: {str(e)}"
 
-    # ✅ NO PRINT STATEMENTS
     return {"answer": answer}
 
-# @app.get("/top")
-# def get_top_items(
-#     table: str = Query(..., description="Choose 'flipkart' or 'rapidapi_amazon_products'"),
-#     n: int = Query(10, description="Number of top items to fetch"),
-#     db: Session = Depends(get_db),
-# ):
-#     table = table.lower()
+@app.post("/ai/analyze-chart")
+def analyze_chart_data(request: AIChartAnalysis):
+    """
+    NLP-powered natural language chart analysis
+    """
+    
+    chart_data = request.chartData
+    data_count = len(chart_data)
+    
+    if data_count == 0:
+        return {"answer": "No data available for the selected filters."}
+    
+    source_name = "Flipkart" if request.source == "flipkart" else "Amazon"
+    
+    # Detect chart type
+    first_item = chart_data[0] if chart_data else {}
+    chart_type = detect_chart_type(first_item, request.question)
+    
+    print(f"📊 NLP Mode | Type: {chart_type} | Items: {data_count}")
+    print(f"   Question: {request.question}")
+    
+    try:
+        # Generate natural language summary
+        answer = generate_nlp_summary(chart_data, chart_type, request.question, source_name)
+        print(f"✅ NLP summary generated")
+    
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        answer = f"I couldn't analyze this data right now. {str(e)[:60]}"
 
-#     # ----------------------------- #
-#     # 🔹 Flipkart (same as before)
-#     # ----------------------------- #
-#     if table == "flipkart":
-#         data = crud.get_top_products(db, n)
-#         return {"table": "flipkart", "count": len(data), "data": data}
+    return {"answer": answer}
 
-#     # ----------------------------- #
-#     # 🔹 RapidAPI Amazon Products
-#     # ----------------------------- #
-#     elif table == "rapidapi_amazon_products":
-#         query = text("""
-#             SELECT 
-#                 asin,
-#                 product_title,
-#                 category_name,
-#                 product_url,
-#                 product_photo,
-#                 product_star_rating_numeric AS rating,
-#                 product_num_ratings AS reviews,
-#                 product_price_numeric AS price,
-#                 avg_price,
-#                 min_price,
-#                 max_price,
-#                 sales_volume
-#             FROM rapidapi_amazon_products
-#             WHERE 
-#                 product_title IS NOT NULL AND product_title != ''
-#                 AND product_star_rating_numeric IS NOT NULL
-#                 AND product_price_numeric IS NOT NULL
-#         """)
-#         result = db.execute(query).mappings().all()
-#         rows = [dict(r) for r in result]
 
-#         # ----------------------------- #
-#         # 🔹 Merge duplicates by ASIN or title
-#         # ----------------------------- #
-#         merged = {}
-#         for row in rows:
-#             key = row["asin"] or row["product_title"].strip()
-#             if key in merged:
-#                 m = merged[key]
-#                 # Average ratings and prices, sum reviews/sales
-#                 m["rating"] = (m["rating"] + row["rating"]) / 2 if row["rating"] else m["rating"]
-#                 m["price"] = (m["price"] + row["price"]) / 2 if row["price"] else m["price"]
-#                 m["reviews"] = (m["reviews"] or 0) + (row["reviews"] or 0)
-#                 m["sales_volume"] = (m["sales_volume"] or 0) + (row["sales_volume"] or 0)
-#             else:
-#                 merged[key] = row
+def detect_chart_type(first_item: dict, question: str) -> str:
+    """Detect chart type from data structure"""
+    keys_lower = {k.lower() for k in first_item.keys()}
+    
+    # Top products
+    if any(k in keys_lower for k in ['title', 'product_title', 'name']):
+        if any(k in keys_lower for k in ['price', 'avg_price', 'reviews', 'total_ratings']):
+            return "top_products"
+    
+    # Daily sales
+    if 'daily_sales' in keys_lower:
+        return "daily_sales"
+    
+    # Rating distribution
+    if 'rating' in keys_lower and 'count' in keys_lower:
+        if not any(k in keys_lower for k in ['title', 'product_title', 'asin']):
+            return "rating_distribution"
+    
+    # Sentiment
+    if 'sentiment' in keys_lower and 'count' in keys_lower:
+        return "sentiment_distribution"
+    
+    # Category distribution
+    if any(k in keys_lower for k in ['category', 'category_name']):
+        if 'count' in keys_lower:
+            if not any(k in keys_lower for k in ['title', 'product_title', 'price']):
+                return "category_distribution"
+    
+    return "generic"
 
-#         merged_list = list(merged.values())
 
-#         # ----------------------------- #
-#         # 🔹 Sort by highest reviews first, then by rating
-#         # ----------------------------- #
-#         merged_list.sort(
-#             key=lambda x: (
-#                 x.get("reviews", 0),
-#                 x.get("rating", 0)
-#             ),
-#             reverse=True
-#         )
+def generate_nlp_summary(data: list, chart_type: str, question: str, source: str) -> str:
+    """Generate natural language summary using NLP approach"""
+    
+    # Prepare structured data narrative
+    if chart_type == "top_products":
+        data_narrative = create_product_narrative(data, source)
+        analysis_focus = "product recommendations and market insights"
+        
+    elif chart_type == "category_distribution":
+        data_narrative = create_category_narrative(data, source)
+        analysis_focus = "category trends and market distribution"
+        
+    elif chart_type == "rating_distribution":
+        data_narrative = create_rating_narrative(data, source)
+        analysis_focus = "quality assessment and customer satisfaction"
+        
+    elif chart_type == "sentiment_distribution":
+        data_narrative = create_sentiment_narrative(data, source)
+        analysis_focus = "customer sentiment and feedback patterns"
+        
+    elif chart_type == "daily_sales":
+        data_narrative = create_sales_narrative(data, source)
+        analysis_focus = "sales performance and top sellers"
+        
+    else:
+        data_narrative = f"{len(data)} data points from {source}"
+        analysis_focus = "general patterns"
+    
+    # Create conversational NLP prompt
+    prompt = f"""You are having a conversation with someone exploring {source} data. They asked: "{question}"
 
-#         # Limit to top N
-#         top_items = merged_list[:n]
+Here's what you're looking at:
+{data_narrative}
 
-#         return {
-#             "table": "rapidapi_amazon_products",
-#             "count": len(top_items),
-#             "data": top_items
-#         }
+Your task: Respond naturally as if you're chatting with a friend who asked about this data. 
 
-#     # ----------------------------- #
-#     # 🔹 Invalid Input
-#     # ----------------------------- #
-#     else:
-#         return {
-#             "error": "Invalid table. Use 'flipkart' or 'rapidapi_amazon_products'."
-#         }
+Guidelines:
+- Write 2-3 short sentences (like you're texting)
+- Be conversational: "Looking at this...", "What stands out is...", "I'd recommend..."
+- Mention specific numbers/products to be helpful
+- Sound enthusiastic about interesting findings
+- NO bullet points, NO formal structure, just natural speech
+
+Think about {analysis_focus} and respond conversationally:"""
+
+    try:
+        result = subprocess.run(
+            ["ollama", "run", "mistral"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            timeout=30
+        )
+
+        raw_output = (result.stdout or result.stderr or "").strip()
+        
+        # Clean AI output
+        clean_output = (
+            raw_output
+            .replace("<|MODEL_RESPONSE|>", "")
+            .replace("</s>", "")
+            .replace("```", "")
+            .replace("Answer:", "")
+            .replace("Response:", "")
+            .strip()
+        )
+        
+        # Take first paragraph or first 2-3 sentences
+        sentences = []
+        for line in clean_output.split('\n'):
+            line = line.strip()
+            if line and not line.startswith('#') and not line.startswith('*'):
+                # Split by sentence endings
+                for sentence in line.replace('! ', '!|').replace('. ', '.|').replace('? ', '?|').split('|'):
+                    s = sentence.strip()
+                    if s and len(s) > 15:
+                        sentences.append(s)
+                    if len(sentences) >= 3:
+                        break
+            if len(sentences) >= 3:
+                break
+        
+        if len(sentences) >= 2:
+            # Join 2-3 sentences naturally
+            response = ' '.join(sentences[:3])
+            # Ensure it doesn't end abruptly
+            if not response[-1] in '.!?':
+                response += '.'
+            return response
+        
+        # Fallback to natural language generation
+        return generate_natural_fallback(data, chart_type, source)
+    
+    except subprocess.TimeoutExpired:
+        print("   ⏱️ AI timeout, generating natural summary")
+        return generate_natural_fallback(data, chart_type, source)
+    
+    except Exception as e:
+        print(f"   ❌ AI error: {e}")
+        return generate_natural_fallback(data, chart_type, source)
+
+
+def create_product_narrative(data: list, source: str) -> str:
+    """Create natural narrative for products"""
+    narratives = [f"Looking at the top {len(data)} {source} products:\n"]
+    
+    for i, item in enumerate(data[:3], 1):
+        name = (item.get('product_title') or item.get('title') or item.get('name', 'Unknown'))[:60]
+        price = item.get('price') or item.get('avg_price') or item.get('product_price') or 0
+        rating = item.get('rating') or item.get('avg_rating') or item.get('product_star_rating') or 0
+        reviews = item.get('reviews') or item.get('total_ratings') or 0
+        sales = item.get('daily_sales') or item.get('sales_volume') or ''
+        
+        if isinstance(price, str):
+            price = float(price.replace('₹', '').replace(',', '').strip()) if price else 0
+        
+        narrative = f"#{i}: {name} costs ₹{float(price):,.0f}, rated {rating}★ with {reviews:,} reviews"
+        if sales:
+            narrative += f" (selling {sales})"
+        narratives.append(narrative)
+    
+    # Add aggregate insights
+    avg_price = sum(float(p.get('price', 0) or p.get('avg_price', 0) or 0) for p in data[:3]) / min(3, len(data))
+    avg_rating = sum(float(p.get('rating', 0) or p.get('avg_rating', 0) or 0) for p in data[:3]) / min(3, len(data))
+    
+    narratives.append(f"\nPrice range: ₹{avg_price*0.5:,.0f}-₹{avg_price*1.8:,.0f}, average rating: {avg_rating:.1f}★")
+    
+    return "\n".join(narratives)
+
+
+def create_category_narrative(data: list, source: str) -> str:
+    """Create natural narrative for categories"""
+    cat_field = get_category_field(data[0])
+    val_field = get_value_field(data[0])
+    
+    if not cat_field or not val_field:
+        return f"{len(data)} {source} categories"
+    
+    total = sum(item.get(val_field, 0) for item in data)
+    sorted_data = sorted(data, key=lambda x: x.get(val_field, 0), reverse=True)[:5]
+    
+    narratives = [f"{source} has {total:,} products spread across {len(data)} categories.\n"]
+    
+    for i, item in enumerate(sorted_data, 1):
+        cat = item.get(cat_field, 'Unknown')
+        count = item.get(val_field, 0)
+        pct = (count / total * 100) if total > 0 else 0
+        narratives.append(f"#{i} {cat}: {count:,} products ({pct:.0f}% of total)")
+    
+    # Add insight about distribution
+    top_3_share = sum(item.get(val_field, 0) for item in sorted_data[:3]) / total * 100 if total > 0 else 0
+    narratives.append(f"\nThe top 3 categories represent {top_3_share:.0f}% of all products.")
+    
+    return "\n".join(narratives)
+
+
+def create_rating_narrative(data: list, source: str) -> str:
+    """Create natural narrative for ratings"""
+    total = sum(item.get('count', 0) for item in data)
+    total_points = sum(float(item.get('rating', 0)) * item.get('count', 0) for item in data)
+    avg_rating = total_points / total if total > 0 else 0
+    
+    high_rated = sum(item.get('count', 0) for item in data if float(item.get('rating', 0)) >= 4.0)
+    high_pct = (high_rated / total * 100) if total > 0 else 0
+    
+    low_rated = sum(item.get('count', 0) for item in data if float(item.get('rating', 0)) < 3.0)
+    low_pct = (low_rated / total * 100) if total > 0 else 0
+    
+    narratives = [
+        f"{source} rating analysis across {total:,} products:",
+        f"Average rating: {avg_rating:.2f}★",
+        f"High quality (4★+): {high_rated:,} products ({high_pct:.0f}%)",
+        f"Needs improvement (<3★): {low_rated:,} products ({low_pct:.0f}%)"
+    ]
+    
+    # Most common rating
+    most_common = max(data, key=lambda x: x.get('count', 0))
+    narratives.append(f"\nMost products are rated {most_common.get('rating')}★ ({most_common.get('count'):,} products)")
+    
+    return "\n".join(narratives)
+
+
+def create_sentiment_narrative(data: list, source: str) -> str:
+    """Create natural narrative for sentiment"""
+    sentiment_map = {str(item.get('sentiment', '')).lower(): item.get('count', 0) for item in data}
+    total = sum(sentiment_map.values())
+    
+    positive = sentiment_map.get('positive', 0)
+    negative = sentiment_map.get('negative', 0)
+    neutral = sentiment_map.get('neutral', 0)
+    
+    pos_pct = (positive / total * 100) if total > 0 else 0
+    neg_pct = (negative / total * 100) if total > 0 else 0
+    
+    narratives = [
+        f"Customer sentiment analysis for {total:,} {source} products:",
+        f"😊 Positive: {positive:,} ({pos_pct:.0f}%)",
+        f"😐 Neutral: {neutral:,} ({(neutral/total*100) if total > 0 else 0:.0f}%)",
+        f"😞 Negative: {negative:,} ({neg_pct:.0f}%)"
+    ]
+    
+    # Overall sentiment interpretation
+    if pos_pct > 70:
+        narratives.append(f"\nOverall vibe: Very positive! Customers are happy.")
+    elif pos_pct > 50:
+        narratives.append(f"\nOverall vibe: Mostly positive with some mixed feedback.")
+    else:
+        narratives.append(f"\nOverall vibe: Mixed reactions, worth investigating concerns.")
+    
+    return "\n".join(narratives)
+
+
+def create_sales_narrative(data: list, source: str) -> str:
+    """Create natural narrative for sales"""
+    return create_product_narrative(data, source)
+
+
+def generate_natural_fallback(data: list, chart_type: str, source: str) -> str:
+    """Generate natural language fallback"""
+    
+    if chart_type == "top_products":
+        top = data[0]
+        name = (top.get('product_title') or top.get('title', 'the top product'))[:50]
+        reviews = top.get('reviews') or top.get('total_ratings') or 0
+        rating = top.get('rating') or top.get('avg_rating') or 0
+        price = top.get('price') or top.get('avg_price') or 0
+        
+        if isinstance(price, str):
+            price = float(price.replace('₹', '').replace(',', '').strip()) if price else 0
+        
+        return f"Looking at the top {len(data)} {source} products, {name} really stands out with {reviews:,} reviews and a {rating}★ rating at ₹{float(price):,.0f}. The quality across this selection is solid, with most items hitting 4+ stars."
+    
+    elif chart_type == "category_distribution":
+        cat_field = get_category_field(data[0])
+        val_field = get_value_field(data[0])
+        
+        if cat_field and val_field:
+            total = sum(item.get(val_field, 0) for item in data)
+            top = max(data, key=lambda x: x.get(val_field, 0))
+            top_name = top.get(cat_field, 'the leading category')
+            top_pct = (top.get(val_field, 0) / total * 100) if total > 0 else 0
+            
+            return f"Across {total:,} {source} products in {len(data)} categories, {top_name} clearly dominates with {top_pct:.0f}% of the market. It's interesting to see how concentrated the product selection is in just a few key categories."
+        else:
+            return f"{source} has products spread across {len(data)} different categories. There's good variety here for shoppers."
+    
+    elif chart_type == "rating_distribution":
+        total = sum(item.get('count', 0) for item in data)
+        high = sum(item.get('count', 0) for item in data if float(item.get('rating', 0)) >= 4.0)
+        pct = (high / total * 100) if total > 0 else 0
+        
+        total_points = sum(float(item.get('rating', 0)) * item.get('count', 0) for item in data)
+        avg = total_points / total if total > 0 else 0
+        
+        return f"Looking at {total:,} {source} products, the quality is pretty impressive - {pct:.0f}% are rated 4 stars or higher with an average of {avg:.1f}★. That's a good sign that customers are generally satisfied with their purchases."
+    
+    elif chart_type == "sentiment_distribution":
+        sentiment_map = {str(item.get('sentiment', '')).lower(): item.get('count', 0) for item in data}
+        total = sum(sentiment_map.values())
+        positive = sentiment_map.get('positive', 0)
+        pos_pct = (positive / total * 100) if total > 0 else 0
+        
+        vibe = "really positive" if pos_pct > 70 else "mostly positive" if pos_pct > 50 else "mixed"
+        return f"Customer feedback across {total:,} {source} products is {vibe} - {pos_pct:.0f}% positive sentiment. {'People seem happy with their purchases!' if pos_pct > 60 else 'There is room for improvement based on customer feedback.'}"
+    
+    return f"I analyzed {len(data)} {source} data points. The chart shows some interesting patterns worth exploring further!"
+
+
+def get_category_field(item: dict) -> str:
+    """Find category field name"""
+    for key in item.keys():
+        if 'category' in key.lower():
+            return key
+    return None
+
+
+def get_value_field(item: dict) -> str:
+    """Find value/count field name"""
+    for key in item.keys():
+        if key.lower() in ['count', 'value', 'products']:
+            return key
+    return None
+
+
+def decimal_to_float(obj):
+    """Convert Decimal to float"""
+    from decimal import Decimal
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError(f"Type {type(obj)} not JSON serializable")
 
 @app.get("/top")
 def get_top_items(
@@ -1582,8 +1917,8 @@ class PasswordReset(BaseModel):
 class LoginResponse(BaseModel):
     success: bool
     message: str
-    user: dict = None
- 
+    user: dict = None 
+    
 # ============================================
 # FIXED LOGIN ENDPOINT (without is_active check)
 # ============================================
@@ -1697,7 +2032,7 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 # ============================================
 # PASSWORD RESET ENDPOINT
 # ============================================
- 
+
 @app.post("/users/reset-password")
 def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
     """
@@ -1779,3 +2114,275 @@ def get_user_profile(email: str, db: Session = Depends(get_db)):
         "created_at": str(user.created_at)
     }
  
+# Helper function (keep this as is)
+def parse_sales_volume(sales_text: str) -> float:
+    """
+    Convert sales_volume text like '10K+' or '2M+' into a numeric value
+    """
+    if not sales_text:
+        return 0
+    match = re.search(r'([\d,.]+)([KM]?)', sales_text.replace(',', ''))
+    if not match:
+        return 0
+    number, suffix = match.groups()
+    number = float(number)
+    if suffix == 'K':
+        number *= 1_000
+    elif suffix == 'M':
+        number *= 1_000_000
+    return number
+
+
+# 1️⃣ Price Distribution per Category (WITH FILTERS - SECURE)
+@app.get("/rapidapi_amazon_products/price_distribution")
+def price_distribution(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    date_range: Optional[str] = Query(None),
+    trending_only: Optional[bool] = Query(False),
+    db: Session = Depends(get_db)
+):
+    # Build WHERE clause with parameterized queries
+    where_conditions = ["product_price_numeric IS NOT NULL"]
+    params = {}
+    
+    if category and category != "All Categories":
+        where_conditions.append("category_name = :category")
+        params['category'] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params['min_price'] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params['max_price'] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating >= :min_rating")
+        params['min_rating'] = min_rating
+    
+    if date_range and date_range != "all":
+        days_map = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
+        if date_range in days_map:
+            where_conditions.append(f"created_at >= NOW() - INTERVAL '{days_map[date_range]} days'")
+    
+    if trending_only:
+        where_conditions.append("(is_best_seller = TRUE OR is_amazon_choice = TRUE)")
+    
+    where_clause = " AND ".join(where_conditions)
+    
+    query = text(f"""
+        SELECT category_name AS category, product_price_numeric AS price, COUNT(*) AS count
+        FROM rapidapi_amazon_products
+        WHERE {where_clause}
+        GROUP BY category_name, product_price_numeric
+        ORDER BY category_name, product_price_numeric
+    """)
+    
+    result = db.execute(query, params)
+    data = []
+    for row in result:
+        data.append({
+            "category": row.category,
+            "price": float(row.price),
+            "count": int(row.count)
+        })
+    return {"data": data}
+
+
+# 2️⃣ Sales Volume vs Price (WITH FILTERS - SECURE)
+@app.get("/rapidapi_amazon_products/sales_vs_price_daily")
+def sales_vs_price_daily(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    date_range: Optional[str] = Query(None),
+    trending_only: Optional[bool] = Query(False),
+    db: Session = Depends(get_db)
+):
+    where_conditions = ["product_price_numeric IS NOT NULL", "sales_volume IS NOT NULL"]
+    params = {}
+    
+    if category and category != "All Categories":
+        where_conditions.append("category_name = :category")
+        params['category'] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params['min_price'] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params['max_price'] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating >= :min_rating")
+        params['min_rating'] = min_rating
+    
+    if date_range and date_range != "all":
+        days_map = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
+        if date_range in days_map:
+            where_conditions.append(f"created_at >= NOW() - INTERVAL '{days_map[date_range]} days'")
+    
+    if trending_only:
+        where_conditions.append("(is_best_seller = TRUE OR is_amazon_choice = TRUE)")
+    
+    where_clause = " AND ".join(where_conditions)
+    
+    query = text(f"""
+        SELECT product_price_numeric AS price,
+               sales_volume,
+               created_at,
+               updated_at
+        FROM rapidapi_amazon_products
+        WHERE {where_clause}
+    """)
+    
+    result = db.execute(query, params)
+    data = []
+    for row in result:
+        total_sales = parse_sales_volume(row.sales_volume)
+        days = max((row.updated_at - row.created_at).days, 1)
+        daily_sales = total_sales / days
+        data.append({
+            "price": float(row.price),
+            "daily_sales": daily_sales
+        })
+    return {"data": data}
+
+
+# 3️⃣ Best Seller / Amazon Choice Count per Category (WITH FILTERS - SECURE)
+@app.get("/rapidapi_amazon_products/bestseller_count")
+def bestseller_count(
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    date_range: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    where_conditions = ["(is_best_seller = TRUE OR is_amazon_choice = TRUE)"]
+    params = {}
+    
+    # CRITICAL FIX: Check if specific category is selected
+    if category and category != "All Categories":
+        where_conditions.append("LOWER(category_name) = LOWER(:category)")
+        params['category'] = category
+        print(f"🔍 DEBUG: Filtering by category = {category}")
+    else:
+        print(f"🔍 DEBUG: No category filter (showing all categories)")
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params['min_price'] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params['max_price'] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating >= :min_rating")
+        params['min_rating'] = min_rating
+    
+    if date_range and date_range != "all":
+        days_map = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365, "1y": 365}
+        if date_range in days_map:
+            where_conditions.append(f"created_at >= NOW() - INTERVAL '{days_map[date_range]} days'")
+    
+    where_clause = " AND ".join(where_conditions)
+    
+    print(f"🔍 DEBUG: WHERE clause = {where_clause}")
+    print(f"🔍 DEBUG: Query params = {params}")
+    
+    query = text(f"""
+        SELECT category_name AS category, 
+               COUNT(*) AS count
+        FROM rapidapi_amazon_products
+        WHERE {where_clause}
+        GROUP BY category_name
+        ORDER BY count DESC
+    """)
+    
+    result = db.execute(query, params)
+    data = []
+    for row in result:
+        data.append({
+            "category": row.category,
+            "count": int(row.count)
+        })
+    
+    print(f"🔍 DEBUG: Results count = {len(data)}")
+    print(f"🔍 DEBUG: Results = {data}")
+    
+    return {"data": data}
+
+
+# 4️⃣ Sales Efficiency (Sales per Review) (WITH FILTERS - SECURE)
+@app.get("/rapidapi_amazon_products/sales-efficiency")
+def sales_efficiency(
+    top_n: int = Query(10),
+    category: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    min_rating: Optional[float] = Query(None),
+    date_range: Optional[str] = Query(None),
+    trending_only: Optional[bool] = Query(False),
+    db: Session = Depends(get_db)
+):
+    where_conditions = ["sales_volume IS NOT NULL"]
+    params = {'top_n': top_n}
+    
+    if category and category != "All Categories":
+        where_conditions.append("category_name = :category")
+        params['category'] = category
+    
+    if min_price is not None:
+        where_conditions.append("product_price_numeric >= :min_price")
+        params['min_price'] = min_price
+    
+    if max_price is not None:
+        where_conditions.append("product_price_numeric <= :max_price")
+        params['max_price'] = max_price
+    
+    if min_rating is not None:
+        where_conditions.append("product_star_rating >= :min_rating")
+        params['min_rating'] = min_rating
+    
+    if date_range and date_range != "all":
+        days_map = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
+        if date_range in days_map:
+            where_conditions.append(f"created_at >= NOW() - INTERVAL '{days_map[date_range]} days'")
+    
+    if trending_only:
+        where_conditions.append("(is_best_seller = TRUE OR is_amazon_choice = TRUE)")
+    
+    where_clause = " AND ".join(where_conditions)
+    
+    query = text(f"""
+        SELECT 
+            product_title,
+            sales_volume,
+            COALESCE(product_num_ratings, 0) AS num_ratings
+        FROM rapidapi_amazon_products
+        WHERE {where_clause}
+        LIMIT :top_n
+    """)
+    
+    result = db.execute(query, params)
+    data = []
+    for row in result:
+        sales = parse_sales_volume(row.sales_volume)
+        num_ratings = int(row.num_ratings)
+        efficiency_score = sales / num_ratings if num_ratings else 0
+        data.append({
+            "product_title": row.product_title,
+            "sales": sales,
+            "num_ratings": num_ratings,
+            "efficiency_score": efficiency_score
+        })
+    data.sort(key=lambda x: x["efficiency_score"], reverse=True)
+    return data

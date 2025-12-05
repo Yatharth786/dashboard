@@ -1903,13 +1903,25 @@
 
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { TrendingUp, Menu, X, Facebook, Twitter, Instagram, BarChart3, Zap, Shield, Mail, Phone, MapPin, Check, Crown, Building2 } from "lucide-react";
+import { TrendingUp, Menu, X, Facebook, Twitter, Instagram, BarChart3, Zap, Shield, Mail, Phone, MapPin, Check, Crown, Building2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   const [, setLocation] = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+
+  // Dark mode toggle
+  useEffect(() => {
+    const html = document.documentElement;
+    if (isDarkMode) {
+      html.classList.add("dark");
+    } else {
+      html.classList.remove("dark");
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1930,12 +1942,9 @@ export default function LandingPage() {
 
   const handlePlanSelect = (planId: string) => {
     const user = localStorage.getItem('user');
-    
-    // Store selected plan in localStorage
     localStorage.setItem('selectedPlan', planId);
-    
+
     if (user) {
-      // Parse user and update their subscription
       try {
         const userData = JSON.parse(user);
         userData.subscriptionTier = planId;
@@ -1943,11 +1952,8 @@ export default function LandingPage() {
       } catch (error) {
         console.error('Error updating user:', error);
       }
-      
-      // Go to dashboard, subscription page will auto-update when visited
       window.location.href = '/dashboard';
     } else {
-      // If not logged in, go to login with plan info
       setLocation("/login");
     }
   };
@@ -1974,74 +1980,40 @@ export default function LandingPage() {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => scrollToSection('home')}>
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center transform transition-transform group-hover:scale-110 group-hover:rotate-3 shadow-lg">
-                  <TrendingUp className="text-white h-6 w-6" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></div>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Insydz
-              </span>
-            </div>
+  <div className="relative">
+    <img 
+      src="/logo.png" 
+      alt="Insydz Logo" 
+      className="w-12 h-12 rounded-2xl shadow-lg transform transition-transform group-hover:scale-110 group-hover:rotate-3 object-contain"
+    />
+    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></div>
+  </div>
+  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+    Insydz
+  </span>
+</div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <button
-                onClick={() => scrollToSection('home')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
-              >
-                home
-              </button>
-              <button
-                onClick={() => scrollToSection('about')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
-              >
-                about
-              </button>
-              <button
-                onClick={() => scrollToSection('work')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
-              >
-                work
-              </button>
-              <button
-                onClick={() => scrollToSection('subscription')}
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
-              >
-                subscription
-              </button>
-              <Button
-                onClick={() => scrollToSection('contact')}
-                className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold px-8 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-              >
-                contact
-              </Button>
-            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <button onClick={() => scrollToSection('home')} className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium">home</button>
+              <button onClick={() => scrollToSection('about')} className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium">about</button>
+              <button onClick={() => scrollToSection('work')} className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium">work</button>
+              <button onClick={() => scrollToSection('subscription')} className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium">subscription</button>
 
-            {/* Social Icons */}
-            <div className="hidden lg:flex items-center space-x-3">
-              <div className="w-10 h-10 bg-black dark:bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer">
-                <Facebook className="w-5 h-5 text-white dark:text-black" />
-              </div>
-              <div className="w-10 h-10 bg-black dark:bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer">
-                <Twitter className="w-5 h-5 text-white dark:text-black" />
-              </div>
-              <div className="w-10 h-10 bg-black dark:bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer">
-                <Instagram className="w-5 h-5 text-white dark:text-black" />
-              </div>
+              <Button onClick={() => scrollToSection('contact')} className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold px-6 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105">contact</Button>
+
+              {/* Dark Mode Toggle */}
+              <button 
+                className="ml-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setIsDarkMode(!isDarkMode)}
+              >
+                {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5 text-gray-800"/>}
+              </button>
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+            <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -2050,133 +2022,91 @@ export default function LandingPage() {
         {isMenuOpen && (
           <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
             <div className="px-4 py-4 space-y-3">
-              <button
-                onClick={() => scrollToSection('home')}
-                className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium"
+              <button onClick={() => scrollToSection('home')} className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium">home</button>
+              <button onClick={() => scrollToSection('about')} className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium">about</button>
+              <button onClick={() => scrollToSection('work')} className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium">work</button>
+              <button onClick={() => scrollToSection('subscription')} className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium">subscription</button>
+              <Button onClick={() => scrollToSection('contact')} className="w-full bg-gradient-to-r from-pink-500 to-rose-500">contact</Button>
+
+              {/* Mobile Dark Mode Toggle */}
+              <button 
+                className="mt-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors w-full flex justify-center items-center"
+                onClick={() => setIsDarkMode(!isDarkMode)}
               >
-                home
+                {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5 text-gray-800"/>}
               </button>
-              <button
-                onClick={() => scrollToSection('about')}
-                className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium"
-              >
-                about
-              </button>
-              <button
-                onClick={() => scrollToSection('work')}
-                className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium"
-              >
-                work
-              </button>
-              <button
-                onClick={() => scrollToSection('subscription')}
-                className="block w-full text-left text-gray-700 dark:text-gray-300 hover:text-purple-600 font-medium"
-              >
-                subscription
-              </button>
-              <Button
-                onClick={() => scrollToSection('contact')}
-                className="w-full bg-gradient-to-r from-pink-500 to-rose-500"
-              >
-                contact
-              </Button>
             </div>
           </div>
         )}
       </nav>
-
+      
       {/* Hero Section */}
-      <section id="home" className="relative min-h-screen flex items-center pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div className="space-y-8 animate-fade-in">
-              <div className="space-y-4">
-                <p className="text-gray-600 dark:text-gray-400 text-lg font-medium tracking-wide">
-                  Intelligent and Responsive
-                </p>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white leading-tight">
-                  Data-Driven
-                  <br />
-                  <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
-                    Analytics
-                  </span>
-                </h1>
-                <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-gray-700 dark:text-gray-300">
-                  Smart & Powerful
-                </p>
-              </div>
+<section
+  id="home"
+  className="relative h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-900 dark:via-background dark:to-gray-900 overflow-hidden"
+>
+  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center flex flex-col items-center justify-center space-y-6 mt-20">
+    {/* Tagline */}
+    <p className="text-gray-600 dark:text-gray-400 text-lg font-medium tracking-wide">
+      Intelligent and Responsive
+    </p>
 
-              <Button
-                onClick={handleGetStarted}
-                size="lg"
-                className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold px-12 py-6 text-lg rounded-full shadow-2xl hover:shadow-pink-500/50 transition-all transform hover:scale-105"
-              >
-                Get Started
-              </Button>
+    {/* Main Heading */}
+    <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white leading-tight">
+      Data-Driven
+      <br />
+      <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
+        Analytics
+      </span>
+    </h1>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 pt-8">
-                <div className="space-y-1">
-                  <div className="text-3xl font-bold text-purple-600">500K+</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Reviews Analyzed
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-bold text-pink-600">98%</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Accuracy Rate
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-bold text-rose-600">24/7</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Real-time Data
-                  </div>
-                </div>
-              </div>
+    {/* Subheading */}
+    <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-gray-700 dark:text-gray-300">
+      Smart & Powerful
+    </p>
 
-              {/* Trusted by Businesses */}
-              <div className="pt-12">
-                <p className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                  Trusted by Businesses
-                </p>
-                <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-                  Join thousands of businesses making smarter decisions with our analytics platform
-                </p>
-              </div>
-            </div>
+    {/* Call to Action */}
+    <Button
+      onClick={handleGetStarted}
+      size="lg"
+      className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold px-12 py-6 text-lg rounded-full shadow-2xl hover:shadow-pink-500/50 transition-all transform hover:scale-105"
+    >
+      Get Started
+    </Button>
 
-            {/* Right Content - Decorative */}
-            <div className="relative hidden lg:block">
-              <div className="relative w-full aspect-square">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-yellow-500 rounded-full transform rotate-12 shadow-2xl">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-[20rem] font-bold text-white/10 select-none">
-                      AA
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute bottom-0 right-0 w-48 h-48 transform translate-x-8 translate-y-8">
-                  <div className="relative w-full h-full">
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-20 bg-gradient-to-b from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 rounded-t-xl rounded-b-3xl shadow-xl"></div>
-                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-40 h-32">
-                      <div className="absolute top-0 left-8 w-16 h-20 bg-gradient-to-br from-green-600 to-green-800 rounded-full transform -rotate-12 shadow-lg"></div>
-                      <div className="absolute top-2 right-8 w-16 h-20 bg-gradient-to-br from-green-500 to-green-700 rounded-full transform rotate-12 shadow-lg"></div>
-                      <div className="absolute top-6 left-12 w-14 h-18 bg-gradient-to-br from-green-600 to-green-800 rounded-full shadow-lg"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute top-10 -left-10 w-20 h-20 bg-purple-400/30 rounded-full blur-xl animate-pulse"></div>
-                <div className="absolute bottom-20 -right-10 w-32 h-32 bg-pink-400/30 rounded-full blur-xl animate-pulse delay-1000"></div>
-              </div>
-            </div>
-          </div>
+    {/* Stats */}
+    <div className="grid grid-cols-3 gap-6 pt-8 text-center">
+      <div className="space-y-1">
+        <div className="text-3xl font-bold text-purple-600">500K+</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Reviews Analyzed
         </div>
-      </section>
+      </div>
+      <div className="space-y-1">
+        <div className="text-3xl font-bold text-pink-600">98%</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Accuracy Rate
+        </div>
+      </div>
+      <div className="space-y-1">
+        <div className="text-3xl font-bold text-rose-600">24/7</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Real-time Data
+        </div>
+      </div>
+    </div>
+
+    {/* Trusted by Businesses */}
+    <div className="pt-12 max-w-2xl">
+      <p className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+        Trusted by Businesses
+      </p>
+      <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+        Join thousands of businesses making smarter decisions with our analytics platform
+      </p>
+    </div>
+  </div>
+</section>
 
       {/* About Section */}
       <section id="about" className="py-24 bg-white/50 dark:bg-gray-800/50">
@@ -2537,11 +2467,13 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="text-white h-5 w-5" />
-                </div>
-                <span className="text-lg font-bold">Analytics Platform</span>
-              </div>
+  <img 
+    src="/logo.png" 
+    alt="Insydz Logo" 
+    className="w-10 h-10 rounded-xl object-contain"
+  />
+  <span className="text-lg font-bold">Analytics Platform</span>
+</div>
               <p className="text-gray-400">
                 Empowering businesses with intelligent data analytics
               </p>
@@ -2577,7 +2509,7 @@ export default function LandingPage() {
               © 2024 <span className="text-purple-400 font-bold">Insydz</span>
             </p>
             <p className="text-gray-500 text-sm mt-2">
-              Designed & Developed with ❤️ in India
+              Designed & Developed in India
             </p>
           </div>
         </div>
@@ -2604,3 +2536,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

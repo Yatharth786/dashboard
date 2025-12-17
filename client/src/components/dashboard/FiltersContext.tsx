@@ -44,3 +44,5 @@ export const useFilters = (): FiltersContextType => {
   if (!context) throw new Error("useFilters must be used within a FiltersProvider");
   return context;
 };
+
+

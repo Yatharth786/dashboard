@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from . import models
 from sqlalchemy import text
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import pandas as pd
 import numpy as np
 from tensorflow.keras.models import Sequential
@@ -161,15 +161,63 @@ def get_products(db: Session, limit: int, offset: int, category: str = None,
     return [dict(row._mapping) for row in result]
 
 
+# def get_summary(db: Session, source: str) -> Dict[str, Any]:
+#     if source == "flipkart":
+#         query = """
+#         SELECT
+#             COUNT(*) AS total_products,
+#             AVG(price) AS avg_price,
+#             AVG(rating) AS avg_rating,
+#             SUM(reviews) AS total_reviews
+#         FROM flipkart
+#         """
+#     elif source == "amazon":
+#         query = """
+#         SELECT
+#             COUNT(*) AS total_products,
+#             AVG(product_price_numeric) AS avg_price,
+#             AVG(product_star_rating_numeric) AS avg_rating,
+#             SUM(product_num_ratings) AS total_reviews
+#         FROM rapidapi_amazon_products
+#         """
+#     elif source == "all":
+#         query = """
+#         SELECT
+#             SUM(total_products) AS total_products,
+#             AVG(avg_price) AS avg_price,
+#             AVG(avg_rating) AS avg_rating,
+#             SUM(total_reviews) AS total_reviews
+#         FROM (
+#             SELECT
+#                 COUNT(*) AS total_products,
+#                 AVG(price) AS avg_price,
+#                 AVG(rating) AS avg_rating,
+#                 SUM(reviews) AS total_reviews
+#             FROM flipkart
+#             UNION ALL
+#             SELECT
+#                 COUNT(*) AS total_products,
+#                 AVG(product_price_numeric) AS avg_price,
+#                 AVG(product_star_rating_numeric) AS avg_rating,
+#                 SUM(product_num_ratings) AS total_reviews
+#             FROM rapidapi_amazon_products
+#         ) combined
+#         """
+#     else:
+#         raise ValueError("Invalid source. Must be 'flipkart', 'amazon', or 'all'.")
+
+#     result = db.execute(text(query))
+#     return dict(result.mappings().first())
+
 def get_summary(db: Session, source: str) -> Dict[str, Any]:
     if source == "flipkart":
         query = """
         SELECT
             COUNT(*) AS total_products,
-            AVG(price) AS avg_price,
-            AVG(rating) AS avg_rating,
-            SUM(reviews) AS total_reviews
-        FROM flipkart
+            AVG(product_price) AS avg_price,
+            AVG(product_star_rating) AS avg_rating,
+            SUM(product_review_count) AS total_reviews
+        FROM rapidapi_flipkart_products
         """
     elif source == "amazon":
         query = """
@@ -190,10 +238,10 @@ def get_summary(db: Session, source: str) -> Dict[str, Any]:
         FROM (
             SELECT
                 COUNT(*) AS total_products,
-                AVG(price) AS avg_price,
-                AVG(rating) AS avg_rating,
-                SUM(reviews) AS total_reviews
-            FROM flipkart
+                AVG(product_price) AS avg_price,
+                AVG(product_star_rating) AS avg_rating,
+                SUM(product_review_count) AS total_reviews
+            FROM rapidapi_flipkart_products
             UNION ALL
             SELECT
                 COUNT(*) AS total_products,
@@ -205,9 +253,9 @@ def get_summary(db: Session, source: str) -> Dict[str, Any]:
         """
     else:
         raise ValueError("Invalid source. Must be 'flipkart', 'amazon', or 'all'.")
-
-    result = db.execute(text(query))
-    return dict(result.mappings().first())
+    
+    result = db.execute(text(query)).fetchone()
+    return dict(result._mapping) if result else {}
 
 def get_top_products(db: Session, n: int):
     return db.query(models.Product).order_by(models.Product.rating.desc()).limit(n).all()
@@ -226,6 +274,45 @@ def get_top_products_amazon(db: Session, n: int):
     )
     return [dict(product_title=r.product_title, avg_rating=r.avg_rating, review_count=r.review_count) for r in result]
 
+# def get_category_analytics(db):
+#     query = """
+#     SELECT 
+#         category,
+#         COUNT(*) AS total_products,
+#         AVG(price) AS avg_price,
+#         AVG(rating) AS avg_rating,
+#         SUM(reviews) AS total_reviews,
+#         source
+#     FROM (
+#         -- Flipkart data
+#         SELECT 
+#             category, 
+#             price, 
+#             rating, 
+#             reviews, 
+#             'flipkart' AS source
+#         FROM flipkart
+#         WHERE price IS NOT NULL AND rating IS NOT NULL
+
+#         UNION ALL
+
+#         -- Amazon data
+#         SELECT 
+#             category_name AS category, 
+#             product_price_numeric AS price, 
+#             product_star_rating_numeric AS rating, 
+#             product_num_ratings AS reviews, 
+#             'amazon' AS source
+#         FROM rapidapi_amazon_products
+#         WHERE product_price_numeric IS NOT NULL 
+#           AND product_star_rating_numeric IS NOT NULL
+#     ) combined
+#     GROUP BY category, source
+#     ORDER BY total_reviews DESC
+#     """
+#     result = db.execute(text(query))
+#     return [dict(row._mapping) for row in result]
+
 def get_category_analytics(db):
     query = """
     SELECT 
@@ -238,13 +325,13 @@ def get_category_analytics(db):
     FROM (
         -- Flipkart data
         SELECT 
-            category, 
-            price, 
-            rating, 
-            reviews, 
+            category_name AS category, 
+            product_price AS price, 
+            product_star_rating AS rating, 
+            product_review_count AS reviews, 
             'flipkart' AS source
-        FROM flipkart
-        WHERE price IS NOT NULL AND rating IS NOT NULL
+        FROM rapidapi_flipkart_products
+        WHERE product_price IS NOT NULL AND product_star_rating IS NOT NULL
 
         UNION ALL
 
@@ -266,7 +353,7 @@ def get_category_analytics(db):
     return [dict(row._mapping) for row in result]
 
 def get_flipkart_categories(db: Session):
-    rows = db.execute(text("SELECT DISTINCT category FROM flipkart")).fetchall()
+    rows = db.execute(text("SELECT DISTINCT category_name as category FROM rapidapi_flipkart_products")).fetchall()
     return [{"category": row.category} for row in rows]
 
 def get_amazon_categories(db: Session):
@@ -459,3 +546,125 @@ def lstm_forecast(data_series, last_date=None, n_future=365):
     future_dates = [(last_date + timedelta(days=i+1)).strftime("%Y-%m-%d") for i in range(n_future)]
 
     return {"forecast": future_preds.tolist(), "dates": future_dates, "note": "LSTM forecast successful"}
+
+def create_tracker_analysis(
+    db: Session,
+    user_email: Optional[str],
+    analysis_data: dict
+) -> models.ProductTrackerAnalysis:
+    """
+    Save product tracker analysis to database
+    """
+    
+    # Extract sales range
+    sales_range = analysis_data.get('sales', {}).get('estimated_monthly_sales', '0 - 0')
+    if ' - ' in sales_range:
+        sales_parts = sales_range.replace(',', '').split(' - ')
+        sales_min = int(sales_parts[0])
+        sales_max = int(sales_parts[1])
+    else:
+        sales_min = sales_max = 0
+    
+    # Extract top competitor info
+    top_competitor = analysis_data.get('competition', {}).get('top_competitor')
+    
+    db_analysis = models.ProductTrackerAnalysis(
+        user_email=user_email,
+        product_name=analysis_data.get('product_name'),
+        category=analysis_data.get('category'),
+        source=analysis_data.get('source'),
+        base_cost=analysis_data.get('base_cost', 0),
+        
+        recommended_price=analysis_data.get('pricing', {}).get('recommended_price'),
+        min_price=analysis_data.get('pricing', {}).get('min_price'),
+        max_price=analysis_data.get('pricing', {}).get('max_price'),
+        profit_margin=analysis_data.get('pricing', {}).get('profit_margin'),
+        pricing_confidence=analysis_data.get('pricing', {}).get('confidence'),
+        
+        estimated_monthly_sales_min=sales_min,
+        estimated_monthly_sales_max=sales_max,
+        estimated_daily_sales=analysis_data.get('sales', {}).get('estimated_daily_sales'),
+        market_demand=analysis_data.get('sales', {}).get('market_demand'),
+        
+        total_competitors=analysis_data.get('competition', {}).get('total_competitors'),
+        avg_competitor_price=analysis_data.get('competition', {}).get('avg_competitor_price'),
+        avg_competitor_rating=analysis_data.get('competition', {}).get('avg_competitor_rating'),
+        top_competitor_name=top_competitor.get('name') if top_competitor else None,
+        top_competitor_price=top_competitor.get('price') if top_competitor else None,
+        
+        location_insights=analysis_data.get('location_insights', []),
+        ai_strategy=analysis_data.get('ai_strategy'),
+        warnings=analysis_data.get('warnings', []),
+        
+        similar_products_count=len(analysis_data.get('similar_products', [])),
+        analysis_success=analysis_data.get('success', True)
+    )
+    
+    db.add(db_analysis)
+    db.commit()
+    db.refresh(db_analysis)
+    
+    return db_analysis
+
+
+def get_user_tracker_history(
+    db: Session,
+    user_email: str,
+    limit: int = 20,
+    offset: int = 0
+) -> List[models.ProductTrackerAnalysis]:
+    """
+    Get user's product tracker analysis history
+    """
+    return db.query(models.ProductTrackerAnalysis)\
+        .filter(models.ProductTrackerAnalysis.user_email == user_email)\
+        .order_by(models.ProductTrackerAnalysis.created_at.desc())\
+        .offset(offset)\
+        .limit(limit)\
+        .all()
+
+
+def get_tracker_analysis_by_id(
+    db: Session,
+    analysis_id: int
+) -> Optional[models.ProductTrackerAnalysis]:
+    """
+    Get specific analysis by ID
+    """
+    return db.query(models.ProductTrackerAnalysis)\
+        .filter(models.ProductTrackerAnalysis.id == analysis_id)\
+        .first()
+
+
+def get_popular_categories(db: Session, limit: int = 10) -> List[dict]:
+    """
+    Get most analyzed categories
+    """
+    from sqlalchemy import func
+    
+    results = db.query(
+        models.ProductTrackerAnalysis.category,
+        func.count(models.ProductTrackerAnalysis.id).label('count')
+    ).group_by(models.ProductTrackerAnalysis.category)\
+     .order_by(func.count(models.ProductTrackerAnalysis.id).desc())\
+     .limit(limit)\
+     .all()
+    
+    return [{"category": r.category, "count": r.count} for r in results]
+
+
+def delete_tracker_analysis(db: Session, analysis_id: int, user_email: str) -> bool:
+    """
+    Delete an analysis (only if it belongs to the user)
+    """
+    analysis = db.query(models.ProductTrackerAnalysis)\
+        .filter(
+            models.ProductTrackerAnalysis.id == analysis_id,
+            models.ProductTrackerAnalysis.user_email == user_email
+        ).first()
+    
+    if analysis:
+        db.delete(analysis)
+        db.commit()
+        return True
+    return False    

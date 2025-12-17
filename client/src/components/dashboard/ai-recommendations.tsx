@@ -610,7 +610,7 @@ export default function AIRecommendations({ selectedSource }: { selectedSource: 
       // Map sources properly
       const sourceMap: Record<string, string> = {
         flipkart: "flipkart",
-        amazon_reviews: "amazon",
+        amazon: "amazon",
         rapidapi_amazon_products: "amazon",
         both: "both",
       };
@@ -716,7 +716,7 @@ Be conversational and specific. Use natural language like you're advising a frie
 
       const sourceText = (filters.table || selectedSource) === "both"
         ? "both Flipkart and Amazon"
-        : (filters.table || selectedSource) === "amazon_reviews" 
+        : (filters.table || selectedSource) === "amazon" 
         ? "Amazon"
         : "Flipkart";
 
@@ -753,7 +753,7 @@ Be conversational and specific. Use natural language like you're advising a frie
   // Determine display source
   const displaySource = 
     (filters.table || selectedSource) === "both" ? "Both Platforms" :
-    (filters.table || selectedSource) === "amazon_reviews" ? "Amazon" :
+    (filters.table || selectedSource) === "amazon" ? "Amazon" :
     "Flipkart";
 
   return (

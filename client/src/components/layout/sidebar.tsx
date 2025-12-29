@@ -206,6 +206,7 @@ import {
   DollarSign,
   PieChart,
   Users,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -226,6 +227,7 @@ const SECTIONS = [
       { href: "/sales", label: "Sales Analytics", icon: TrendingUp },
       { href: "/revenue", label: "Revenue", icon: DollarSign },
       { href: "/categories", label: "Categories", icon: PieChart },
+       { href: "/product-tracker", label: "Product Radar", icon: Target },
     ],
   },
 ];

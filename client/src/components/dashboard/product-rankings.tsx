@@ -795,10 +795,10 @@ export default function ProductRankings({
         <CardHeader className="flex flex-row items-center justify-between mb-4 p-0">
           <CardTitle className="text-lg font-semibold">
             {showBoth
-              ? "Top Trending Products (Both Sources)"
+              ? "Market Movers (Both Sources)"
               : isAmazon
-              ? "Top Trending Products (Amazon)"
-              : "Top Trending Products (Flipkart)"}
+              ? "Market Movers (Amazon)"
+              : "Market Movers (Flipkart)"}
           </CardTitle>
           <Badge variant="secondary" className="text-xs">
             Live Data

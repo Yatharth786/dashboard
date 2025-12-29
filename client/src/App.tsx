@@ -131,6 +131,8 @@ import Revenue from "@/pages/revenue";
 import Categories from "@/pages/categories";
 import CategoryProducts from "@/pages/category-products";
 import ProductDetails from "@/pages/product-details";
+import SentimentProducts from "@/pages/sentiment-products"; 
+import ProductTracker from "@/pages/product-tracker";
 
 // Auth Context
 interface User {
@@ -205,6 +207,9 @@ function Router() {
       {/* /* <Route path="/category-products/:category" component={CategoryProducts} />  */}
       <Route path="/category-products/:source/:category" component={CategoryProducts} />
       <Route path="/product/:productName" component={ProductDetails} /> 
+      <Route path="/product-tracker" component={ProductTracker} />
+
+      <Route path="/sentiment-products/:source/:sentiment" component={SentimentProducts} />
 
       {/* Tools Pages */}
       <Route path="/subscription" component={Subscription} />

@@ -547,74 +547,216 @@ def lstm_forecast(data_series, last_date=None, n_future=365):
 
     return {"forecast": future_preds.tolist(), "dates": future_dates, "note": "LSTM forecast successful"}
 
-def create_tracker_analysis(
-    db: Session,
-    user_email: Optional[str],
-    analysis_data: dict
-) -> models.ProductTrackerAnalysis:
-    """
-    Save product tracker analysis to database
-    """
+# def create_tracker_analysis(
+#     db: Session,
+#     user_email: Optional[str],
+#     analysis_data: dict
+# ) -> models.ProductTrackerAnalysis:
+#     """
+#     Save product tracker analysis to database
+#     """
     
-    # Extract sales range
-    sales_range = analysis_data.get('sales', {}).get('estimated_monthly_sales', '0 - 0')
-    if ' - ' in sales_range:
+#     # Extract sales range
+#     sales_range = analysis_data.get('sales', {}).get('estimated_monthly_sales', '0 - 0')
+#     if ' - ' in sales_range:
+#         sales_parts = sales_range.replace(',', '').split(' - ')
+#         sales_min = int(sales_parts[0])
+#         sales_max = int(sales_parts[1])
+#     else:
+#         sales_min = sales_max = 0
+    
+#     # Extract top competitor info
+#     top_competitor = analysis_data.get('competition', {}).get('top_competitor')
+    
+#     db_analysis = models.ProductTrackerAnalysis(
+#         user_email=user_email,
+#         product_name=analysis_data.get('product_name'),
+#         category=analysis_data.get('category'),
+#         source=analysis_data.get('source'),
+#         base_cost=analysis_data.get('base_cost', 0),
+        
+#         recommended_price=analysis_data.get('pricing', {}).get('recommended_price'),
+#         min_price=analysis_data.get('pricing', {}).get('min_price'),
+#         max_price=analysis_data.get('pricing', {}).get('max_price'),
+#         profit_margin=analysis_data.get('pricing', {}).get('profit_margin'),
+#         pricing_confidence=analysis_data.get('pricing', {}).get('confidence'),
+        
+#         estimated_monthly_sales_min=sales_min,
+#         estimated_monthly_sales_max=sales_max,
+#         estimated_daily_sales=analysis_data.get('sales', {}).get('estimated_daily_sales'),
+#         market_demand=analysis_data.get('sales', {}).get('market_demand'),
+        
+#         total_competitors=analysis_data.get('competition', {}).get('total_competitors'),
+#         avg_competitor_price=analysis_data.get('competition', {}).get('avg_competitor_price'),
+#         avg_competitor_rating=analysis_data.get('competition', {}).get('avg_competitor_rating'),
+#         top_competitor_name=top_competitor.get('name') if top_competitor else None,
+#         top_competitor_price=top_competitor.get('price') if top_competitor else None,
+        
+#         location_insights=analysis_data.get('location_insights', []),
+#         ai_strategy=analysis_data.get('ai_strategy'),
+#         warnings=analysis_data.get('warnings', []),
+        
+#         similar_products_count=len(analysis_data.get('similar_products', [])),
+#         analysis_success=analysis_data.get('success', True)
+#     )
+    
+#     db.add(db_analysis)
+#     db.commit()
+#     db.refresh(db_analysis)
+    
+#     return db_analysis
+
+
+# def get_user_tracker_history(
+#     db: Session,
+#     user_email: str,
+#     limit: int = 20,
+#     offset: int = 0
+# ) -> List[models.ProductTrackerAnalysis]:
+#     """
+#     Get user's product tracker analysis history
+#     """
+#     return db.query(models.ProductTrackerAnalysis)\
+#         .filter(models.ProductTrackerAnalysis.user_email == user_email)\
+#         .order_by(models.ProductTrackerAnalysis.created_at.desc())\
+#         .offset(offset)\
+#         .limit(limit)\
+#         .all()
+
+
+# def get_tracker_analysis_by_id(
+#     db: Session,
+#     analysis_id: int
+# ) -> Optional[models.ProductTrackerAnalysis]:
+#     """
+#     Get specific analysis by ID
+#     """
+#     return db.query(models.ProductTrackerAnalysis)\
+#         .filter(models.ProductTrackerAnalysis.id == analysis_id)\
+#         .first()
+
+
+# def get_popular_categories(db: Session, limit: int = 10) -> List[dict]:
+#     """
+#     Get most analyzed categories
+#     """
+#     from sqlalchemy import func
+    
+#     results = db.query(
+#         models.ProductTrackerAnalysis.category,
+#         func.count(models.ProductTrackerAnalysis.id).label('count')
+#     ).group_by(models.ProductTrackerAnalysis.category)\
+#      .order_by(func.count(models.ProductTrackerAnalysis.id).desc())\
+#      .limit(limit)\
+#      .all()
+    
+#     return [{"category": r.category, "count": r.count} for r in results]
+
+
+# def delete_tracker_analysis(db: Session, analysis_id: int, user_email: str) -> bool:
+#     """
+#     Delete an analysis (only if it belongs to the user)
+#     """
+#     analysis = db.query(models.ProductTrackerAnalysis)\
+#         .filter(
+#             models.ProductTrackerAnalysis.id == analysis_id,
+#             models.ProductTrackerAnalysis.user_email == user_email
+#         ).first()
+    
+#     if analysis:
+#         db.delete(analysis)
+#         db.commit()
+#         return True
+#     return False    
+
+def create_tracker_analysis(db: Session, user_email: Optional[str], analysis_data: dict):
+    """
+    Create a new product tracker analysis record
+    
+    Args:
+        db: Database session
+        user_email: User's email (can be None for anonymous)
+        analysis_data: Analysis data dict
+    
+    Returns:
+        ProductTrackerAnalysis object
+    """
+    try:
+        # Parse sales range
+        sales_range = analysis_data.get('sales', {}).get('estimated_monthly_sales', '0 - 0')
         sales_parts = sales_range.replace(',', '').split(' - ')
-        sales_min = int(sales_parts[0])
-        sales_max = int(sales_parts[1])
-    else:
-        sales_min = sales_max = 0
-    
-    # Extract top competitor info
-    top_competitor = analysis_data.get('competition', {}).get('top_competitor')
-    
-    db_analysis = models.ProductTrackerAnalysis(
-        user_email=user_email,
-        product_name=analysis_data.get('product_name'),
-        category=analysis_data.get('category'),
-        source=analysis_data.get('source'),
-        base_cost=analysis_data.get('base_cost', 0),
+        sales_min = int(sales_parts[0]) if len(sales_parts) > 0 else 0
+        sales_max = int(sales_parts[1]) if len(sales_parts) > 1 else 0
         
-        recommended_price=analysis_data.get('pricing', {}).get('recommended_price'),
-        min_price=analysis_data.get('pricing', {}).get('min_price'),
-        max_price=analysis_data.get('pricing', {}).get('max_price'),
-        profit_margin=analysis_data.get('pricing', {}).get('profit_margin'),
-        pricing_confidence=analysis_data.get('pricing', {}).get('confidence'),
+        # Extract competition data
+        competition = analysis_data.get('competition', {})
+        top_comp = competition.get('top_competitor', {})
         
-        estimated_monthly_sales_min=sales_min,
-        estimated_monthly_sales_max=sales_max,
-        estimated_daily_sales=analysis_data.get('sales', {}).get('estimated_daily_sales'),
-        market_demand=analysis_data.get('sales', {}).get('market_demand'),
+        # ✅ Create the analysis record
+        new_analysis = models.ProductTrackerAnalysis(
+            user_email=user_email,  # ✅ CRITICAL: This can be None
+            product_name=analysis_data.get('product_name'),
+            category=analysis_data.get('category'),
+            source=analysis_data.get('source'),
+            base_cost=analysis_data.get('base_cost'),
+            
+            # Pricing data
+            recommended_price=analysis_data.get('pricing', {}).get('recommended_price'),
+            min_price=analysis_data.get('pricing', {}).get('min_price'),
+            max_price=analysis_data.get('pricing', {}).get('max_price'),
+            profit_margin=analysis_data.get('pricing', {}).get('profit_margin'),
+            pricing_confidence=analysis_data.get('pricing', {}).get('confidence'),
+            
+            # Sales data
+            estimated_monthly_sales_min=sales_min,
+            estimated_monthly_sales_max=sales_max,
+            estimated_daily_sales=analysis_data.get('sales', {}).get('estimated_daily_sales'),
+            market_demand=analysis_data.get('sales', {}).get('market_demand'),
+            
+            # Competition data
+            total_competitors=competition.get('total_competitors'),
+            avg_competitor_price=competition.get('avg_competitor_price'),
+            avg_competitor_rating=competition.get('avg_competitor_rating'),
+            top_competitor_name=top_comp.get('name') if top_comp else None,
+            top_competitor_price=top_comp.get('price') if top_comp else None,
+            
+            # Location insights (JSON)
+            location_insights=analysis_data.get('location_insights'),
+            
+            # Strategy and warnings
+            ai_strategy=analysis_data.get('ai_strategy'),
+            warnings=analysis_data.get('warnings'),
+            
+            # Metadata
+            similar_products_count=len(analysis_data.get('similar_products', [])),
+            analysis_success=analysis_data.get('success', True)
+        )
         
-        total_competitors=analysis_data.get('competition', {}).get('total_competitors'),
-        avg_competitor_price=analysis_data.get('competition', {}).get('avg_competitor_price'),
-        avg_competitor_rating=analysis_data.get('competition', {}).get('avg_competitor_rating'),
-        top_competitor_name=top_competitor.get('name') if top_competitor else None,
-        top_competitor_price=top_competitor.get('price') if top_competitor else None,
+        db.add(new_analysis)
+        db.commit()
+        db.refresh(new_analysis)
         
-        location_insights=analysis_data.get('location_insights', []),
-        ai_strategy=analysis_data.get('ai_strategy'),
-        warnings=analysis_data.get('warnings', []),
+        print(f"✅ Saved analysis ID {new_analysis.id} for user: {user_email if user_email else 'Anonymous'}")
+        return new_analysis
         
-        similar_products_count=len(analysis_data.get('similar_products', [])),
-        analysis_success=analysis_data.get('success', True)
-    )
-    
-    db.add(db_analysis)
-    db.commit()
-    db.refresh(db_analysis)
-    
-    return db_analysis
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Failed to save analysis: {str(e)}")
+        raise e
 
 
-def get_user_tracker_history(
-    db: Session,
-    user_email: str,
-    limit: int = 20,
-    offset: int = 0
-) -> List[models.ProductTrackerAnalysis]:
+def get_user_tracker_history(db: Session, user_email: str, limit: int = 20, offset: int = 0):
     """
-    Get user's product tracker analysis history
+    Get analysis history for a specific user
+    
+    Args:
+        db: Database session
+        user_email: User's email
+        limit: Number of results to return
+        offset: Pagination offset
+    
+    Returns:
+        List of ProductTrackerAnalysis objects
     """
     return db.query(models.ProductTrackerAnalysis)\
         .filter(models.ProductTrackerAnalysis.user_email == user_email)\
@@ -624,47 +766,90 @@ def get_user_tracker_history(
         .all()
 
 
-def get_tracker_analysis_by_id(
-    db: Session,
-    analysis_id: int
-) -> Optional[models.ProductTrackerAnalysis]:
+def get_tracker_analysis_by_id(db: Session, analysis_id: int):
     """
-    Get specific analysis by ID
+    Get a single analysis by ID
+    
+    Args:
+        db: Database session
+        analysis_id: Analysis ID
+    
+    Returns:
+        ProductTrackerAnalysis object or None
     """
     return db.query(models.ProductTrackerAnalysis)\
         .filter(models.ProductTrackerAnalysis.id == analysis_id)\
         .first()
 
 
-def get_popular_categories(db: Session, limit: int = 10) -> List[dict]:
+def delete_tracker_analysis(db: Session, analysis_id: int, user_email: str) -> bool:
+    """
+    Delete an analysis (only if it belongs to the user)
+    
+    Args:
+        db: Database session
+        analysis_id: Analysis ID
+        user_email: User's email for verification
+    
+    Returns:
+        True if deleted, False otherwise
+    """
+    try:
+        analysis = db.query(models.ProductTrackerAnalysis)\
+            .filter(
+                models.ProductTrackerAnalysis.id == analysis_id,
+                models.ProductTrackerAnalysis.user_email == user_email
+            )\
+            .first()
+        
+        if analysis:
+            db.delete(analysis)
+            db.commit()
+            return True
+        return False
+        
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Failed to delete analysis: {str(e)}")
+        return False
+
+
+def get_popular_categories(db: Session, limit: int = 10):
     """
     Get most analyzed categories
+    
+    Args:
+        db: Database session
+        limit: Number of categories to return
+    
+    Returns:
+        List of (category, count) tuples
     """
     from sqlalchemy import func
     
     results = db.query(
         models.ProductTrackerAnalysis.category,
         func.count(models.ProductTrackerAnalysis.id).label('count')
-    ).group_by(models.ProductTrackerAnalysis.category)\
-     .order_by(func.count(models.ProductTrackerAnalysis.id).desc())\
-     .limit(limit)\
-     .all()
+    )\
+    .group_by(models.ProductTrackerAnalysis.category)\
+    .order_by(func.count(models.ProductTrackerAnalysis.id).desc())\
+    .limit(limit)\
+    .all()
     
     return [{"category": r.category, "count": r.count} for r in results]
 
 
-def delete_tracker_analysis(db: Session, analysis_id: int, user_email: str) -> bool:
+def get_user_analysis_count(db: Session, user_email: str) -> int:
     """
-    Delete an analysis (only if it belongs to the user)
-    """
-    analysis = db.query(models.ProductTrackerAnalysis)\
-        .filter(
-            models.ProductTrackerAnalysis.id == analysis_id,
-            models.ProductTrackerAnalysis.user_email == user_email
-        ).first()
+    Get total number of analyses for a user
     
-    if analysis:
-        db.delete(analysis)
-        db.commit()
-        return True
-    return False    
+    Args:
+        db: Database session
+        user_email: User's email
+    
+    Returns:
+        Count of analyses
+    """
+    return db.query(models.ProductTrackerAnalysis)\
+        .filter(models.ProductTrackerAnalysis.user_email == user_email)\
+        .count()

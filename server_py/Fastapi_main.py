@@ -3734,6 +3734,117 @@ def extract_keywords(product_name: str) -> list[str]:
 
 
 
+# @app.post("/product-tracker/analyze", response_model=ProductTrackerResponse)
+# def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = Depends(get_db)):
+#     print(f"🔍 Analyzing market for: {request.product_name} in {request.category}")
+    
+#     # ✅ CRITICAL FIX: Get user email (can be None)
+#     user_email = request.user_email if request.user_email else None
+#     print(f"👤 User Email: {user_email if user_email else 'Anonymous (not logged in)'}")
+    
+#     try:
+#         # Get similar products
+#         similar_products = get_similar_products(db, request.product_name, request.category, request.source)
+#         if not similar_products:
+#             raise HTTPException(404, f"❌ No products found matching '{request.product_name}' in category '{request.category}' on {request.source}")
+        
+#         print(f"📊 Found {len(similar_products)} similar products")
+        
+#         # Validate cost
+#         prices = [float(p.get('price', 0)) for p in similar_products if p.get('price', 0) > 0]
+#         market_max = max(prices) if prices else 0
+#         market_min = min(prices) if prices else 0
+        
+#         if request.base_cost > market_max * 2:
+#             raise HTTPException(400, f"❌ Invalid Cost: Your cost (₹{request.base_cost:,.0f}) seems incorrect. Market range: ₹{market_min:,.0f}-₹{market_max:,.0f}")
+#         if request.base_cost > market_max:
+#             raise HTTPException(400, f"⚠️ Cost Too High: ₹{request.base_cost:,.0f} > market max ₹{market_max:,.0f}")
+        
+#         # Extract keywords
+#         keywords = extract_keywords(request.product_name)
+        
+#         # Run analysis
+#         pricing_insights = analyze_pricing(similar_products, request.base_cost)
+        
+#         sales_insights = analyze_sales_potential(
+#             products=similar_products,
+#             source=request.source,
+#             base_cost=request.base_cost,
+#             recommended_price=pricing_insights['recommended_price'],
+#             category=request.category
+#         )
+        
+#         competition_insights = analyze_competition(similar_products, request.category, keywords)
+#         location_insights = generate_location_insights(similar_products)
+        
+#         ai_strategy = generate_ai_strategy(
+#             pricing_insights, 
+#             sales_insights, 
+#             competition_insights, 
+#             request.base_cost, 
+#             request.product_name, 
+#             request.category,
+#             location_insights
+#         )
+        
+#         warnings = generate_warnings(pricing_insights, competition_insights, request.base_cost)
+        
+#         # Build response
+#         response = ProductTrackerResponse(
+#             success=True,
+#             product_name=request.product_name,
+#             category=request.category,
+#             source=request.source.capitalize(),
+#             pricing=PricingInsights(**pricing_insights),
+#             sales=SalesInsights(**sales_insights),
+#             competition=CompetitorInsights(**competition_insights),
+#             location_insights=location_insights,
+#             ai_strategy=ai_strategy,
+#             warnings=warnings
+#         )
+        
+#         # ✅ CRITICAL: Save to database with user email
+#         try:
+#             analysis_data = {
+#                 'product_name': request.product_name,
+#                 'category': request.category,
+#                 'source': request.source,
+#                 'base_cost': request.base_cost,
+#                 'pricing': pricing_insights,
+#                 'sales': sales_insights,
+#                 'competition': competition_insights,
+#                 'location_insights': [
+#                     {
+#                         'country': loc.country,
+#                         'market_share': loc.market_share,
+#                         'demand_level': loc.demand_level
+#                     } for loc in location_insights
+#                 ],
+#                 'ai_strategy': ai_strategy,
+#                 'warnings': warnings,
+#                 'similar_products': similar_products,
+#                 'success': True
+#             }
+            
+#             # ✅ Pass user_email to CRUD function
+#             saved_analysis = crud.create_tracker_analysis(db, user_email, analysis_data)
+#             print(f"💾 Analysis saved to database - ID: {saved_analysis.id}, User: {user_email if user_email else 'Anonymous'}")
+            
+#         except Exception as e:
+#             print(f"⚠️ Failed to save analysis: {str(e)}")
+#             import traceback
+#             traceback.print_exc()
+        
+#         return response
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ Error in product tracker: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(500, f"Analysis failed: {str(e)}")
+
 @app.post("/product-tracker/analyze", response_model=ProductTrackerResponse)
 def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = Depends(get_db)):
     print(f"🔍 Analyzing market for: {request.product_name} in {request.category}")
@@ -5053,6 +5164,40 @@ def generate_warnings(pricing: Dict, competition: Dict, base_cost: float) -> Lis
 # NEW ENDPOINTS FOR HISTORY & ANALYTICS
 # ============================================
 
+# @app.get("/product-tracker/history")
+# def get_tracker_history(
+#     user_email: str = Query(..., description="User's email"),
+#     limit: int = Query(20, description="Number of results"),
+#     offset: int = Query(0, description="Pagination offset"),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get user's product tracker analysis history
+#     """
+#     try:
+#         history = crud.get_user_tracker_history(db, user_email, limit, offset)
+        
+#         return {
+#             "success": True,
+#             "count": len(history),
+#             "data": [
+#                 {
+#                     "id": h.id,
+#                     "product_name": h.product_name,
+#                     "category": h.category,
+#                     "source": h.source,
+#                     "base_cost": float(h.base_cost),
+#                     "recommended_price": float(h.recommended_price) if h.recommended_price else None,
+#                     "profit_margin": float(h.profit_margin) if h.profit_margin else None,
+#                     "market_demand": h.market_demand,
+#                     "created_at": h.created_at.isoformat()
+#                 }
+#                 for h in history
+#             ]
+#         }
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/product-tracker/history")
 def get_tracker_history(
     user_email: str = Query(..., description="User's email"),
@@ -5060,9 +5205,7 @@ def get_tracker_history(
     offset: int = Query(0, description="Pagination offset"),
     db: Session = Depends(get_db)
 ):
-    """
-    Get user's product tracker analysis history
-    """
+    """Get user's product tracker analysis history"""
     try:
         history = crud.get_user_tracker_history(db, user_email, limit, offset)
         
@@ -5087,15 +5230,66 @@ def get_tracker_history(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# @app.get("/product-tracker/analysis/{analysis_id}")
+# def get_analysis_details(
+#     analysis_id: int,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get detailed analysis by ID
+#     """
+#     try:
+#         analysis = crud.get_tracker_analysis_by_id(db, analysis_id)
+        
+#         if not analysis:
+#             raise HTTPException(status_code=404, detail="Analysis not found")
+        
+#         return {
+#             "success": True,
+#             "data": {
+#                 "id": analysis.id,
+#                 "product_name": analysis.product_name,
+#                 "category": analysis.category,
+#                 "source": analysis.source,
+#                 "base_cost": float(analysis.base_cost),
+#                 "pricing": {
+#                     "recommended_price": float(analysis.recommended_price) if analysis.recommended_price else None,
+#                     "min_price": float(analysis.min_price) if analysis.min_price else None,
+#                     "max_price": float(analysis.max_price) if analysis.max_price else None,
+#                     "profit_margin": float(analysis.profit_margin) if analysis.profit_margin else None,
+#                     "confidence": analysis.pricing_confidence
+#                 },
+#                 "sales": {
+#                     "estimated_monthly_sales": f"{analysis.estimated_monthly_sales_min:,} - {analysis.estimated_monthly_sales_max:,}",
+#                     "estimated_daily_sales": float(analysis.estimated_daily_sales) if analysis.estimated_daily_sales else None,
+#                     "market_demand": analysis.market_demand
+#                 },
+#                 "competition": {
+#                     "total_competitors": analysis.total_competitors,
+#                     "avg_competitor_price": float(analysis.avg_competitor_price) if analysis.avg_competitor_price else None,
+#                     "avg_competitor_rating": float(analysis.avg_competitor_rating) if analysis.avg_competitor_rating else None,
+#                     "top_competitor": {
+#                         "name": analysis.top_competitor_name,
+#                         "price": float(analysis.top_competitor_price) if analysis.top_competitor_price else None
+#                     } if analysis.top_competitor_name else None
+#                 },
+#                 "location_insights": analysis.location_insights,
+#                 "ai_strategy": analysis.ai_strategy,
+#                 "warnings": analysis.warnings,
+#                 "created_at": analysis.created_at.isoformat()
+#             }
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/product-tracker/analysis/{analysis_id}")
 def get_analysis_details(
     analysis_id: int,
     db: Session = Depends(get_db)
 ):
-    """
-    Get detailed analysis by ID
-    """
+    """Get detailed analysis by ID"""
     try:
         analysis = crud.get_tracker_analysis_by_id(db, analysis_id)
         
@@ -5111,29 +5305,29 @@ def get_analysis_details(
                 "source": analysis.source,
                 "base_cost": float(analysis.base_cost),
                 "pricing": {
-                    "recommended_price": float(analysis.recommended_price) if analysis.recommended_price else None,
-                    "min_price": float(analysis.min_price) if analysis.min_price else None,
-                    "max_price": float(analysis.max_price) if analysis.max_price else None,
-                    "profit_margin": float(analysis.profit_margin) if analysis.profit_margin else None,
-                    "confidence": analysis.pricing_confidence
+                    "recommended_price": float(analysis.recommended_price) if analysis.recommended_price else 0,
+                    "min_price": float(analysis.min_price) if analysis.min_price else 0,
+                    "max_price": float(analysis.max_price) if analysis.max_price else 0,
+                    "profit_margin": float(analysis.profit_margin) if analysis.profit_margin else 0,
+                    "confidence": analysis.pricing_confidence or "Unknown"
                 },
                 "sales": {
                     "estimated_monthly_sales": f"{analysis.estimated_monthly_sales_min:,} - {analysis.estimated_monthly_sales_max:,}",
-                    "estimated_daily_sales": float(analysis.estimated_daily_sales) if analysis.estimated_daily_sales else None,
-                    "market_demand": analysis.market_demand
+                    "estimated_daily_sales": float(analysis.estimated_daily_sales) if analysis.estimated_daily_sales else 0,
+                    "market_demand": analysis.market_demand or "Unknown"
                 },
                 "competition": {
-                    "total_competitors": analysis.total_competitors,
-                    "avg_competitor_price": float(analysis.avg_competitor_price) if analysis.avg_competitor_price else None,
-                    "avg_competitor_rating": float(analysis.avg_competitor_rating) if analysis.avg_competitor_rating else None,
+                    "total_competitors": analysis.total_competitors or 0,
+                    "avg_competitor_price": float(analysis.avg_competitor_price) if analysis.avg_competitor_price else 0,
+                    "avg_competitor_rating": float(analysis.avg_competitor_rating) if analysis.avg_competitor_rating else 0,
                     "top_competitor": {
                         "name": analysis.top_competitor_name,
-                        "price": float(analysis.top_competitor_price) if analysis.top_competitor_price else None
+                        "price": float(analysis.top_competitor_price) if analysis.top_competitor_price else 0
                     } if analysis.top_competitor_name else None
                 },
-                "location_insights": analysis.location_insights,
-                "ai_strategy": analysis.ai_strategy,
-                "warnings": analysis.warnings,
+                "location_insights": analysis.location_insights or [],
+                "ai_strategy": analysis.ai_strategy or "",
+                "warnings": analysis.warnings or [],
                 "created_at": analysis.created_at.isoformat()
             }
         }
@@ -5142,6 +5336,27 @@ def get_analysis_details(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# @app.delete("/product-tracker/analysis/{analysis_id}")
+# def delete_analysis(
+#     analysis_id: int,
+#     user_email: str = Query(..., description="User's email for verification"),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Delete an analysis (only if it belongs to the user)
+#     """
+#     try:
+#         success = crud.delete_tracker_analysis(db, analysis_id, user_email)
+        
+#         if success:
+#             return {"success": True, "message": "Analysis deleted successfully"}
+#         else:
+#             raise HTTPException(status_code=404, detail="Analysis not found or unauthorized")
+            
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/product-tracker/analysis/{analysis_id}")
 def delete_analysis(
@@ -5149,9 +5364,7 @@ def delete_analysis(
     user_email: str = Query(..., description="User's email for verification"),
     db: Session = Depends(get_db)
 ):
-    """
-    Delete an analysis (only if it belongs to the user)
-    """
+    """Delete an analysis (only if it belongs to the user)"""
     try:
         success = crud.delete_tracker_analysis(db, analysis_id, user_email)
         
@@ -5389,3 +5602,542 @@ def get_products_by_sentiment(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def generate_location_insights(products: List[Dict]) -> List[LocationInsight]:
+#     """
+#     Generate FULLY AI-DRIVEN dynamic location insights using Llama 3.2:3b.
+#     AI predicts ANY city/district/state across India - zero hardcoded locations.
+#     """
+    
+#     if not products:
+#         return []
+    
+#     # Extract category
+#     category = products[0].get('category_name') or products[0].get('category', 'General')
+    
+#     # Analyze product patterns
+#     analysis = analyze_product_patterns(products)
+    
+#     if not analysis:
+#         return []
+    
+#     # Build comprehensive market intelligence report
+#     brand_info = ""
+#     if analysis['brands']:
+#         top_3_brands = [f"{brand} ({count} products)" for brand, count in analysis['brands'][:3]]
+#         brand_info = f"\nTop Brands: {', '.join(top_3_brands)}"
+    
+#     price_dist = analysis['price_distribution']
+#     dominant_segment = max(price_dist.items(), key=lambda x: x[1])[0]
+    
+#     market_intelligence = f"""CATEGORY: {category}
+# TOTAL PRODUCTS: {analysis['total_products']}
+
+# PRICE ANALYSIS:
+# - Average Price: ₹{analysis['avg_price']:.0f}
+# - Price Range: ₹{analysis['min_price']:.0f} - ₹{analysis['max_price']:.0f}
+# - Dominant Segment: {dominant_segment.replace('_', ' ').title()}
+
+# MARKET PERFORMANCE:
+# - Average Rating: {analysis['avg_rating']:.2f}★
+# - Total Sales Volume: {analysis['total_sales']:,.0f}
+# - Total Reviews: {analysis['total_reviews']:,.0f}
+# - Brand Diversity: {analysis['brand_diversity']} unique brands{brand_info}
+# """
+
+#     # Optimized prompt for Llama 3.2:3b (shorter, more direct)
+#     prompt = f"""You are an Indian e-commerce market analyst. Predict the TOP 6 Indian cities/districts with highest demand for this product category.
+
+# {market_intelligence}
+
+# INSTRUCTIONS:
+# 1. Consider ALL Indian states and cities (tier-1, tier-2, tier-3, tier-4)
+# 2. Match locations to product type and price point:
+#    - Budget products (<₹1000): High-population tier-2/3 cities
+#    - Mid-range (₹1K-5K): Growing tier-2 cities
+#    - Premium (>₹5K): Affluent metros and IT hubs
+# 3. Category-specific logic:
+#    - Electronics/Tech: Bangalore, Pune, Hyderabad, Noida
+#    - Fashion: Textile centers like Tiruppur, Ludhiana
+#    - Agriculture: Ludhiana, Nashik, Guntur
+#    - Automotive: Industrial areas - Chennai, Manesar
+#    - Books/Education: University towns - Kota, Varanasi
+# 4. Distribute across North, South, East, West regions
+# 5. Be creative with non-obvious but logical cities
+
+# OUTPUT FORMAT (JSON array only, no explanation):
+# [
+#   {"city": "CityName, StateName", "share": 26.5, "demand": "Very High"},
+#   {"city": "CityName, StateName", "share": 23.2, "demand": "High"}
+# ]
+
+# Requirements:
+# - Total shares must sum to 100
+# - Use real Indian cities/districts
+# - Demand levels: "Very High", "High", "Medium", "Moderate"
+# - Order by share (highest first)
+# - Respond with ONLY the JSON array
+
+# Generate now:"""
+    
+#     try:
+#         result = subprocess.run(
+#             ["ollama", "run", "llama3.2:3b"],  # Changed model name
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=45
+#         )
+        
+#         output = (result.stdout or result.stderr or "").strip()
+        
+#         # Extract JSON array from response (handle markdown code blocks)
+#         json_match = re.search(r'```json\s*(\[[\s\S]*?\])\s*```', output)
+#         if not json_match:
+#             json_match = re.search(r'```\s*(\[[\s\S]*?\])\s*```', output)
+#         if not json_match:
+#             json_match = re.search(r'\[[\s\S]*?\]', output)
+        
+#         if json_match:
+#             json_text = json_match.group(1) if json_match.lastindex else json_match.group()
+#             locations_data = json.loads(json_text)
+            
+#             # Validate and normalize shares to sum to 100
+#             locations = locations_data[:6]
+#             total_share = sum(float(loc.get('share', 0)) for loc in locations)
+            
+#             if total_share > 0:
+#                 # Normalize shares
+#                 for loc in locations:
+#                     loc['share'] = (float(loc.get('share', 0)) / total_share) * 100
+            
+#             return [
+#                 LocationInsight(
+#                     country=loc.get("city", "Location Data Unavailable"),
+#                     market_share=f"{loc['share']:.1f}%",
+#                     demand_level=loc.get("demand", "Medium")
+#                 )
+#                 for loc in locations
+#             ]
+    
+#     except json.JSONDecodeError as e:
+#         print(f"❌ JSON parsing failed: {e}")
+#         print(f"AI Output: {output[:500]}")
+#     except subprocess.TimeoutExpired:
+#         print(f"❌ AI request timeout after 45 seconds")
+#     except Exception as e:
+#         print(f"❌ AI location prediction failed: {e}")
+    
+#     # Ultimate fallback: Use AI again with simpler prompt
+#     try:
+#         fallback_prompt = f"""List 6 Indian cities with highest demand for {category} products (avg price: ₹{analysis['avg_price']:.0f}).
+
+# Respond ONLY with JSON:
+# [{{"city": "City, State", "share": 25, "demand": "High"}}]
+
+# Total shares = 100. No explanation."""
+
+#         result = subprocess.run(
+#             ["ollama", "run", "llama3.2:3b"],  # Changed model name
+#             input=fallback_prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=30
+#         )
+        
+#         output = (result.stdout or result.stderr or "").strip()
+#         json_match = re.search(r'\[[\s\S]*?\]', output)
+        
+#         if json_match:
+#             locations_data = json.loads(json_match.group())
+#             locations = locations_data[:6]
+            
+#             # Normalize shares
+#             total_share = sum(float(loc.get('share', 0)) for loc in locations)
+#             if total_share > 0:
+#                 for loc in locations:
+#                     loc['share'] = (float(loc.get('share', 0)) / total_share) * 100
+            
+#             return [
+#                 LocationInsight(
+#                     country=loc.get("city", "Unknown Location"),
+#                     market_share=f"{loc['share']:.1f}%",
+#                     demand_level=loc.get("demand", "Medium")
+#                 )
+#                 for loc in locations
+#             ]
+#     except:
+#         pass
+    
+#     # Last resort: Return message indicating AI is needed
+#     return [
+#         LocationInsight(
+#             country="AI Analysis Required",
+#             market_share="N/A",
+#             demand_level="Configure Ollama Llama 3.2:3b for dynamic location insights"
+#         )
+#     ]
+
+
+# def parse_sales_volume(sales_text: str) -> float:
+#     """Parse sales volume text into numeric value"""
+#     if not sales_text:
+#         return 0.0
+    
+#     sales_text = str(sales_text).lower().replace(',', '')
+    
+#     # Handle K (thousands)
+#     if 'k' in sales_text:
+#         try:
+#             num = re.search(r'[\d.]+', sales_text.replace('k', ''))
+#             if num:
+#                 return float(num.group()) * 1000
+#         except:
+#             pass
+    
+#     # Handle M (millions)
+#     if 'm' in sales_text:
+#         try:
+#             num = re.search(r'[\d.]+', sales_text.replace('m', ''))
+#             if num:
+#                 return float(num.group()) * 1000000
+#         except:
+#             pass
+    
+#     # Handle L (lakhs)
+#     if 'l' in sales_text or 'lakh' in sales_text:
+#         try:
+#             num = re.search(r'[\d.]+', sales_text)
+#             if num:
+#                 return float(num.group()) * 100000
+#         except:
+#             pass
+    
+#     # Extract numeric value
+#     match = re.search(r'[\d.]+', sales_text)
+#     if match:
+#         try:
+#             return float(match.group())
+#         except:
+#             pass
+    
+#     return 0.0
+
+
+# def generate_ai_strategy(pricing: Dict, sales: Dict, competition: Dict, 
+#                         base_cost: float, product_name: str, category: str,
+#                         location_insights: List[LocationInsight] = None) -> str:
+#     """
+#     FULLY DYNAMIC AI-powered strategy using Llama 3.2:3b - synchronized with location insights
+#     """
+    
+#     # Extract ALL market intelligence
+#     margin = pricing['profit_margin']
+#     recommended = pricing['recommended_price']
+#     market_avg = pricing.get('market_avg_price', 0)
+#     market_min = pricing.get('market_min_price', 0)
+#     market_max = pricing.get('market_max_price', 0)
+    
+#     monthly_sales = sales['estimated_monthly_sales']
+#     daily_sales = sales['estimated_daily_sales']
+#     demand = sales['market_demand']
+    
+#     total_competitors = competition['total_competitors']
+#     avg_comp_price = competition['avg_competitor_price']
+#     avg_comp_rating = competition['avg_competitor_rating']
+    
+#     top_comp = competition.get('top_competitor', {})
+#     top_comp_name = top_comp.get('name', 'N/A') if top_comp else 'N/A'
+#     top_comp_price = top_comp.get('price', 0) if top_comp else 0
+    
+#     # Calculate ACCURATE metrics
+#     profit_per_unit = recommended - base_cost
+#     price_vs_avg = ((recommended - avg_comp_price) / avg_comp_price * 100) if avg_comp_price > 0 else 0
+    
+#     # Parse sales range
+#     try:
+#         sales_parts = monthly_sales.replace(',', '').split(' - ')
+#         avg_monthly_sales = (int(sales_parts[0]) + int(sales_parts[1])) / 2
+#         monthly_revenue_potential = profit_per_unit * avg_monthly_sales
+#     except:
+#         avg_monthly_sales = daily_sales * 30
+#         monthly_revenue_potential = profit_per_unit * avg_monthly_sales
+    
+#     # Determine market position
+#     if base_cost >= market_avg * 0.8:
+#         cost_advantage = "WEAK"
+#     elif base_cost >= market_avg * 0.6:
+#         cost_advantage = "MODERATE"
+#     else:
+#         cost_advantage = "STRONG"
+    
+#     # Competition level
+#     if total_competitors > 80:
+#         comp_level = "VERY HIGH"
+#     elif total_competitors > 40:
+#         comp_level = "HIGH"
+#     else:
+#         comp_level = "MODERATE"
+
+#     # Extract target cities from location insights
+#     target_cities_str = ""
+#     cities_list = ""
+#     if location_insights and len(location_insights) > 0:
+#         top_locations = location_insights[:3]
+#         cities = [loc.country for loc in top_locations if loc.country != "AI Analysis Required"]
+        
+#         if cities:
+#             target_cities_str = "\n\nTARGET CITIES:\n"
+#             for i, loc in enumerate(top_locations[:3], 1):
+#                 target_cities_str += f"{i}. {loc.country} - {loc.market_share}, {loc.demand_level} demand\n"
+#             cities_list = ", ".join([city.split(',')[0] for city in cities[:3]])
+#         else:
+#             cities_list = "major metros"
+#     else:
+#         cities_list = "major metros"
+
+#     # Optimized prompt for Llama 3.2:3b (more concise and structured)
+#     prompt = f"""You are an Indian e-commerce strategist. Write a 5-6 sentence actionable strategy.
+
+# PRODUCT: {product_name}
+# CATEGORY: {category}
+
+# DATA:
+# • Cost: ₹{base_cost:,.0f} | Market Avg: ₹{market_avg:,.0f}
+# • Recommended Price: ₹{recommended:,.0f}
+# • Profit/Unit: ₹{profit_per_unit:,.0f} | Margin: {margin:.1f}%
+# • Competitors: {total_competitors} ({comp_level})
+# • Monthly Sales Est: {int(avg_monthly_sales)} units
+# • Monthly Revenue: ₹{monthly_revenue_potential * 0.7:,.0f} (after fees)
+# {target_cities_str}
+
+# STRATEGY STRUCTURE:
+
+# 1. VIABILITY: Start with one of these based on margin:
+#    - <10%: "❌ NOT VIABLE:"
+#    - 10-19%: "⚠️ RISKY:"
+#    - 20-29%: "⚡ CHALLENGING:"
+#    - 30-39%: "✅ SOLID:"
+#    - 40+%: "🎯 EXCELLENT:"
+
+# 2. PRICING: "Price at ₹{recommended:,.0f}, earning ₹{profit_per_unit:,.0f}/unit ({margin:.1f}% margin)."
+
+# 3. TARGET CITIES: "Focus on {cities_list}" and briefly why these cities match the product.
+
+# 4. COMPETITION: How to handle {total_competitors} competitors (differentiation strategy).
+
+# 5. DIFFERENTIATION: One specific tactic (bundle, niche, warranty, etc.).
+
+# 6. TIMELINE: "{int(avg_monthly_sales)} units/month = ₹{monthly_revenue_potential * 0.7:,.0f} after fees. Month 1-2: [action], Month 3+: [result]"
+
+# Write the 5-6 sentence strategy now:"""
+
+#     try:
+#         result = subprocess.run(
+#             ["ollama", "run", "llama3.2:3b"],  # Changed model name
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=35
+#         )
+        
+#         ai_output = (result.stdout or result.stderr or "").strip()
+        
+#         # Clean output
+#         clean = (
+#             ai_output
+#             .replace("</s>", "")
+#             .replace("```", "")
+#             .replace("**", "")
+#             .strip()
+#         )
+        
+#         # Extract sentences
+#         sentences = []
+#         for line in clean.split('\n'):
+#             line = line.strip()
+            
+#             if (line and 
+#                 not line.startswith('#') and 
+#                 not line.startswith('*') and 
+#                 not line.startswith('-') and
+#                 not line.upper().startswith(('TASK', 'SENTENCE', 'PRODUCT', 'DATA', 'STRATEGY')) and
+#                 not line.startswith(('✓', '•')) and
+#                 len(line) > 50):
+                
+#                 for sentence in line.replace('. ', '.|').split('|'):
+#                     s = sentence.strip()
+#                     if (s and len(s) > 40 and
+#                         not s.lower().startswith(('here', 'write', 'you are'))):
+#                         sentences.append(s)
+#                         if len(sentences) >= 6:
+#                             break
+            
+#             if len(sentences) >= 6:
+#                 break
+        
+#         if len(sentences) >= 4:
+#             strategy = ' '.join(sentences[:6])
+            
+#             # Safety: Add fee warning if low margin
+#             if margin < 18 and 'fee' not in strategy.lower():
+#                 actual_profit = profit_per_unit * 0.7
+#                 strategy += f" ⚠️ After platform fees, actual profit ~₹{actual_profit:.0f}/unit."
+            
+#             return strategy
+#         else:
+#             print(f"⚠️ AI insufficient ({len(sentences)} sentences), using fallback")
+#             return generate_enhanced_fallback_strategy(
+#                 pricing, sales, competition, base_cost, 
+#                 cost_advantage, comp_level, profit_per_unit, monthly_revenue_potential,
+#                 category, avg_monthly_sales, recommended, market_avg,
+#                 location_insights
+#             )
+            
+#     except Exception as e:
+#         print(f"❌ AI failed: {e}")
+#         return generate_enhanced_fallback_strategy(
+#             pricing, sales, competition, base_cost,
+#             cost_advantage, comp_level, profit_per_unit, monthly_revenue_potential,
+#             category, avg_monthly_sales if 'avg_monthly_sales' in locals() else daily_sales * 30,
+#             recommended, market_avg,
+#             location_insights
+#         )
+
+
+# def generate_enhanced_fallback_strategy(
+#     pricing: Dict, sales: Dict, competition: Dict, base_cost: float,
+#     cost_advantage: str, comp_level: str, profit_per_unit: float, 
+#     monthly_revenue: float, category: str, avg_monthly_sales: float,
+#     recommended: float, market_avg: float,
+#     location_insights: List[LocationInsight] = None
+# ) -> str:
+#     """
+#     Intelligent fallback with synchronized city targeting
+#     """
+#     margin = pricing['profit_margin']
+#     demand = sales['market_demand']
+#     competitors = competition['total_competitors']
+#     actual_profit_after_fees = profit_per_unit * 0.7
+#     actual_monthly_profit = monthly_revenue * 0.7
+    
+#     # Extract target cities from location insights
+#     target_cities = ""
+#     if location_insights and len(location_insights) > 0:
+#         cities = [loc.country.split(',')[0] for loc in location_insights[:3] 
+#                  if loc.country != "AI Analysis Required"]
+#         if cities:
+#             if len(cities) == 1:
+#                 target_cities = cities[0]
+#             elif len(cities) == 2:
+#                 target_cities = f"{cities[0]} and {cities[1]}"
+#             else:
+#                 target_cities = f"{cities[0]}, {cities[1]}, and {cities[2]}"
+#         else:
+#             target_cities = "tier-1 metros"
+#     else:
+#         target_cities = "major metros"
+    
+#     # CRITICAL: Not viable
+#     if margin < 10:
+#         return f"❌ NOT VIABLE: Your cost (₹{base_cost:,.0f}) leaves only {margin:.1f}% margin at ₹{recommended:,.0f}. After platform fees (15-20%), shipping, returns, you face NET LOSSES. With {competitors} competitors at ₹{market_avg:,.0f}, this is uncompetitive. MUST reduce cost to under ₹{market_avg * 0.5:.0f} or pivot. Not salvageable at current cost."
+    
+#     # RISKY: Low margin
+#     if margin < 20:
+#         breakeven = int(30000 / actual_profit_after_fees) if actual_profit_after_fees > 0 else 999
+#         return f"⚠️ RISKY: {margin:.1f}% margin (₹{profit_per_unit:,.0f}/unit) at ₹{recommended:,.0f} vs market ₹{market_avg:,.0f}. {comp_level} competition ({competitors} sellers). After fees, actual profit = ₹{actual_profit_after_fees:.0f}/unit. Need {breakeven} monthly sales for ₹30k income. Focus on {target_cities}. Expected: {int(avg_monthly_sales)} units/month = ₹{actual_monthly_profit:,.0f} profit. Test 50 units first. High risk due to thin margins."
+    
+#     # CHALLENGING
+#     if margin < 30:
+#         return f"⚡ CHALLENGING: {margin:.1f}% margin (₹{profit_per_unit:,.0f}/unit). Price ₹{recommended:,.0f} vs market ₹{market_avg:,.0f}. {comp_level} competition ({competitors} sellers). Target {target_cities} where demand is strongest. Focus on 4.5★+ rating strategy. Expected: {int(avg_monthly_sales)} units/month = ₹{actual_monthly_profit:,.0f} after fees. Investment: ₹8k. Timeline: Month 1-2 (test 50), Month 3+ (scale). Needs execution discipline."
+    
+#     # SOLID
+#     if margin < 40:
+#         return f"✅ SOLID: {margin:.0f}% margin (₹{profit_per_unit:,.0f}/unit) in {demand.lower()}-demand market. Selling ₹{recommended:,.0f} (market: ₹{market_avg:,.0f}). {comp_level} competition ({competitors} sellers) - differentiate through quality listing. Focus on {target_cities}. Expected: {int(avg_monthly_sales)} units/month = ₹{actual_monthly_profit:,.0f} after fees. Invest ₹10k. Timeline: Month 1-2 (50-75 units), Month 3-6 (ramp to {int(avg_monthly_sales * 1.5)}). Sustainable model."
+    
+#     # EXCELLENT
+#     return f"🎯 EXCELLENT: {margin:.0f}% margin (₹{profit_per_unit:,.0f}/unit)! Cost advantage enables ₹{recommended:,.0f} pricing vs market ₹{market_avg:,.0f}. With {competitors} competitors, your cost moat enables market share capture. Target {target_cities}. Invest in premium positioning. Expected: {int(avg_monthly_sales)} initial → {int(avg_monthly_sales * 2)} by month 3 = ₹{actual_monthly_profit * 2:,.0f}/month. Launch 100-150 units, sponsored ads ₹500/day. Capitalize quickly!"
+
+
+# def generate_warnings(pricing: Dict, competition: Dict, base_cost: float) -> List[str]:
+#     """
+#     FULLY DYNAMIC warnings - no static assumptions
+#     """
+#     warnings = []
+    
+#     market_avg = pricing.get('market_avg_price', 0)
+#     market_min = pricing.get('market_min_price', 0)
+#     profit_margin = pricing['profit_margin']
+#     recommended_price = pricing['recommended_price']
+    
+#     # CRITICAL: Cost too high
+#     if base_cost > market_avg:
+#         loss_pct = ((base_cost - market_avg) / market_avg) * 100
+#         warnings.append(f"🚨 CRITICAL: Your cost (₹{base_cost:,.0f}) is {loss_pct:.0f}% HIGHER than market average (₹{market_avg:,.0f})! Cannot compete profitably.")
+#         warnings.append(f"💡 Solution: Reduce cost to under ₹{market_avg * 0.6:,.0f} for 40% margin.")
+#         return warnings
+    
+#     # HIGH ALERT: Cost close to average
+#     if base_cost > market_avg * 0.8:
+#         warnings.append(f"⚠️ HIGH RISK: Cost (₹{base_cost:,.0f}) very close to market avg (₹{market_avg:,.0f}). Only {profit_margin:.1f}% margin.")
+#         warnings.append(f"💡 Recommendation: Negotiate down to ₹{market_avg * 0.5:,.0f}.")
+    
+#     # Cost higher than minimum
+#     if base_cost > market_min:
+#         warnings.append(f"⚠️ WARNING: Cost (₹{base_cost:,.0f}) > cheapest competitor (₹{market_min:,.0f}).")
+#         warnings.append(f"💡 Strategy: Focus on premium positioning or unique features.")
+    
+#     # Low margin warnings
+#     if profit_margin < 10:
+#         warnings.append(f"🔴 DANGER: Only {profit_margin:.1f}% margin! Unsustainable after fees.")
+#         warnings.append(f"💡 Action: Need 30-40% margin minimum.")
+#     elif profit_margin < 20:
+#         warnings.append(f"⚠️ LOW MARGIN: {profit_margin:.1f}% risky. After fees, profit minimal.")
+#         warnings.append(f"💡 Tip: Aim for 35-50% margin for sustainable business.")
+    
+#     # Competition warnings
+#     if competition['total_competitors'] > 100:
+#         warnings.append(f"⚠️ EXTREMELY COMPETITIVE: {competition['total_competitors']} competitors!")
+#         warnings.append(f"💡 Strategy: Niche variations or unique bundles.")
+#     elif competition['total_competitors'] > 50:
+#         warnings.append(f"⚠️ High competition ({competition['total_competitors']} sellers).")
+#         warnings.append(f"💡 Tip: Quality photos, early reviews to stand out.")
+    
+#     # Price positioning
+#     if recommended_price > market_avg * 1.3:
+#         warnings.append(f"⚠️ PRICING RISK: Recommended (₹{recommended_price:,.0f}) is high vs market.")
+#         warnings.append(f"💡 Option: Start at ₹{market_avg:,.0f} then increase.")
+    
+#     # Confidence warnings
+#     if pricing['confidence'] == "Critical":
+#         warnings.append("🚨 CRITICAL: NOT viable with current cost.")
+#     elif pricing['confidence'] == "Low":
+#         warnings.append("⚠️ Limited data. Test with small inventory.")
+    
+#     # Positive scenarios
+#     if not warnings and profit_margin > 35:
+#         warnings.append(f"✅ EXCELLENT: {profit_margin:.0f}% margin!")
+#         warnings.append(f"💡 Strategy: Price ₹{recommended_price:,.0f}, quality listing, scale fast.")
+#     elif not warnings:
+#         warnings.append(f"✅ VIABLE: {profit_margin:.1f}% margin acceptable.")
+#         warnings.append(f"💡 Focus: Quality photos, competitive shipping.")
+    
+#     return warnings

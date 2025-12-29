@@ -206,6 +206,7 @@ import {
   DollarSign,
   PieChart,
   Users,
+  History,
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -764,7 +764,7 @@ Be conversational and specific. Use natural language like you're advising a frie
             <Bot className="text-primary-foreground h-6 w-6" />
           </div>
           <div>
-            <CardTitle className="text-lg font-semibold">AI-Powered Insights</CardTitle>
+            <CardTitle className="text-lg font-semibold">Decision Intelligence</CardTitle>
             <p className="text-sm text-muted-foreground">
               Natural language analysis for{" "}
               <span className="font-medium text-foreground">{displaySource}</span>

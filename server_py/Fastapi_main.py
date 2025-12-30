@@ -5615,10 +5615,275 @@ def get_products_by_sentiment(
 
 
 
+# def analyze_product_patterns(products: List[Dict]) -> Dict:
+#     """
+#     Analyze product data to extract market intelligence patterns.
+#     Returns comprehensive analysis for AI-based location prediction.
+#     """
+#     if not products:
+#         return {}
+    
+#     # Brand analysis
+#     brands = {}
+#     top_brands = []
+    
+#     for p in products:
+#         brand = p.get('brand')
+#         if brand:
+#             brand = str(brand).strip()
+#             brands[brand] = brands.get(brand, 0) + 1
+    
+#     if brands:
+#         top_brands = sorted(brands.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+#     # Price distribution analysis
+#     prices = [float(D(p.get('price', 0))) for p in products if p.get('price')]
+#     price_ranges = {
+#         'ultra_budget': len([p for p in prices if p < 300]),
+#         'budget': len([p for p in prices if 300 <= p < 1000]),
+#         'mid_range': len([p for p in prices if 1000 <= p < 3000]),
+#         'premium': len([p for p in prices if 3000 <= p < 10000]),
+#         'luxury': len([p for p in prices if p >= 10000])
+#     }
+    
+#     # Rating analysis
+#     ratings = []
+#     for p in products:
+#         rating = (
+#             p.get('rating') or 
+#             p.get('product_star_rating_numeric') or 
+#             p.get('product_star_rating') or 
+#             0
+#         )
+#         if rating:
+#             ratings.append(float(D(rating)))
+    
+#     avg_rating = sum(ratings) / len(ratings) if ratings else 0
+#     high_rated = len([r for r in ratings if r >= 4.0])
+    
+#     # Sales velocity analysis
+#     total_sales = Decimal("0")
+#     high_sales_products = 0
+    
+#     for p in products:
+#         sales_vol = p.get('sales_volume', '')
+#         if sales_vol:
+#             sales = D(parse_sales_volume(str(sales_vol)))
+#             total_sales += sales
+#             if sales > 1000:
+#                 high_sales_products += 1
+        
+#         estimated = p.get('estimated_sales')
+#         if estimated:
+#             total_sales += D(estimated)
+    
+#     # Review analysis
+#     total_reviews = Decimal("0")
+#     high_engagement = 0
+    
+#     for p in products:
+#         reviews = (
+#             p.get('reviews') or 
+#             p.get('product_num_ratings') or 
+#             p.get('product_review_count') or 
+#             0
+#         )
+#         review_count = D(reviews)
+#         total_reviews += review_count
+#         if review_count > 500:
+#             high_engagement += 1
+    
+#     return {
+#         'total_products': len(products),
+#         'brands': top_brands,
+#         'brand_diversity': len(brands),
+#         'price_distribution': price_ranges,
+#         'avg_rating': avg_rating,
+#         'high_rated_percentage': (high_rated / len(ratings) * 100) if ratings else 0,
+#         'total_sales': float(total_sales),
+#         'high_sales_products': high_sales_products,
+#         'total_reviews': float(total_reviews),
+#         'high_engagement_products': high_engagement,
+#         'avg_price': sum(prices) / len(prices) if prices else 0,
+#         'min_price': min(prices) if prices else 0,
+#         'max_price': max(prices) if prices else 0
+#     }
+
+
+# def get_rule_based_locations(category: str, avg_price: float, analysis: Dict) -> List[LocationInsight]:
+#     """
+#     Fallback rule-based location prediction when AI fails.
+#     Uses category and price-based logic.
+#     """
+#     locations = []
+    
+#     # Determine dominant price segment
+#     price_dist = analysis.get('price_distribution', {})
+#     dominant_segment = max(price_dist.items(), key=lambda x: x[1])[0] if price_dist else 'mid_range'
+    
+#     # Category-specific location mapping
+#     category_lower = category.lower()
+    
+#     # Electronics & Tech products
+#     if any(term in category_lower for term in ['electronic', 'mobile', 'laptop', 'computer', 'gadget', 'tech']):
+#         if avg_price > 5000:
+#             locations = [
+#                 ("Bangalore, Karnataka", 22, "Very High"),
+#                 ("Hyderabad, Telangana", 18, "High"),
+#                 ("Pune, Maharashtra", 16, "High"),
+#                 ("Gurgaon, Haryana", 15, "High"),
+#                 ("Chennai, Tamil Nadu", 14, "High"),
+#                 ("Noida, Uttar Pradesh", 15, "Medium")
+#             ]
+#         else:
+#             locations = [
+#                 ("Delhi, Delhi", 20, "Very High"),
+#                 ("Mumbai, Maharashtra", 18, "High"),
+#                 ("Kolkata, West Bengal", 16, "High"),
+#                 ("Jaipur, Rajasthan", 15, "Medium"),
+#                 ("Lucknow, Uttar Pradesh", 16, "Medium"),
+#                 ("Ahmedabad, Gujarat", 15, "Medium")
+#             ]
+    
+#     # Fashion & Apparel
+#     elif any(term in category_lower for term in ['fashion', 'cloth', 'apparel', 'wear', 'dress', 'shirt']):
+#         if avg_price > 2000:
+#             locations = [
+#                 ("Mumbai, Maharashtra", 22, "Very High"),
+#                 ("Delhi, Delhi", 20, "Very High"),
+#                 ("Bangalore, Karnataka", 17, "High"),
+#                 ("Kolkata, West Bengal", 14, "High"),
+#                 ("Hyderabad, Telangana", 14, "Medium"),
+#                 ("Pune, Maharashtra", 13, "Medium")
+#             ]
+#         else:
+#             locations = [
+#                 ("Tiruppur, Tamil Nadu", 20, "Very High"),
+#                 ("Ludhiana, Punjab", 18, "High"),
+#                 ("Surat, Gujarat", 17, "High"),
+#                 ("Kanpur, Uttar Pradesh", 15, "Medium"),
+#                 ("Erode, Tamil Nadu", 15, "Medium"),
+#                 ("Ahmedabad, Gujarat", 15, "Medium")
+#             ]
+    
+#     # Home & Kitchen
+#     elif any(term in category_lower for term in ['home', 'kitchen', 'furniture', 'decor', 'appliance']):
+#         locations = [
+#             ("Mumbai, Maharashtra", 19, "Very High"),
+#             ("Delhi, Delhi", 18, "High"),
+#             ("Bangalore, Karnataka", 16, "High"),
+#             ("Pune, Maharashtra", 15, "High"),
+#             ("Hyderabad, Telangana", 16, "Medium"),
+#             ("Chennai, Tamil Nadu", 16, "Medium")
+#         ]
+    
+#     # Books & Education
+#     elif any(term in category_lower for term in ['book', 'education', 'stationery', 'study']):
+#         locations = [
+#             ("Kota, Rajasthan", 20, "Very High"),
+#             ("Delhi, Delhi", 18, "High"),
+#             ("Bangalore, Karnataka", 17, "High"),
+#             ("Pune, Maharashtra", 15, "High"),
+#             ("Kolkata, West Bengal", 15, "Medium"),
+#             ("Chennai, Tamil Nadu", 15, "Medium")
+#         ]
+    
+#     # Automotive & Parts
+#     elif any(term in category_lower for term in ['automotive', 'car', 'bike', 'vehicle', 'auto']):
+#         locations = [
+#             ("Chennai, Tamil Nadu", 20, "Very High"),
+#             ("Pune, Maharashtra", 19, "High"),
+#             ("Gurgaon, Haryana", 18, "High"),
+#             ("Bangalore, Karnataka", 15, "High"),
+#             ("Ahmedabad, Gujarat", 14, "Medium"),
+#             ("Ludhiana, Punjab", 14, "Medium")
+#         ]
+    
+#     # Beauty & Personal Care
+#     elif any(term in category_lower for term in ['beauty', 'cosmetic', 'skincare', 'makeup', 'personal care']):
+#         locations = [
+#             ("Mumbai, Maharashtra", 21, "Very High"),
+#             ("Delhi, Delhi", 19, "High"),
+#             ("Bangalore, Karnataka", 17, "High"),
+#             ("Kolkata, West Bengal", 15, "High"),
+#             ("Hyderabad, Telangana", 14, "Medium"),
+#             ("Chennai, Tamil Nadu", 14, "Medium")
+#         ]
+    
+#     # Sports & Fitness
+#     elif any(term in category_lower for term in ['sport', 'fitness', 'gym', 'exercise']):
+#         locations = [
+#             ("Mumbai, Maharashtra", 20, "Very High"),
+#             ("Bangalore, Karnataka", 19, "High"),
+#             ("Delhi, Delhi", 18, "High"),
+#             ("Pune, Maharashtra", 15, "High"),
+#             ("Hyderabad, Telangana", 14, "Medium"),
+#             ("Chennai, Tamil Nadu", 14, "Medium")
+#         ]
+    
+#     # Jewelry & Accessories
+#     elif any(term in category_lower for term in ['jewel', 'gold', 'silver', 'accessory']):
+#         locations = [
+#             ("Jaipur, Rajasthan", 22, "Very High"),
+#             ("Mumbai, Maharashtra", 19, "High"),
+#             ("Coimbatore, Tamil Nadu", 17, "High"),
+#             ("Surat, Gujarat", 15, "High"),
+#             ("Thrissur, Kerala", 14, "Medium"),
+#             ("Kolkata, West Bengal", 13, "Medium")
+#         ]
+    
+#     # Default for unknown categories - Major metros based on price
+#     else:
+#         if avg_price > 3000:
+#             locations = [
+#                 ("Mumbai, Maharashtra", 20, "Very High"),
+#                 ("Delhi, Delhi", 19, "High"),
+#                 ("Bangalore, Karnataka", 18, "High"),
+#                 ("Pune, Maharashtra", 15, "High"),
+#                 ("Hyderabad, Telangana", 14, "Medium"),
+#                 ("Chennai, Tamil Nadu", 14, "Medium")
+#             ]
+#         elif avg_price > 1000:
+#             locations = [
+#                 ("Delhi, Delhi", 19, "Very High"),
+#                 ("Mumbai, Maharashtra", 18, "High"),
+#                 ("Bangalore, Karnataka", 17, "High"),
+#                 ("Kolkata, West Bengal", 15, "High"),
+#                 ("Hyderabad, Telangana", 16, "Medium"),
+#                 ("Pune, Maharashtra", 15, "Medium")
+#             ]
+#         else:
+#             locations = [
+#                 ("Lucknow, Uttar Pradesh", 18, "Very High"),
+#                 ("Kanpur, Uttar Pradesh", 17, "High"),
+#                 ("Patna, Bihar", 16, "High"),
+#                 ("Jaipur, Rajasthan", 16, "High"),
+#                 ("Indore, Madhya Pradesh", 17, "Medium"),
+#                 ("Nagpur, Maharashtra", 16, "Medium")
+#             ]
+    
+#     # Normalize shares to exactly 100
+#     total_share = sum(share for _, share, _ in locations)
+#     if total_share > 0:
+#         locations = [
+#             (city, (share / total_share) * 100, demand)
+#             for city, share, demand in locations
+#         ]
+    
+#     return [
+#         LocationInsight(
+#             country=city,
+#             market_share=f"{share:.1f}%",
+#             demand_level=demand
+#         )
+#         for city, share, demand in locations
+#     ]
+
+
 # def generate_location_insights(products: List[Dict]) -> List[LocationInsight]:
 #     """
-#     Generate FULLY AI-DRIVEN dynamic location insights using Llama 3.2:3b.
-#     AI predicts ANY city/district/state across India - zero hardcoded locations.
+#     Generate AI-driven dynamic location insights with robust fallback.
+#     Primary: AI prediction | Fallback: Rule-based intelligent prediction
 #     """
     
 #     if not products:
@@ -5633,146 +5898,113 @@ def get_products_by_sentiment(
 #     if not analysis:
 #         return []
     
-#     # Build comprehensive market intelligence report
-#     brand_info = ""
-#     if analysis['brands']:
-#         top_3_brands = [f"{brand} ({count} products)" for brand, count in analysis['brands'][:3]]
-#         brand_info = f"\nTop Brands: {', '.join(top_3_brands)}"
+#     avg_price = analysis.get('avg_price', 0)
     
-#     price_dist = analysis['price_distribution']
-#     dominant_segment = max(price_dist.items(), key=lambda x: x[1])[0]
-    
-#     market_intelligence = f"""CATEGORY: {category}
-# TOTAL PRODUCTS: {analysis['total_products']}
+#     # Simplified prompt for Llama 3.2:3b (smaller model needs simpler instructions)
+#     simplified_prompt = f"""You are analyzing Indian e-commerce market for {category} products.
 
-# PRICE ANALYSIS:
-# - Average Price: ₹{analysis['avg_price']:.0f}
-# - Price Range: ₹{analysis['min_price']:.0f} - ₹{analysis['max_price']:.0f}
-# - Dominant Segment: {dominant_segment.replace('_', ' ').title()}
+# Price: ₹{avg_price:.0f}
+# Total Products: {analysis['total_products']}
+# Avg Rating: {analysis['avg_rating']:.1f}★
 
-# MARKET PERFORMANCE:
-# - Average Rating: {analysis['avg_rating']:.2f}★
-# - Total Sales Volume: {analysis['total_sales']:,.0f}
-# - Total Reviews: {analysis['total_reviews']:,.0f}
-# - Brand Diversity: {analysis['brand_diversity']} unique brands{brand_info}
-# """
+# Task: List 6 Indian cities with highest demand.
 
-#     # Optimized prompt for Llama 3.2:3b (shorter, more direct)
-#     prompt = f"""You are an Indian e-commerce market analyst. Predict the TOP 6 Indian cities/districts with highest demand for this product category.
-
-# {market_intelligence}
-
-# INSTRUCTIONS:
-# 1. Consider ALL Indian states and cities (tier-1, tier-2, tier-3, tier-4)
-# 2. Match locations to product type and price point:
-#    - Budget products (<₹1000): High-population tier-2/3 cities
-#    - Mid-range (₹1K-5K): Growing tier-2 cities
-#    - Premium (>₹5K): Affluent metros and IT hubs
-# 3. Category-specific logic:
-#    - Electronics/Tech: Bangalore, Pune, Hyderabad, Noida
-#    - Fashion: Textile centers like Tiruppur, Ludhiana
-#    - Agriculture: Ludhiana, Nashik, Guntur
-#    - Automotive: Industrial areas - Chennai, Manesar
-#    - Books/Education: University towns - Kota, Varanasi
-# 4. Distribute across North, South, East, West regions
-# 5. Be creative with non-obvious but logical cities
-
-# OUTPUT FORMAT (JSON array only, no explanation):
+# Format ONLY as JSON array (no other text):
 # [
-#   {"city": "CityName, StateName", "share": 26.5, "demand": "Very High"},
-#   {"city": "CityName, StateName", "share": 23.2, "demand": "High"}
+#   {{"city": "CityName, State", "share": 25.0, "demand": "Very High"}},
+#   {{"city": "CityName, State", "share": 20.0, "demand": "High"}}
 # ]
 
-# Requirements:
-# - Total shares must sum to 100
-# - Use real Indian cities/districts
-# - Demand levels: "Very High", "High", "Medium", "Moderate"
+# Rules:
+# - Total shares = 100
+# - Use real Indian cities
+# - Match price to city tier
 # - Order by share (highest first)
-# - Respond with ONLY the JSON array
 
-# Generate now:"""
-    
-#     try:
-#         result = subprocess.run(
-#             ["ollama", "run", "llama3.2:3b"],  # Changed model name
-#             input=prompt,
-#             capture_output=True,
-#             text=True,
-#             encoding="utf-8",
-#             errors="ignore",
-#             timeout=45
-#         )
-        
-#         output = (result.stdout or result.stderr or "").strip()
-        
-#         # Extract JSON array from response (handle markdown code blocks)
-#         json_match = re.search(r'```json\s*(\[[\s\S]*?\])\s*```', output)
-#         if not json_match:
-#             json_match = re.search(r'```\s*(\[[\s\S]*?\])\s*```', output)
-#         if not json_match:
-#             json_match = re.search(r'\[[\s\S]*?\]', output)
-        
-#         if json_match:
-#             json_text = json_match.group(1) if json_match.lastindex else json_match.group()
-#             locations_data = json.loads(json_text)
+# Output ONLY the JSON array:"""
+
+#     # Try AI prediction with multiple attempts
+#     for attempt in range(2):
+#         try:
+#             print(f"🤖 Attempting AI location prediction (attempt {attempt + 1})...")
             
-#             # Validate and normalize shares to sum to 100
-#             locations = locations_data[:6]
-#             total_share = sum(float(loc.get('share', 0)) for loc in locations)
+#             result = subprocess.run(
+#                 ["ollama", "run", "llama3.2:3b"],
+#                 input=simplified_prompt,
+#                 capture_output=True,
+#                 text=True,
+#                 encoding="utf-8",
+#                 errors="ignore",
+#                 timeout=60  # Increased timeout
+#             )
             
-#             if total_share > 0:
-#                 # Normalize shares
-#                 for loc in locations:
-#                     loc['share'] = (float(loc.get('share', 0)) / total_share) * 100
+#             output = (result.stdout or result.stderr or "").strip()
+#             print(f"📥 AI Output: {output[:200]}...")
             
-#             return [
-#                 LocationInsight(
-#                     country=loc.get("city", "Location Data Unavailable"),
-#                     market_share=f"{loc['share']:.1f}%",
-#                     demand_level=loc.get("demand", "Medium")
-#                 )
-#                 for loc in locations
+#             if not output:
+#                 print(f"⚠️ Empty AI response on attempt {attempt + 1}")
+#                 continue
+            
+#             # Try to extract JSON array from response
+#             # Handle various formats: plain JSON, markdown code blocks, text with JSON
+#             json_patterns = [
+#                 r'```json\s*(\[[\s\S]*?\])\s*```',  # Markdown code block
+#                 r'```\s*(\[[\s\S]*?\])\s*```',      # Plain code block
+#                 r'(\[[\s\S]*?\])',                   # Plain JSON array
 #             ]
-    
-#     except json.JSONDecodeError as e:
-#         print(f"❌ JSON parsing failed: {e}")
-#         print(f"AI Output: {output[:500]}")
-#     except subprocess.TimeoutExpired:
-#         print(f"❌ AI request timeout after 45 seconds")
-#     except Exception as e:
-#         print(f"❌ AI location prediction failed: {e}")
-    
-#     # Ultimate fallback: Use AI again with simpler prompt
-#     try:
-#         fallback_prompt = f"""List 6 Indian cities with highest demand for {category} products (avg price: ₹{analysis['avg_price']:.0f}).
-
-# Respond ONLY with JSON:
-# [{{"city": "City, State", "share": 25, "demand": "High"}}]
-
-# Total shares = 100. No explanation."""
-
-#         result = subprocess.run(
-#             ["ollama", "run", "llama3.2:3b"],  # Changed model name
-#             input=fallback_prompt,
-#             capture_output=True,
-#             text=True,
-#             encoding="utf-8",
-#             errors="ignore",
-#             timeout=30
-#         )
-        
-#         output = (result.stdout or result.stderr or "").strip()
-#         json_match = re.search(r'\[[\s\S]*?\]', output)
-        
-#         if json_match:
-#             locations_data = json.loads(json_match.group())
+            
+#             json_text = None
+#             for pattern in json_patterns:
+#                 match = re.search(pattern, output)
+#                 if match:
+#                     json_text = match.group(1) if match.lastindex else match.group()
+#                     break
+            
+#             if not json_text:
+#                 print(f"⚠️ No JSON found in AI output on attempt {attempt + 1}")
+#                 continue
+            
+#             # Clean up the JSON text
+#             json_text = json_text.strip()
+            
+#             # Try to parse JSON
+#             try:
+#                 locations_data = json.loads(json_text)
+#             except json.JSONDecodeError:
+#                 # Try to fix common JSON issues
+#                 json_text = json_text.replace("'", '"')  # Single to double quotes
+#                 json_text = re.sub(r',(\s*[}\]])', r'\1', json_text)  # Remove trailing commas
+#                 locations_data = json.loads(json_text)
+            
+#             if not isinstance(locations_data, list) or len(locations_data) == 0:
+#                 print(f"⚠️ Invalid JSON structure on attempt {attempt + 1}")
+#                 continue
+            
+#             # Validate and normalize
 #             locations = locations_data[:6]
             
-#             # Normalize shares
-#             total_share = sum(float(loc.get('share', 0)) for loc in locations)
-#             if total_share > 0:
-#                 for loc in locations:
-#                     loc['share'] = (float(loc.get('share', 0)) / total_share) * 100
+#             # Ensure all required fields exist
+#             valid_locations = []
+#             for loc in locations:
+#                 if isinstance(loc, dict) and 'city' in loc and 'share' in loc:
+#                     valid_locations.append(loc)
+            
+#             if len(valid_locations) < 3:  # Need at least 3 valid locations
+#                 print(f"⚠️ Not enough valid locations ({len(valid_locations)}) on attempt {attempt + 1}")
+#                 continue
+            
+#             # Normalize shares to sum to 100
+#             total_share = sum(float(loc.get('share', 0)) for loc in valid_locations)
+            
+#             if total_share <= 0:
+#                 print(f"⚠️ Invalid share totals on attempt {attempt + 1}")
+#                 continue
+            
+#             # Normalize
+#             for loc in valid_locations:
+#                 loc['share'] = (float(loc.get('share', 0)) / total_share) * 100
+            
+#             print(f"✅ Successfully generated {len(valid_locations)} AI-powered locations")
             
 #             return [
 #                 LocationInsight(
@@ -5780,364 +6012,19 @@ def get_products_by_sentiment(
 #                     market_share=f"{loc['share']:.1f}%",
 #                     demand_level=loc.get("demand", "Medium")
 #                 )
-#                 for loc in locations
+#                 for loc in valid_locations
 #             ]
-#     except:
-#         pass
-    
-#     # Last resort: Return message indicating AI is needed
-#     return [
-#         LocationInsight(
-#             country="AI Analysis Required",
-#             market_share="N/A",
-#             demand_level="Configure Ollama Llama 3.2:3b for dynamic location insights"
-#         )
-#     ]
-
-
-# def parse_sales_volume(sales_text: str) -> float:
-#     """Parse sales volume text into numeric value"""
-#     if not sales_text:
-#         return 0.0
-    
-#     sales_text = str(sales_text).lower().replace(',', '')
-    
-#     # Handle K (thousands)
-#     if 'k' in sales_text:
-#         try:
-#             num = re.search(r'[\d.]+', sales_text.replace('k', ''))
-#             if num:
-#                 return float(num.group()) * 1000
-#         except:
-#             pass
-    
-#     # Handle M (millions)
-#     if 'm' in sales_text:
-#         try:
-#             num = re.search(r'[\d.]+', sales_text.replace('m', ''))
-#             if num:
-#                 return float(num.group()) * 1000000
-#         except:
-#             pass
-    
-#     # Handle L (lakhs)
-#     if 'l' in sales_text or 'lakh' in sales_text:
-#         try:
-#             num = re.search(r'[\d.]+', sales_text)
-#             if num:
-#                 return float(num.group()) * 100000
-#         except:
-#             pass
-    
-#     # Extract numeric value
-#     match = re.search(r'[\d.]+', sales_text)
-#     if match:
-#         try:
-#             return float(match.group())
-#         except:
-#             pass
-    
-#     return 0.0
-
-
-# def generate_ai_strategy(pricing: Dict, sales: Dict, competition: Dict, 
-#                         base_cost: float, product_name: str, category: str,
-#                         location_insights: List[LocationInsight] = None) -> str:
-#     """
-#     FULLY DYNAMIC AI-powered strategy using Llama 3.2:3b - synchronized with location insights
-#     """
-    
-#     # Extract ALL market intelligence
-#     margin = pricing['profit_margin']
-#     recommended = pricing['recommended_price']
-#     market_avg = pricing.get('market_avg_price', 0)
-#     market_min = pricing.get('market_min_price', 0)
-#     market_max = pricing.get('market_max_price', 0)
-    
-#     monthly_sales = sales['estimated_monthly_sales']
-#     daily_sales = sales['estimated_daily_sales']
-#     demand = sales['market_demand']
-    
-#     total_competitors = competition['total_competitors']
-#     avg_comp_price = competition['avg_competitor_price']
-#     avg_comp_rating = competition['avg_competitor_rating']
-    
-#     top_comp = competition.get('top_competitor', {})
-#     top_comp_name = top_comp.get('name', 'N/A') if top_comp else 'N/A'
-#     top_comp_price = top_comp.get('price', 0) if top_comp else 0
-    
-#     # Calculate ACCURATE metrics
-#     profit_per_unit = recommended - base_cost
-#     price_vs_avg = ((recommended - avg_comp_price) / avg_comp_price * 100) if avg_comp_price > 0 else 0
-    
-#     # Parse sales range
-#     try:
-#         sales_parts = monthly_sales.replace(',', '').split(' - ')
-#         avg_monthly_sales = (int(sales_parts[0]) + int(sales_parts[1])) / 2
-#         monthly_revenue_potential = profit_per_unit * avg_monthly_sales
-#     except:
-#         avg_monthly_sales = daily_sales * 30
-#         monthly_revenue_potential = profit_per_unit * avg_monthly_sales
-    
-#     # Determine market position
-#     if base_cost >= market_avg * 0.8:
-#         cost_advantage = "WEAK"
-#     elif base_cost >= market_avg * 0.6:
-#         cost_advantage = "MODERATE"
-#     else:
-#         cost_advantage = "STRONG"
-    
-#     # Competition level
-#     if total_competitors > 80:
-#         comp_level = "VERY HIGH"
-#     elif total_competitors > 40:
-#         comp_level = "HIGH"
-#     else:
-#         comp_level = "MODERATE"
-
-#     # Extract target cities from location insights
-#     target_cities_str = ""
-#     cities_list = ""
-#     if location_insights and len(location_insights) > 0:
-#         top_locations = location_insights[:3]
-#         cities = [loc.country for loc in top_locations if loc.country != "AI Analysis Required"]
         
-#         if cities:
-#             target_cities_str = "\n\nTARGET CITIES:\n"
-#             for i, loc in enumerate(top_locations[:3], 1):
-#                 target_cities_str += f"{i}. {loc.country} - {loc.market_share}, {loc.demand_level} demand\n"
-#             cities_list = ", ".join([city.split(',')[0] for city in cities[:3]])
-#         else:
-#             cities_list = "major metros"
-#     else:
-#         cities_list = "major metros"
+#         except json.JSONDecodeError as e:
+#             print(f"❌ JSON parsing failed on attempt {attempt + 1}: {e}")
+#             print(f"Raw output: {output[:300]}")
+#         except subprocess.TimeoutExpired:
+#             print(f"❌ AI request timeout after 60 seconds on attempt {attempt + 1}")
+#         except subprocess.CalledProcessError as e:
+#             print(f"❌ Subprocess error on attempt {attempt + 1}: {e}")
+#         except Exception as e:
+#             print(f"❌ Unexpected error on attempt {attempt + 1}: {e}")
 
-#     # Optimized prompt for Llama 3.2:3b (more concise and structured)
-#     prompt = f"""You are an Indian e-commerce strategist. Write a 5-6 sentence actionable strategy.
-
-# PRODUCT: {product_name}
-# CATEGORY: {category}
-
-# DATA:
-# • Cost: ₹{base_cost:,.0f} | Market Avg: ₹{market_avg:,.0f}
-# • Recommended Price: ₹{recommended:,.0f}
-# • Profit/Unit: ₹{profit_per_unit:,.0f} | Margin: {margin:.1f}%
-# • Competitors: {total_competitors} ({comp_level})
-# • Monthly Sales Est: {int(avg_monthly_sales)} units
-# • Monthly Revenue: ₹{monthly_revenue_potential * 0.7:,.0f} (after fees)
-# {target_cities_str}
-
-# STRATEGY STRUCTURE:
-
-# 1. VIABILITY: Start with one of these based on margin:
-#    - <10%: "❌ NOT VIABLE:"
-#    - 10-19%: "⚠️ RISKY:"
-#    - 20-29%: "⚡ CHALLENGING:"
-#    - 30-39%: "✅ SOLID:"
-#    - 40+%: "🎯 EXCELLENT:"
-
-# 2. PRICING: "Price at ₹{recommended:,.0f}, earning ₹{profit_per_unit:,.0f}/unit ({margin:.1f}% margin)."
-
-# 3. TARGET CITIES: "Focus on {cities_list}" and briefly why these cities match the product.
-
-# 4. COMPETITION: How to handle {total_competitors} competitors (differentiation strategy).
-
-# 5. DIFFERENTIATION: One specific tactic (bundle, niche, warranty, etc.).
-
-# 6. TIMELINE: "{int(avg_monthly_sales)} units/month = ₹{monthly_revenue_potential * 0.7:,.0f} after fees. Month 1-2: [action], Month 3+: [result]"
-
-# Write the 5-6 sentence strategy now:"""
-
-#     try:
-#         result = subprocess.run(
-#             ["ollama", "run", "llama3.2:3b"],  # Changed model name
-#             input=prompt,
-#             capture_output=True,
-#             text=True,
-#             encoding="utf-8",
-#             errors="ignore",
-#             timeout=35
-#         )
-        
-#         ai_output = (result.stdout or result.stderr or "").strip()
-        
-#         # Clean output
-#         clean = (
-#             ai_output
-#             .replace("</s>", "")
-#             .replace("```", "")
-#             .replace("**", "")
-#             .strip()
-#         )
-        
-#         # Extract sentences
-#         sentences = []
-#         for line in clean.split('\n'):
-#             line = line.strip()
-            
-#             if (line and 
-#                 not line.startswith('#') and 
-#                 not line.startswith('*') and 
-#                 not line.startswith('-') and
-#                 not line.upper().startswith(('TASK', 'SENTENCE', 'PRODUCT', 'DATA', 'STRATEGY')) and
-#                 not line.startswith(('✓', '•')) and
-#                 len(line) > 50):
-                
-#                 for sentence in line.replace('. ', '.|').split('|'):
-#                     s = sentence.strip()
-#                     if (s and len(s) > 40 and
-#                         not s.lower().startswith(('here', 'write', 'you are'))):
-#                         sentences.append(s)
-#                         if len(sentences) >= 6:
-#                             break
-            
-#             if len(sentences) >= 6:
-#                 break
-        
-#         if len(sentences) >= 4:
-#             strategy = ' '.join(sentences[:6])
-            
-#             # Safety: Add fee warning if low margin
-#             if margin < 18 and 'fee' not in strategy.lower():
-#                 actual_profit = profit_per_unit * 0.7
-#                 strategy += f" ⚠️ After platform fees, actual profit ~₹{actual_profit:.0f}/unit."
-            
-#             return strategy
-#         else:
-#             print(f"⚠️ AI insufficient ({len(sentences)} sentences), using fallback")
-#             return generate_enhanced_fallback_strategy(
-#                 pricing, sales, competition, base_cost, 
-#                 cost_advantage, comp_level, profit_per_unit, monthly_revenue_potential,
-#                 category, avg_monthly_sales, recommended, market_avg,
-#                 location_insights
-#             )
-            
-#     except Exception as e:
-#         print(f"❌ AI failed: {e}")
-#         return generate_enhanced_fallback_strategy(
-#             pricing, sales, competition, base_cost,
-#             cost_advantage, comp_level, profit_per_unit, monthly_revenue_potential,
-#             category, avg_monthly_sales if 'avg_monthly_sales' in locals() else daily_sales * 30,
-#             recommended, market_avg,
-#             location_insights
-#         )
-
-
-# def generate_enhanced_fallback_strategy(
-#     pricing: Dict, sales: Dict, competition: Dict, base_cost: float,
-#     cost_advantage: str, comp_level: str, profit_per_unit: float, 
-#     monthly_revenue: float, category: str, avg_monthly_sales: float,
-#     recommended: float, market_avg: float,
-#     location_insights: List[LocationInsight] = None
-# ) -> str:
-#     """
-#     Intelligent fallback with synchronized city targeting
-#     """
-#     margin = pricing['profit_margin']
-#     demand = sales['market_demand']
-#     competitors = competition['total_competitors']
-#     actual_profit_after_fees = profit_per_unit * 0.7
-#     actual_monthly_profit = monthly_revenue * 0.7
-    
-#     # Extract target cities from location insights
-#     target_cities = ""
-#     if location_insights and len(location_insights) > 0:
-#         cities = [loc.country.split(',')[0] for loc in location_insights[:3] 
-#                  if loc.country != "AI Analysis Required"]
-#         if cities:
-#             if len(cities) == 1:
-#                 target_cities = cities[0]
-#             elif len(cities) == 2:
-#                 target_cities = f"{cities[0]} and {cities[1]}"
-#             else:
-#                 target_cities = f"{cities[0]}, {cities[1]}, and {cities[2]}"
-#         else:
-#             target_cities = "tier-1 metros"
-#     else:
-#         target_cities = "major metros"
-    
-#     # CRITICAL: Not viable
-#     if margin < 10:
-#         return f"❌ NOT VIABLE: Your cost (₹{base_cost:,.0f}) leaves only {margin:.1f}% margin at ₹{recommended:,.0f}. After platform fees (15-20%), shipping, returns, you face NET LOSSES. With {competitors} competitors at ₹{market_avg:,.0f}, this is uncompetitive. MUST reduce cost to under ₹{market_avg * 0.5:.0f} or pivot. Not salvageable at current cost."
-    
-#     # RISKY: Low margin
-#     if margin < 20:
-#         breakeven = int(30000 / actual_profit_after_fees) if actual_profit_after_fees > 0 else 999
-#         return f"⚠️ RISKY: {margin:.1f}% margin (₹{profit_per_unit:,.0f}/unit) at ₹{recommended:,.0f} vs market ₹{market_avg:,.0f}. {comp_level} competition ({competitors} sellers). After fees, actual profit = ₹{actual_profit_after_fees:.0f}/unit. Need {breakeven} monthly sales for ₹30k income. Focus on {target_cities}. Expected: {int(avg_monthly_sales)} units/month = ₹{actual_monthly_profit:,.0f} profit. Test 50 units first. High risk due to thin margins."
-    
-#     # CHALLENGING
-#     if margin < 30:
-#         return f"⚡ CHALLENGING: {margin:.1f}% margin (₹{profit_per_unit:,.0f}/unit). Price ₹{recommended:,.0f} vs market ₹{market_avg:,.0f}. {comp_level} competition ({competitors} sellers). Target {target_cities} where demand is strongest. Focus on 4.5★+ rating strategy. Expected: {int(avg_monthly_sales)} units/month = ₹{actual_monthly_profit:,.0f} after fees. Investment: ₹8k. Timeline: Month 1-2 (test 50), Month 3+ (scale). Needs execution discipline."
-    
-#     # SOLID
-#     if margin < 40:
-#         return f"✅ SOLID: {margin:.0f}% margin (₹{profit_per_unit:,.0f}/unit) in {demand.lower()}-demand market. Selling ₹{recommended:,.0f} (market: ₹{market_avg:,.0f}). {comp_level} competition ({competitors} sellers) - differentiate through quality listing. Focus on {target_cities}. Expected: {int(avg_monthly_sales)} units/month = ₹{actual_monthly_profit:,.0f} after fees. Invest ₹10k. Timeline: Month 1-2 (50-75 units), Month 3-6 (ramp to {int(avg_monthly_sales * 1.5)}). Sustainable model."
-    
-#     # EXCELLENT
-#     return f"🎯 EXCELLENT: {margin:.0f}% margin (₹{profit_per_unit:,.0f}/unit)! Cost advantage enables ₹{recommended:,.0f} pricing vs market ₹{market_avg:,.0f}. With {competitors} competitors, your cost moat enables market share capture. Target {target_cities}. Invest in premium positioning. Expected: {int(avg_monthly_sales)} initial → {int(avg_monthly_sales * 2)} by month 3 = ₹{actual_monthly_profit * 2:,.0f}/month. Launch 100-150 units, sponsored ads ₹500/day. Capitalize quickly!"
-
-
-# def generate_warnings(pricing: Dict, competition: Dict, base_cost: float) -> List[str]:
-#     """
-#     FULLY DYNAMIC warnings - no static assumptions
-#     """
-#     warnings = []
-    
-#     market_avg = pricing.get('market_avg_price', 0)
-#     market_min = pricing.get('market_min_price', 0)
-#     profit_margin = pricing['profit_margin']
-#     recommended_price = pricing['recommended_price']
-    
-#     # CRITICAL: Cost too high
-#     if base_cost > market_avg:
-#         loss_pct = ((base_cost - market_avg) / market_avg) * 100
-#         warnings.append(f"🚨 CRITICAL: Your cost (₹{base_cost:,.0f}) is {loss_pct:.0f}% HIGHER than market average (₹{market_avg:,.0f})! Cannot compete profitably.")
-#         warnings.append(f"💡 Solution: Reduce cost to under ₹{market_avg * 0.6:,.0f} for 40% margin.")
-#         return warnings
-    
-#     # HIGH ALERT: Cost close to average
-#     if base_cost > market_avg * 0.8:
-#         warnings.append(f"⚠️ HIGH RISK: Cost (₹{base_cost:,.0f}) very close to market avg (₹{market_avg:,.0f}). Only {profit_margin:.1f}% margin.")
-#         warnings.append(f"💡 Recommendation: Negotiate down to ₹{market_avg * 0.5:,.0f}.")
-    
-#     # Cost higher than minimum
-#     if base_cost > market_min:
-#         warnings.append(f"⚠️ WARNING: Cost (₹{base_cost:,.0f}) > cheapest competitor (₹{market_min:,.0f}).")
-#         warnings.append(f"💡 Strategy: Focus on premium positioning or unique features.")
-    
-#     # Low margin warnings
-#     if profit_margin < 10:
-#         warnings.append(f"🔴 DANGER: Only {profit_margin:.1f}% margin! Unsustainable after fees.")
-#         warnings.append(f"💡 Action: Need 30-40% margin minimum.")
-#     elif profit_margin < 20:
-#         warnings.append(f"⚠️ LOW MARGIN: {profit_margin:.1f}% risky. After fees, profit minimal.")
-#         warnings.append(f"💡 Tip: Aim for 35-50% margin for sustainable business.")
-    
-#     # Competition warnings
-#     if competition['total_competitors'] > 100:
-#         warnings.append(f"⚠️ EXTREMELY COMPETITIVE: {competition['total_competitors']} competitors!")
-#         warnings.append(f"💡 Strategy: Niche variations or unique bundles.")
-#     elif competition['total_competitors'] > 50:
-#         warnings.append(f"⚠️ High competition ({competition['total_competitors']} sellers).")
-#         warnings.append(f"💡 Tip: Quality photos, early reviews to stand out.")
-    
-#     # Price positioning
-#     if recommended_price > market_avg * 1.3:
-#         warnings.append(f"⚠️ PRICING RISK: Recommended (₹{recommended_price:,.0f}) is high vs market.")
-#         warnings.append(f"💡 Option: Start at ₹{market_avg:,.0f} then increase.")
-    
-#     # Confidence warnings
-#     if pricing['confidence'] == "Critical":
-#         warnings.append("🚨 CRITICAL: NOT viable with current cost.")
-#     elif pricing['confidence'] == "Low":
-#         warnings.append("⚠️ Limited data. Test with small inventory.")
-    
-#     # Positive scenarios
-#     if not warnings and profit_margin > 35:
-#         warnings.append(f"✅ EXCELLENT: {profit_margin:.0f}% margin!")
-#         warnings.append(f"💡 Strategy: Price ₹{recommended_price:,.0f}, quality listing, scale fast.")
-#     elif not warnings:
-#         warnings.append(f"✅ VIABLE: {profit_margin:.1f}% margin acceptable.")
-#         warnings.append(f"💡 Focus: Quality photos, competitive shipping.")
-    
-#     return warnings
+    # If AI fails, use intelligent rule-based fallback
+    # print("🔄 AI failed, using intelligent rule-based location prediction...")
+    # return get_rule_based_locations(category, avg_price, analysis)

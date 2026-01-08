@@ -1,4 +1,5 @@
 
+
 // import { useEffect, useState } from "react";
 // import { useLocation, useRoute } from "wouter";
 // import axios from "axios";
@@ -72,17 +73,13 @@
 //       setFromPage(parseInt(pageParam || "1"));
 //       setSource(sourceParam || "");
       
-//       // ✅ Strong check for dashboard
 //       const isDashboard = fromParam === "dashboard";
 //       setFromDashboard(isDashboard);
       
-//       // Debug: Console mein check karo
 //       console.log("=== PRODUCT DETAILS PAGE LOADED ===");
 //       console.log("Full URL:", window.location.href);
-//       console.log("Search params:", window.location.search);
 //       console.log("from param:", fromParam);
 //       console.log("isDashboard:", isDashboard);
-//       console.log("category:", categoryParam);
 //       console.log("source:", sourceParam);
 //       console.log("===================================");
 //     }
@@ -134,38 +131,33 @@
 //     axios
 //       .get(endpoint)
 //       .then((res) => {
-//         if (isAmazon) {
-//           // ✅ Amazon: merge historical + forecast
-//           if (
-//             res.data.forecast &&
-//             Array.isArray(res.data.forecast.forecast_dates) &&
-//             Array.isArray(res.data.forecast.forecast_sales)
-//           ) {
-//             // Forecast data
-//             const forecastDates = res.data.forecast.forecast_dates;
-//             const forecastSales = res.data.forecast.forecast_sales;
+//         // Both Amazon and Flipkart now have same response structure
+//         if (
+//           res.data.forecast &&
+//           Array.isArray(res.data.forecast.forecast_dates) &&
+//           Array.isArray(res.data.forecast.forecast_sales)
+//         ) {
+//           const forecastDates = res.data.forecast.forecast_dates;
+//           const forecastSales = res.data.forecast.forecast_sales;
 
-//             // Merge both
-//             const allDates = [...forecastDates];
-//             const allSales = [...forecastSales];
-
-//             setForecast({ dates: allDates, forecast: allSales });
-//           } else {
-//             setForecast(null);
-//           }
+//           setForecast({ dates: forecastDates, forecast: forecastSales });
+//         } else if (
+//           Array.isArray(res.data.forecast_dates) &&
+//           Array.isArray(res.data.forecast_sales)
+//         ) {
+//           // Fallback for old response format
+//           setForecast({
+//             dates: res.data.forecast_dates,
+//             forecast: res.data.forecast_sales,
+//           });
 //         } else {
-//           // Flipkart
-//           if (res.data && Array.isArray(res.data.forecast_dates) && Array.isArray(res.data.forecast_sales)) {
-//             setForecast({
-//               dates: res.data.forecast_dates,
-//               forecast: res.data.forecast_sales,
-//             });
-//           } else {
-//             setForecast(null);
-//           }
+//           setForecast(null);
 //         }
 //       })
-//       .catch(() => setForecast(null));
+//       .catch((err) => {
+//         console.error("Forecast fetch error:", err);
+//         setForecast(null);
+//       });
 //   }, [productName, isAmazon, data]);
 
 //   if (loading)
@@ -222,7 +214,7 @@
 //     labels: displayedDates,
 //     datasets: [
 //       {
-//         label: isAmazon ? "Amazon Forecast (Sales)" : "Flipkart Forecast (Price ₹)",
+//         label: isAmazon ? "Amazon Sales Forecast" : "Flipkart Sales Forecast",
 //         data: displayedForecast,
 //         borderColor: isAmazon ? "rgba(54,162,235,1)" : "rgba(255,99,132,1)",
 //         backgroundColor: isAmazon
@@ -243,13 +235,13 @@
 //       title: {
 //         display: true,
 //         text: isAmazon
-//           ? "Amazon Forecast (Next 1 Year)"
-//           : "Flipkart Forecast (Next 1 Year)",
+//           ? "Amazon Sales Forecast (Next 1 Year)"
+//           : "Flipkart Sales Forecast (Next 1 Year)",
 //       },
 //     },
 //     scales: {
 //       x: { title: { display: true, text: "Date" } },
-//       y: { title: { display: true, text: isAmazon ? "Rating" : "Price (₹)" } },
+//       y: { title: { display: true, text: "Sales Volume" } },
 //     },
 //   };
 
@@ -279,22 +271,17 @@
               
 //               console.log("=== BACK BUTTON CLICKED ===");
 //               console.log("fromDashboard state:", fromDashboard);
-//               console.log("fromCategory state:", fromCategory);
-//               console.log("source state:", source);
               
-//               // ✅ Direct window check as backup
 //               const currentURL = new URLSearchParams(window.location.search);
 //               const fromParam = currentURL.get("from");
 //               console.log("Direct URL check - from param:", fromParam);
               
-//               // Priority check
 //               if (fromDashboard || fromParam === "dashboard") {
-//                 console.log("✅ Redirecting to Dashboard (/dashboard)");
+//                 console.log("✅ Redirecting to Dashboard");
 //                 window.location.href = "/dashboard";
 //                 return;
 //               }
               
-//               // Otherwise category ya categories pe jao
 //               if (fromCategory && source) {
 //                 console.log("Redirecting to category products");
 //                 setLocation(
@@ -306,25 +293,22 @@
 //                 console.log("Redirecting to categories list");
 //                 setLocation("/categories");
 //               }
-              
-//               console.log("===========================");
 //             }}
 //             className="text-xs sm:text-sm font-medium bg-gradient-to-r from-sky-400 to-sky-600 text-white px-3 sm:px-4 py-2 rounded-xl shadow hover:shadow-lg hover:scale-105 transition-all whitespace-nowrap"
 //           >
 //             ← Back
 //           </button>
 //         </header>
-//         {/* Product Image Section */}
+
+//         {/* Product Image */}
 //         <div className="flex justify-center mb-6">
-//   <img
-//     src={data.image || ""}
-//     alt={data.product_name}
-//     className="w-40 h-40 object-contain rounded-2xl shadow-md bg-white p-3"
-//     onError={(e) => (e.currentTarget.src = "/no-image.png")}
-//   />
-// </div>
-
-
+//           <img
+//             src={data.image || "/no-image.png"}
+//             alt={data.product_name}
+//             className="w-40 h-40 object-contain rounded-2xl shadow-md bg-white p-3"
+//             onError={(e) => (e.currentTarget.src = "/no-image.png")}
+//           />
+//         </div>
 
 //         <div className="mb-6">
 //           <span
@@ -336,7 +320,7 @@
 //           </span>
 //         </div>
 
-//         {/* Cards */}
+//         {/* Product Info Cards */}
 //         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 lg:mb-12">
 //           <Card className="backdrop-blur-xl bg-white/80 border border-sky-100 shadow-xl rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all">
 //             <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl">
@@ -399,7 +383,7 @@
 //           </Card>
 //         </div>
 
-//         {/* Line Chart */}
+//         {/* Forecast Chart */}
 //         <Card className="backdrop-blur-xl bg-white/90 border border-sky-100 shadow-xl rounded-3xl">
 //           <CardHeader className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white rounded-t-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 //             <CardTitle className="text-sky-900 font-semibold text-base sm:text-lg">Forecast Trend</CardTitle>
@@ -441,6 +425,7 @@
 //     </div>
 //   );
 // }
+
 
 import { useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
@@ -848,9 +833,18 @@ export default function ProductDetails() {
 
           <CardContent className="p-4 sm:p-6">
             {forecast && displayedForecast.length > 0 ? (
-              <div className="h-64 sm:h-80 lg:h-96">
-                <Line data={chartData} options={chartOptions} />
-              </div>
+              <>
+                <div className="h-64 sm:h-80 lg:h-96">
+                  <Line data={chartData} options={chartOptions} />
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-[10px] sm:text-[11px] text-center text-slate-400/70 leading-relaxed select-none">
+                    <strong>Disclaimer:</strong> Sales forecasts are predictive estimates based on historical data and statistical models. 
+                    Actual sales may vary due to market conditions, seasonality, competition, and other factors. 
+                    Use these forecasts as guidance only and not as guaranteed outcomes.
+                  </p>
+                </div>
+              </>
             ) : (
               <div className="text-center py-8 sm:py-12">
                 <p className="text-gray-500 mb-2 text-sm sm:text-base">No forecast data available for this product.</p>

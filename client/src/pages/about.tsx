@@ -447,10 +447,10 @@ const FEATURES = [
 ];
 
 const STATS = [
-  { label: "Active Users", value: "10K+", icon: <Users className="h-5 w-5" /> },
-  { label: "Products Tracked", value: "1M+", icon: <Target className="h-5 w-5" /> },
-  { label: "Countries", value: "50+", icon: <Globe className="h-5 w-5" /> },
-  { label: "Success Rate", value: "98%", icon: <Award className="h-5 w-5" /> },
+  { label: "Active Sellers", value: "Growing", icon: <Users className="h-5 w-5" /> },
+  { label: "Products Tracked", value: "4000+", icon: <Target className="h-5 w-5" /> },
+  { label: "Market", value: "India", icon: <Globe className="h-5 w-5" /> },
+  { label: "Focus", value: "Data-Driven Decisions", icon: <Award className="h-5 w-5" /> },
 ];
 
 const TEAM_VALUES = [
@@ -593,7 +593,7 @@ export default function About() {
           </div>
 
           {/* Technology */}
-          <Card className="shadow-md border border-slate-200 rounded-2xl">
+          <Card className="shadow-md border border-slate-200 rounded-9xl">
             <CardHeader>
               <CardTitle className="text-xl">Our Technology</CardTitle>
               <CardDescription>
@@ -601,7 +601,7 @@ export default function About() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-4 text-center">
                 {["AI/ML", "Real-time", "Secure", "Scalable"].map((tech) => (
                   <div key={tech}>
                     <Badge variant="secondary" className="mb-2">{tech}</Badge>
@@ -628,8 +628,8 @@ export default function About() {
                 Have questions about Insydz? We'd love to hear from you and help you succeed in your e-commerce journey.
               </p>
               <div className="space-y-2 text-sm">
-                <p><strong>Email:</strong> hello@ecomai.com</p>
-                <p><strong>Support:</strong> support@ecomai.com</p>
+                <p><strong>Email:</strong> contact@insydz.com</p>
+                <p><strong>Support:</strong> support@insydz.com</p>
                 <p><strong>Phone:</strong> +91 (0) 123 456 7890</p>
               </div>
             </CardContent>

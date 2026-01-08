@@ -187,6 +187,12 @@ class User(Base):
    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # ✅ SUBSCRIPTION FIELDS (ADD THESE IF MISSING)
+    subscription_tier = Column(String, default='free')  # 'free', 'basic', 'premium', 'enterprise'
+    ai_chat_used = Column(Integer, default=0)
+    ai_chat_month = Column(String, nullable=True)  # Format: 'YYYY-MM'
+    is_active = Column(Boolean, default=True)
    
     # Optional: Add is_active if you want to enable/disable accounts
     # is_active = Column(Boolean, default=True)

@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text, inspect
 from typing import List, Optional, Dict, Any
 import subprocess, json
-from pydantic import BaseModel, Field
-import uvicorn
+from pydantic import BaseModel, Field, validator
 from urllib.parse import unquote
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
@@ -1490,7 +1489,7 @@ def forecast_all_products(n_forecast_days: int = Query(30, description="Days to 
 
 # @app.get("/notifications")
 # def get_notifications(
-#     table: str = Query("flipkart", description="Choose 'flipkart' or 'amazon_reviews'"),
+#     table: str = Query("rapidapi_flipkart_products", description="Choose 'rapidapi_flipkart_products' or 'rapidapi_amazon_products'"),
 #     limit: int = Query(5, description="Number of recent notifications"),
 #     db: Session = Depends(get_db),
 # ):
@@ -1499,23 +1498,23 @@ def forecast_all_products(n_forecast_days: int = Query(30, description="Days to 
 #     try:
 #         if table == "flipkart":
 #             query = text(f"""
-#                 SELECT id, title AS message, category, price
-#                 FROM flipkart
-#                 ORDER BY id DESC
+#                 SELECT id, product_title AS message, category_name, product_price, sales_volume, product_rating_count
+#                 FROM rapidapi_flipkart_products
+#                 WHERE product_title IS NOT NULL
+#                 ORDER BY product_rating_count DESC
 #                 LIMIT {limit}
 #             """)
 #             rows = db.execute(query).fetchall()
 #             data = [
 #                 {
 #                     "id": row.id,
-#                     "message": f"New product added: {row.message[:50]}... (₹{row.price:.2f})",
-#                     "time": "Just now",
+#                     "message": f"Trending: {row.message[:60]}... ({row.sales_volume or 'N/A'} sales)",
+#                     "time": f"{row.product_rating_count or 0} ratings · ₹{row.product_price:.2f}",
 #                 }
 #                 for row in rows
 #             ]
             
-#         elif table == "amazon_reviews":
-#             # ✅ FIXED: Use correct columns from rapidapi_amazon_products table
+#         elif table == "amazon":
 #             query = text(f"""
 #                 SELECT 
 #                     product_title, 
@@ -1540,7 +1539,7 @@ def forecast_all_products(n_forecast_days: int = Query(30, description="Days to 
 #             ]
             
 #         else:
-#             return {"error": "Invalid table. Use 'flipkart' or 'amazon_reviews'."}
+#             return {"error": "Invalid table. Use 'rapidapi_flipkart_products' or 'rapidapi_amazon_products'."}
 
 #         return {"table": table, "count": len(data), "data": data}
         
@@ -1553,67 +1552,659 @@ def forecast_all_products(n_forecast_days: int = Query(30, description="Days to 
 #             "error": str(e)
 #         }
 
+# @app.get("/notifications")
+# def get_notifications(
+#     table: str = Query("flipkart", description="Choose 'flipkart' or 'amazon'"),
+#     limit: int = Query(10, description="Number of recent alerts"),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     Generate real-time competitor alerts based on:
+#     1. Price drops/increases (compared to avg_price)
+#     2. Review spikes (high rating counts)
+#     3. New products (recent created_at)
+#     4. Sales volume changes
+#     """
+#     table = table.lower()
+    
+#     try:
+#         notifications = []
+        
+#         if table == "flipkart":
+#             # Price Drop Alerts
+#             price_drop_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     product_price,
+#                     product_mrp,
+#                     avg_price,
+#                     product_star_rating,
+#                     product_rating_count,
+#                     sales_volume,
+#                     brand,
+#                     ROUND(((product_mrp - product_price) / product_mrp * 100), 1) as discount_percent
+#                 FROM rapidapi_flipkart_products
+#                 WHERE product_price IS NOT NULL 
+#                   AND product_mrp IS NOT NULL
+#                   AND product_price < product_mrp * 0.7
+#                 ORDER BY discount_percent DESC
+#                 LIMIT :limit
+#             """)
+#             price_drops = db.execute(price_drop_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in price_drops:
+#                 notifications.append({
+#                     "id": f"price_drop_{row.id}",
+#                     "type": "price_drop",
+#                     "severity": "high" if row.discount_percent > 40 else "medium",
+#                     "message": f"🔥 {row.brand or 'Competitor'}: {row.product_title[:50]}... dropped to ₹{row.product_price:.0f}",
+#                     "time": f"{row.discount_percent}% OFF · Was ₹{row.product_mrp:.0f}",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "old_price": float(row.product_mrp),
+#                         "new_price": float(row.product_price),
+#                         "discount_percent": float(row.discount_percent),
+#                         "rating": float(row.product_star_rating) if row.product_star_rating else None,
+#                         "sales_volume": row.sales_volume
+#                     }
+#                 })
+            
+#             # Review Spike Alerts
+#             review_spike_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     product_rating_count,
+#                     product_star_rating,
+#                     product_price,
+#                     sales_volume,
+#                     brand
+#                 FROM rapidapi_flipkart_products
+#                 WHERE product_rating_count > 500
+#                 ORDER BY product_rating_count DESC
+#                 LIMIT :limit
+#             """)
+#             review_spikes = db.execute(review_spike_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in review_spikes:
+#                 notifications.append({
+#                     "id": f"review_spike_{row.id}",
+#                     "type": "review_spike",
+#                     "severity": "medium",
+#                     "message": f"⭐ {row.brand or 'Competitor'}: {row.product_title[:50]}... gaining reviews fast",
+#                     "time": f"{row.product_rating_count} ratings · {row.product_star_rating}★ · {row.sales_volume or 'N/A'}",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "rating_count": row.product_rating_count,
+#                         "rating": float(row.product_star_rating) if row.product_star_rating else None,
+#                         "price": float(row.product_price) if row.product_price else None,
+#                         "sales_volume": row.sales_volume
+#                     }
+#                 })
+            
+#             # High Sales Volume Alerts
+#             sales_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     estimated_sales,
+#                     product_price,
+#                     product_star_rating,
+#                     sales_volume,
+#                     brand
+#                 FROM rapidapi_flipkart_products
+#                 WHERE estimated_sales IS NOT NULL
+#                 ORDER BY estimated_sales DESC
+#                 LIMIT :limit
+#             """)
+#             high_sales = db.execute(sales_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in high_sales:
+#                 notifications.append({
+#                     "id": f"sales_spike_{row.id}",
+#                     "type": "sales_spike",
+#                     "severity": "high",
+#                     "message": f"📈 {row.brand or 'Competitor'}: {row.product_title[:50]}... selling fast!",
+#                     "time": f"{row.sales_volume} · ₹{row.product_price:.0f} · {row.product_star_rating}★",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "estimated_sales": float(row.estimated_sales),
+#                         "price": float(row.product_price) if row.product_price else None,
+#                         "rating": float(row.product_star_rating) if row.product_star_rating else None,
+#                         "sales_volume": row.sales_volume
+#                     }
+#                 })
+            
+#             # New Products Alert
+#             new_products_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     product_price,
+#                     product_star_rating,
+#                     brand,
+#                     created_at
+#                 FROM rapidapi_flipkart_products
+#                 WHERE created_at >= NOW() - INTERVAL '7 days'
+#                 ORDER BY created_at DESC
+#                 LIMIT :limit
+#             """)
+#             new_products = db.execute(new_products_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in new_products:
+#                 notifications.append({
+#                     "id": f"new_product_{row.id}",
+#                     "type": "new_product",
+#                     "severity": "low",
+#                     "message": f"🆕 {row.brand or 'Competitor'}: New product - {row.product_title[:50]}...",
+#                     "time": f"Listed recently · ₹{row.product_price:.0f}",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "price": float(row.product_price) if row.product_price else None,
+#                         "rating": float(row.product_star_rating) if row.product_star_rating else None,
+#                         "created_at": row.created_at.isoformat() if row.created_at else None
+#                     }
+#                 })
+                
+#         elif table == "amazon":
+#             # Price Drop Alerts
+#             price_drop_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     product_price_numeric,
+#                     product_original_price_numeric,
+#                     product_star_rating_numeric,
+#                     product_num_ratings,
+#                     sales_volume,
+#                     ROUND(((product_original_price_numeric - product_price_numeric) / 
+#                            product_original_price_numeric * 100), 1) as discount_percent
+#                 FROM rapidapi_amazon_products
+#                 WHERE product_price_numeric IS NOT NULL 
+#                   AND product_original_price_numeric IS NOT NULL
+#                   AND product_price_numeric < product_original_price_numeric * 0.7
+#                 ORDER BY discount_percent DESC
+#                 LIMIT :limit
+#             """)
+#             price_drops = db.execute(price_drop_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in price_drops:
+#                 notifications.append({
+#                     "id": f"price_drop_{row.id}",
+#                     "type": "price_drop",
+#                     "severity": "high" if row.discount_percent > 40 else "medium",
+#                     "message": f"🔥 Competitor: {row.product_title[:50]}... dropped to ₹{row.product_price_numeric:.0f}",
+#                     "time": f"{row.discount_percent}% OFF · Was ₹{row.product_original_price_numeric:.0f}",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "old_price": float(row.product_original_price_numeric),
+#                         "new_price": float(row.product_price_numeric),
+#                         "discount_percent": float(row.discount_percent),
+#                         "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None,
+#                         "sales_volume": row.sales_volume
+#                     }
+#                 })
+            
+#             # Review Spike Alerts
+#             review_spike_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     product_num_ratings,
+#                     product_star_rating_numeric,
+#                     product_price_numeric,
+#                     sales_volume
+#                 FROM rapidapi_amazon_products
+#                 WHERE product_num_ratings > 500
+#                 ORDER BY product_num_ratings DESC
+#                 LIMIT :limit
+#             """)
+#             review_spikes = db.execute(review_spike_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in review_spikes:
+#                 notifications.append({
+#                     "id": f"review_spike_{row.id}",
+#                     "type": "review_spike",
+#                     "severity": "medium",
+#                     "message": f"⭐ Competitor: {row.product_title[:50]}... has {row.product_num_ratings} ratings",
+#                     "time": f"{row.product_star_rating_numeric}★ · {row.sales_volume or 'N/A'}",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "rating_count": row.product_num_ratings,
+#                         "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None,
+#                         "price": float(row.product_price_numeric) if row.product_price_numeric else None,
+#                         "sales_volume": row.sales_volume
+#                     }
+#                 })
+            
+#             # High Sales Volume Alerts
+#             sales_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     sales_volume,
+#                     product_price_numeric,
+#                     product_star_rating_numeric,
+#                     avg_sales_volume
+#                 FROM rapidapi_amazon_products
+#                 WHERE sales_volume IS NOT NULL
+#                   AND sales_volume NOT LIKE '%50+%'
+#                 ORDER BY avg_sales_volume DESC NULLS LAST
+#                 LIMIT :limit
+#             """)
+#             high_sales = db.execute(sales_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in high_sales:
+#                 notifications.append({
+#                     "id": f"sales_spike_{row.id}",
+#                     "type": "sales_spike",
+#                     "severity": "high",
+#                     "message": f"📈 Competitor: {row.product_title[:50]}... selling {row.sales_volume}",
+#                     "time": f"₹{row.product_price_numeric:.0f} · {row.product_star_rating_numeric}★",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "sales_volume": row.sales_volume,
+#                         "price": float(row.product_price_numeric) if row.product_price_numeric else None,
+#                         "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None
+#                     }
+#                 })
+            
+#             # New Products Alert
+#             new_products_query = text("""
+#                 SELECT 
+#                     id,
+#                     product_title,
+#                     product_price_numeric,
+#                     product_star_rating_numeric,
+#                     created_at
+#                 FROM rapidapi_amazon_products
+#                 WHERE created_at >= NOW() - INTERVAL '7 days'
+#                 ORDER BY created_at DESC
+#                 LIMIT :limit
+#             """)
+#             new_products = db.execute(new_products_query, {"limit": limit // 4}).fetchall()
+            
+#             for row in new_products:
+#                 notifications.append({
+#                     "id": f"new_product_{row.id}",
+#                     "type": "new_product",
+#                     "severity": "low",
+#                     "message": f"🆕 New competitor product: {row.product_title[:50]}...",
+#                     "time": f"Listed recently · ₹{row.product_price_numeric:.0f}",
+#                     "details": {
+#                         "product_id": row.id,
+#                         "product_title": row.product_title,
+#                         "price": float(row.product_price_numeric) if row.product_price_numeric else None,
+#                         "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None,
+#                         "created_at": row.created_at.isoformat() if row.created_at else None
+#                     }
+#                 })
+        
+#         else:
+#             return {"error": "Invalid table. Use 'flipkart' or 'amazon'."}
+        
+#         # Sort by severity (high > medium > low)
+#         severity_order = {"high": 0, "medium": 1, "low": 2}
+#         notifications.sort(key=lambda x: severity_order.get(x["severity"], 3))
+        
+#         return {
+#             "table": table,
+#             "count": len(notifications),
+#             "data": notifications[:limit]
+#         }
+        
+#     except Exception as e:
+#         print(f"❌ Competitor Alert Error: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         return {
+#             "table": table,
+#             "count": 0,
+#             "data": [],
+#             "error": str(e)
+#         }
+
 @app.get("/notifications")
 def get_notifications(
-    table: str = Query("rapidapi_flipkart_products", description="Choose 'rapidapi_flipkart_products' or 'rapidapi_amazon_products'"),
-    limit: int = Query(5, description="Number of recent notifications"),
+    table: str = Query("flipkart", description="Choose 'flipkart', 'amazon', or 'both'"),
+    limit: int = Query(10, description="Number of recent alerts"),
     db: Session = Depends(get_db),
 ):
+    """
+    Generate real-time competitor alerts based on:
+    1. Price drops/increases (compared to avg_price)
+    2. Review spikes (high rating counts)
+    3. New products (recent created_at)
+    4. Sales volume changes
+    """
     table = table.lower()
-
+    
     try:
-        if table == "flipkart":
-            query = text(f"""
-                SELECT id, product_title AS message, category_name, product_price, sales_volume, product_rating_count
-                FROM rapidapi_flipkart_products
-                WHERE product_title IS NOT NULL
-                ORDER BY product_rating_count DESC
-                LIMIT {limit}
-            """)
-            rows = db.execute(query).fetchall()
-            data = [
-                {
-                    "id": row.id,
-                    "message": f"Trending: {row.message[:60]}... ({row.sales_volume or 'N/A'} sales)",
-                    "time": f"{row.product_rating_count or 0} ratings · ₹{row.product_price:.2f}",
-                }
-                for row in rows
-            ]
-            
-        elif table == "amazon":
-            query = text(f"""
-                SELECT 
-                    product_title, 
-                    sales_volume, 
-                    product_num_ratings,
-                    product_star_rating_numeric
-                FROM rapidapi_amazon_products
-                WHERE product_title IS NOT NULL
-                  AND sales_volume IS NOT NULL
-                ORDER BY product_num_ratings DESC
-                LIMIT {limit}
-            """)
-            rows = db.execute(query).fetchall()
-            
-            data = [
-                {
-                    "id": i + 1,
-                    "message": f"Trending: {row.product_title[:60]}... ({row.sales_volume} sales)",
-                    "time": f"{row.product_num_ratings} ratings · {row.product_star_rating_numeric}★",
-                }
-                for i, row in enumerate(rows)
-            ]
-            
+        notifications = []
+        
+        # Handle "both" - fetch from both tables
+        tables_to_query = []
+        if table == "both":
+            tables_to_query = ["flipkart", "amazon"]
+        elif table in ["flipkart", "amazon"]:
+            tables_to_query = [table]
         else:
-            return {"error": "Invalid table. Use 'rapidapi_flipkart_products' or 'rapidapi_amazon_products'."}
-
-        return {"table": table, "count": len(data), "data": data}
+            return {"error": "Invalid table. Use 'flipkart', 'amazon', or 'both'."}
+        
+        # Query each table
+        for current_table in tables_to_query:
+            
+            if current_table == "flipkart":
+                # Price Drop Alerts
+                price_drop_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        product_price,
+                        product_mrp,
+                        avg_price,
+                        product_star_rating,
+                        product_rating_count,
+                        sales_volume,
+                        brand,
+                        ROUND(((product_mrp - product_price) / product_mrp * 100), 1) as discount_percent
+                    FROM rapidapi_flipkart_products
+                    WHERE product_price IS NOT NULL 
+                      AND product_mrp IS NOT NULL
+                      AND product_price < product_mrp * 0.7
+                    ORDER BY discount_percent DESC
+                    LIMIT :limit
+                """)
+                price_drops = db.execute(price_drop_query, {"limit": limit // 4}).fetchall()
+                
+                for row in price_drops:
+                    notifications.append({
+                        "id": f"flipkart_price_drop_{row.id}",
+                        "type": "price_drop",
+                        "severity": "high" if row.discount_percent > 40 else "medium",
+                        "platform": "Flipkart",
+                        "message": f"🔥 {row.brand or 'Competitor'}: {row.product_title[:50]}... dropped to ₹{row.product_price:.0f}",
+                        "time": f"{row.discount_percent}% OFF · Was ₹{row.product_mrp:.0f}",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "old_price": float(row.product_mrp),
+                            "new_price": float(row.product_price),
+                            "discount_percent": float(row.discount_percent),
+                            "rating": float(row.product_star_rating) if row.product_star_rating else None,
+                            "sales_volume": row.sales_volume
+                        }
+                    })
+                
+                # Review Spike Alerts
+                review_spike_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        product_rating_count,
+                        product_star_rating,
+                        product_price,
+                        sales_volume,
+                        brand
+                    FROM rapidapi_flipkart_products
+                    WHERE product_rating_count > 500
+                    ORDER BY product_rating_count DESC
+                    LIMIT :limit
+                """)
+                review_spikes = db.execute(review_spike_query, {"limit": limit // 4}).fetchall()
+                
+                for row in review_spikes:
+                    notifications.append({
+                        "id": f"flipkart_review_spike_{row.id}",
+                        "type": "review_spike",
+                        "severity": "medium",
+                        "platform": "Flipkart",
+                        "message": f"⭐ {row.brand or 'Competitor'}: {row.product_title[:50]}... gaining reviews fast",
+                        "time": f"{row.product_rating_count} ratings · {row.product_star_rating}★ · {row.sales_volume or 'N/A'}",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "rating_count": row.product_rating_count,
+                            "rating": float(row.product_star_rating) if row.product_star_rating else None,
+                            "price": float(row.product_price) if row.product_price else None,
+                            "sales_volume": row.sales_volume
+                        }
+                    })
+                
+                # High Sales Volume Alerts
+                sales_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        estimated_sales,
+                        product_price,
+                        product_star_rating,
+                        sales_volume,
+                        brand
+                    FROM rapidapi_flipkart_products
+                    WHERE estimated_sales IS NOT NULL
+                    ORDER BY estimated_sales DESC
+                    LIMIT :limit
+                """)
+                high_sales = db.execute(sales_query, {"limit": limit // 4}).fetchall()
+                
+                for row in high_sales:
+                    notifications.append({
+                        "id": f"flipkart_sales_spike_{row.id}",
+                        "type": "sales_spike",
+                        "severity": "high",
+                        "platform": "Flipkart",
+                        "message": f"📈 {row.brand or 'Competitor'}: {row.product_title[:50]}... selling fast!",
+                        "time": f"{row.sales_volume} · ₹{row.product_price:.0f} · {row.product_star_rating}★",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "estimated_sales": float(row.estimated_sales),
+                            "price": float(row.product_price) if row.product_price else None,
+                            "rating": float(row.product_star_rating) if row.product_star_rating else None,
+                            "sales_volume": row.sales_volume
+                        }
+                    })
+                
+                # New Products Alert
+                new_products_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        product_price,
+                        product_star_rating,
+                        brand,
+                        created_at
+                    FROM rapidapi_flipkart_products
+                    WHERE created_at >= NOW() - INTERVAL '7 days'
+                    ORDER BY created_at DESC
+                    LIMIT :limit
+                """)
+                new_products = db.execute(new_products_query, {"limit": limit // 4}).fetchall()
+                
+                for row in new_products:
+                    notifications.append({
+                        "id": f"flipkart_new_product_{row.id}",
+                        "type": "new_product",
+                        "severity": "low",
+                        "platform": "Flipkart",
+                        "message": f"🆕 {row.brand or 'Competitor'}: New product - {row.product_title[:50]}...",
+                        "time": f"Listed recently · ₹{row.product_price:.0f}",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "price": float(row.product_price) if row.product_price else None,
+                            "rating": float(row.product_star_rating) if row.product_star_rating else None,
+                            "created_at": row.created_at.isoformat() if row.created_at else None
+                        }
+                    })
+                    
+            elif current_table == "amazon":
+                # Price Drop Alerts
+                price_drop_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        product_price_numeric,
+                        product_original_price_numeric,
+                        product_star_rating_numeric,
+                        product_num_ratings,
+                        sales_volume,
+                        ROUND(((product_original_price_numeric - product_price_numeric) / 
+                               product_original_price_numeric * 100), 1) as discount_percent
+                    FROM rapidapi_amazon_products
+                    WHERE product_price_numeric IS NOT NULL 
+                      AND product_original_price_numeric IS NOT NULL
+                      AND product_price_numeric < product_original_price_numeric * 0.7
+                    ORDER BY discount_percent DESC
+                    LIMIT :limit
+                """)
+                price_drops = db.execute(price_drop_query, {"limit": limit // 4}).fetchall()
+                
+                for row in price_drops:
+                    notifications.append({
+                        "id": f"amazon_price_drop_{row.id}",
+                        "type": "price_drop",
+                        "severity": "high" if row.discount_percent > 40 else "medium",
+                        "platform": "Amazon",
+                        "message": f"🔥 Competitor: {row.product_title[:50]}... dropped to ₹{row.product_price_numeric:.0f}",
+                        "time": f"{row.discount_percent}% OFF · Was ₹{row.product_original_price_numeric:.0f}",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "old_price": float(row.product_original_price_numeric),
+                            "new_price": float(row.product_price_numeric),
+                            "discount_percent": float(row.discount_percent),
+                            "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None,
+                            "sales_volume": row.sales_volume
+                        }
+                    })
+                
+                # Review Spike Alerts
+                review_spike_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        product_num_ratings,
+                        product_star_rating_numeric,
+                        product_price_numeric,
+                        sales_volume
+                    FROM rapidapi_amazon_products
+                    WHERE product_num_ratings > 500
+                    ORDER BY product_num_ratings DESC
+                    LIMIT :limit
+                """)
+                review_spikes = db.execute(review_spike_query, {"limit": limit // 4}).fetchall()
+                
+                for row in review_spikes:
+                    notifications.append({
+                        "id": f"amazon_review_spike_{row.id}",
+                        "type": "review_spike",
+                        "severity": "medium",
+                        "platform": "Amazon",
+                        "message": f"⭐ Competitor: {row.product_title[:50]}... has {row.product_num_ratings} ratings",
+                        "time": f"{row.product_star_rating_numeric}★ · {row.sales_volume or 'N/A'}",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "rating_count": row.product_num_ratings,
+                            "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None,
+                            "price": float(row.product_price_numeric) if row.product_price_numeric else None,
+                            "sales_volume": row.sales_volume
+                        }
+                    })
+                
+                # High Sales Volume Alerts
+                sales_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        sales_volume,
+                        product_price_numeric,
+                        product_star_rating_numeric,
+                        avg_sales_volume
+                    FROM rapidapi_amazon_products
+                    WHERE sales_volume IS NOT NULL
+                      AND sales_volume NOT LIKE '%50+%'
+                    ORDER BY avg_sales_volume DESC NULLS LAST
+                    LIMIT :limit
+                """)
+                high_sales = db.execute(sales_query, {"limit": limit // 4}).fetchall()
+                
+                for row in high_sales:
+                    notifications.append({
+                        "id": f"amazon_sales_spike_{row.id}",
+                        "type": "sales_spike",
+                        "severity": "high",
+                        "platform": "Amazon",
+                        "message": f"📈 Competitor: {row.product_title[:50]}... selling {row.sales_volume}",
+                        "time": f"₹{row.product_price_numeric:.0f} · {row.product_star_rating_numeric}★",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "sales_volume": row.sales_volume,
+                            "price": float(row.product_price_numeric) if row.product_price_numeric else None,
+                            "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None
+                        }
+                    })
+                
+                # New Products Alert
+                new_products_query = text("""
+                    SELECT 
+                        id,
+                        product_title,
+                        product_price_numeric,
+                        product_star_rating_numeric,
+                        created_at
+                    FROM rapidapi_amazon_products
+                    WHERE created_at >= NOW() - INTERVAL '7 days'
+                    ORDER BY created_at DESC
+                    LIMIT :limit
+                """)
+                new_products = db.execute(new_products_query, {"limit": limit // 4}).fetchall()
+                
+                for row in new_products:
+                    notifications.append({
+                        "id": f"amazon_new_product_{row.id}",
+                        "type": "new_product",
+                        "severity": "low",
+                        "platform": "Amazon",
+                        "message": f"🆕 New competitor product: {row.product_title[:50]}...",
+                        "time": f"Listed recently · ₹{row.product_price_numeric:.0f}",
+                        "details": {
+                            "product_id": row.id,
+                            "product_title": row.product_title,
+                            "price": float(row.product_price_numeric) if row.product_price_numeric else None,
+                            "rating": float(row.product_star_rating_numeric) if row.product_star_rating_numeric else None,
+                            "created_at": row.created_at.isoformat() if row.created_at else None
+                        }
+                    })
+        
+        # Sort by severity (high > medium > low)
+        severity_order = {"high": 0, "medium": 1, "low": 2}
+        notifications.sort(key=lambda x: severity_order.get(x["severity"], 3))
+        
+        return {
+            "table": table,
+            "count": len(notifications),
+            "data": notifications[:limit]
+        }
         
     except Exception as e:
-        print(f"❌ Notification Error: {str(e)}")
+        print(f"❌ Competitor Alert Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
-            "table": table, 
-            "count": 0, 
+            "table": table,
+            "count": 0,
             "data": [],
             "error": str(e)
         }
@@ -3170,6 +3761,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
+
  
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -3197,16 +3789,129 @@ class LoginResponse(BaseModel):
     message: str
     user: dict = None 
     
-# ============================================
-# FIXED LOGIN ENDPOINT (without is_active check)
-# ============================================
+# # ============================================
+# # FIXED LOGIN ENDPOINT (without is_active check)
+# # ============================================
  
+# @app.post("/users/login", response_model=LoginResponse)
+# def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+#     """
+#     Authenticate user and return user data if successful
+#     """
+#     try:
+#         # Find user by email
+#         user = db.query(models.User).filter(
+#             models.User.email == login_data.email
+#         ).first()
+       
+#         # Check if user exists
+#         if not user:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No account found with this email. Please sign up first."
+#             )
+       
+#         # Verify password
+#         if not verify_password(login_data.password, user.password_hash):
+#             raise HTTPException(
+#                 status_code=401,
+#                 detail="Incorrect password. Please try again or reset your password."
+#             )
+       
+#         # Successful login
+#         return {
+#             "success": True,
+#             "message": "Login successful",
+#             "user": {
+#                 "id": user.id,
+#                 "first_name": user.first_name,
+#                 "last_name": user.last_name,
+#                 "email": user.email,
+#                 "business_name": user.business_name,
+#                 "location": user.location,
+#                 "business_interests": user.business_interests,
+#                 "created_at": str(user.created_at)
+#             }
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"âŒ Login error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Login failed: {str(e)}"
+#         )
+ 
+# # ============================================
+# # FIXED SIGNUP ENDPOINT
+# # ============================================
+ 
+# @app.post("/users/signup")
+# def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+#     """
+#     Create a new user account
+#     """
+#     try:
+#         # Check if email already exists
+#         existing_user = db.query(models.User).filter(
+#             models.User.email == user_data.email
+#         ).first()
+       
+#         if existing_user:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="Email already registered. Please login instead."
+#             )
+       
+#         # Hash the password
+#         hashed_password = get_password_hash(user_data.password)
+       
+#         # Create new user (without is_active field)
+#         new_user = models.User(
+#             first_name=user_data.first_name,
+#             last_name=user_data.last_name,
+#             email=user_data.email,
+#             password_hash=hashed_password,
+#             business_name=user_data.business_name,
+#             location=user_data.location,
+#             business_interests=user_data.business_interests
+#         )
+       
+#         db.add(new_user)
+#         db.commit()
+#         db.refresh(new_user)
+       
+#         return {
+#             "id": new_user.id,
+#             "first_name": new_user.first_name,
+#             "last_name": new_user.last_name,
+#             "email": new_user.email,
+#             "business_name": new_user.business_name,
+#             "location": new_user.location,
+#             "business_interests": new_user.business_interests,
+#             "created_at": new_user.created_at,
+#             "message": "Account created successfully"
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         print(f"âŒ Signup error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+ 
+# ============================================
+# FIXED LOGIN ENDPOINT (WITH SUBSCRIPTION DATA)
+# ============================================
+
+
 @app.post("/users/login", response_model=LoginResponse)
 def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     """
-    Authenticate user and return user data if successful
+    Authenticate user and return user data with subscription info
     """
     try:
+        print(f"🔍 Login attempt for: {login_data.email}")
+        
         # Find user by email
         user = db.query(models.User).filter(
             models.User.email == login_data.email
@@ -3214,6 +3919,7 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
        
         # Check if user exists
         if not user:
+            print(f"❌ User not found: {login_data.email}")
             raise HTTPException(
                 status_code=404,
                 detail="No account found with this email. Please sign up first."
@@ -3221,13 +3927,30 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
        
         # Verify password
         if not verify_password(login_data.password, user.password_hash):
+            print(f"❌ Invalid password for: {login_data.email}")
             raise HTTPException(
                 status_code=401,
                 detail="Incorrect password. Please try again or reset your password."
             )
+        
+        # Check if AI usage should be reset (new month)
+        current_month = datetime.now().strftime("%Y-%m")
+        if user.ai_chat_month != current_month:
+            print(f"🔄 Resetting AI usage for new month: {current_month}")
+            user.ai_chat_used = 0
+            user.ai_chat_month = current_month
+            db.commit()
+            db.refresh(user)
+        
+        # ✅ DEBUG: Print what's in the database
+        print(f"📊 Database values for {user.email}:")
+        print(f"   - ID: {user.id}")
+        print(f"   - Subscription Tier: {user.subscription_tier}")
+        print(f"   - AI Chat Used: {user.ai_chat_used}")
+        print(f"   - AI Chat Month: {user.ai_chat_month}")
        
-        # Successful login
-        return {
+        # ✅ CRITICAL: Return complete user data with subscription
+        response_data = {
             "success": True,
             "message": "Login successful",
             "user": {
@@ -3238,26 +3961,41 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
                 "business_name": user.business_name,
                 "location": user.location,
                 "business_interests": user.business_interests,
+                # ✅ CRITICAL: Include subscription fields from database
+                "subscription_tier": user.subscription_tier or 'free',
+                "ai_chat_used": user.ai_chat_used or 0,
+                "ai_chat_month": user.ai_chat_month or current_month,
                 "created_at": str(user.created_at)
             }
         }
+        
+        print(f"✅ Login successful for {user.email}")
+        print(f"✅ Returning subscription_tier: {response_data['user']['subscription_tier']}")
+        
+        return response_data
+        
     except HTTPException:
         raise
     except Exception as e:
-        print(f"âŒ Login error: {str(e)}")
+        print(f"❌ Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Login failed: {str(e)}"
         )
- 
+
+
+
+
 # ============================================
-# FIXED SIGNUP ENDPOINT
+# FIXED SIGNUP ENDPOINT (WITH SUBSCRIPTION INITIALIZATION)
 # ============================================
  
 @app.post("/users/signup")
 def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """
-    Create a new user account
+    Create a new user account with free tier subscription
     """
     try:
         # Check if email already exists
@@ -3273,8 +4011,11 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
        
         # Hash the password
         hashed_password = get_password_hash(user_data.password)
+        
+        # Get current month for AI usage tracking
+        current_month = datetime.now().strftime("%Y-%m")
        
-        # Create new user (without is_active field)
+        # ✅ CREATE NEW USER WITH SUBSCRIPTION FIELDS
         new_user = models.User(
             first_name=user_data.first_name,
             last_name=user_data.last_name,
@@ -3282,13 +4023,18 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
             password_hash=hashed_password,
             business_name=user_data.business_name,
             location=user_data.location,
-            business_interests=user_data.business_interests
+            business_interests=user_data.business_interests,
+            # ✅ INITIALIZE SUBSCRIPTION FIELDS
+            subscription_tier='free',  # Default to free tier
+            ai_chat_used=0,           # Start with 0 usage
+            ai_chat_month=current_month  # Set current month
         )
        
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
        
+        # ✅ RETURN USER DATA WITH SUBSCRIPTION
         return {
             "id": new_user.id,
             "first_name": new_user.first_name,
@@ -3297,6 +4043,10 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
             "business_name": new_user.business_name,
             "location": new_user.location,
             "business_interests": new_user.business_interests,
+            # ✅ INCLUDE SUBSCRIPTION DATA
+            "subscription_tier": new_user.subscription_tier,
+            "ai_chat_used": new_user.ai_chat_used,
+            "ai_chat_month": new_user.ai_chat_month,
             "created_at": new_user.created_at,
             "message": "Account created successfully"
         }
@@ -3304,9 +4054,9 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         db.rollback()
-        print(f"âŒ Signup error: {str(e)}")
+        print(f"❌ Signup error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
- 
+
 # ============================================
 # PASSWORD RESET ENDPOINT
 # ============================================
@@ -3365,14 +4115,41 @@ def check_email_exists(email: str, db: Session = Depends(get_db)):
         "message": "Email is registered" if user else "Email is available"
     }
  
+# # ============================================
+# # GET USER PROFILE ENDPOINT
+# # ============================================
+ 
+# @app.get("/users/profile/{email}")
+# def get_user_profile(email: str, db: Session = Depends(get_db)):
+#     """
+#     Get user profile by email
+#     """
+#     user = db.query(models.User).filter(
+#         models.User.email == email
+#     ).first()
+   
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+   
+#     return {
+#         "id": user.id,
+#         "first_name": user.first_name,
+#         "last_name": user.last_name,
+#         "email": user.email,
+#         "business_name": user.business_name,
+#         "location": user.location,
+#         "business_interests": user.business_interests,
+#         "created_at": str(user.created_at)
+#     }
+ 
 # ============================================
-# GET USER PROFILE ENDPOINT
+# UPDATED GET USER PROFILE ENDPOINT
 # ============================================
  
 @app.get("/users/profile/{email}")
 def get_user_profile(email: str, db: Session = Depends(get_db)):
     """
-    Get user profile by email
+    Get user profile by email with subscription data
     """
     user = db.query(models.User).filter(
         models.User.email == email
@@ -3380,6 +4157,8 @@ def get_user_profile(email: str, db: Session = Depends(get_db)):
    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    current_month = datetime.now().strftime("%Y-%m")
    
     return {
         "id": user.id,
@@ -3389,9 +4168,16 @@ def get_user_profile(email: str, db: Session = Depends(get_db)):
         "business_name": user.business_name,
         "location": user.location,
         "business_interests": user.business_interests,
+        # ✅ ADD SUBSCRIPTION DATA
+        "subscription_tier": user.subscription_tier or 'free',
+        "ai_chat_used": user.ai_chat_used or 0,
+        "ai_chat_month": user.ai_chat_month or current_month,
         "created_at": str(user.created_at)
     }
- 
+
+
+
+
 # Helper function (keep this as is)
 def parse_sales_volume(sales_text: str) -> float:
     """
@@ -5425,18 +6211,204 @@ def get_tracker_stats(db: Session = Depends(get_db)):
 # 🔥 FIXED: Products by Sentiment (WITH PAGINATION)
 # ============================================
 
+# @app.get("/products/by-sentiment")
+# def get_products_by_sentiment(
+#     table: str = Query(..., description="rapidapi_flipkart_products or rapidapi_amazon_products"),
+#     sentiment: str = Query(..., description="positive, neutral, or negative"),
+#     page: int = Query(1, description="Page number (starts from 1)"),
+#     limit: int = Query(24, description="Products per page"),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     ✅ COMPLETE FIX: 
+#     - Adjusted sentiment ranges: Positive 4.0+, Neutral 3.5-3.99, Negative <3.5
+#     - Added pagination
+#     - Synced with pie chart logic
+#     """
+#     try:
+#         # Validate inputs
+#         sentiment_lower = sentiment.lower()
+#         if sentiment_lower not in ['positive', 'neutral', 'negative']:
+#             raise HTTPException(status_code=400, detail="Invalid sentiment. Use: positive, neutral, or negative")
+        
+#         table_lower = table.lower()
+#         if table_lower not in ['rapidapi_flipkart_products', 'rapidapi_amazon_products']:
+#             raise HTTPException(status_code=400, detail="Invalid table")
+        
+#         # Calculate offset for pagination
+#         offset = (page - 1) * limit
+        
+#         # Define field names based on table
+#         if table_lower == 'rapidapi_flipkart_products':
+#             rating_field = "product_star_rating"
+#             price_field = "product_price"
+#             review_field = "product_review_count"
+#         else:  # Amazon
+#             rating_field = "product_star_rating_numeric"
+#             price_field = "product_price_numeric"
+#             review_field = "product_num_ratings"
+        
+#         # 🔥 ADJUSTED RANGES - Match pie chart exactly
+#         if sentiment_lower == 'positive':
+#             rating_condition = f"{rating_field} >= 4.0"
+#         elif sentiment_lower == 'neutral':
+#             rating_condition = f"{rating_field} >= 3.5 AND {rating_field} < 4.0"
+#         else:  # negative
+#             rating_condition = f"{rating_field} < 3.5"
+        
+#         print(f"\n{'='*60}")
+#         print(f"🔍 SENTIMENT PRODUCTS QUERY")
+#         print(f"{'='*60}")
+#         print(f"Table: {table_lower}")
+#         print(f"Sentiment: {sentiment_lower}")
+#         print(f"Condition: {rating_condition}")
+#         print(f"Page: {page}, Limit: {limit}, Offset: {offset}")
+        
+#         # ========== COUNT QUERY ==========
+#         count_query = text(f"""
+#             SELECT COUNT(*) as total
+#             FROM {table_lower}
+#             WHERE {rating_field} IS NOT NULL
+#               AND {rating_condition}
+#               AND product_title IS NOT NULL
+#               AND {price_field} IS NOT NULL
+#         """)
+        
+#         count_result = db.execute(count_query).fetchone()
+#         total_products = count_result.total if count_result else 0
+#         total_pages = (total_products + limit - 1) // limit if total_products > 0 else 0
+        
+#         print(f"✅ Found {total_products} products (Page {page}/{total_pages})")
+        
+#         # ========== DATA QUERY ==========
+#         products = []
+        
+#         if total_products > 0:
+#             if table_lower == 'rapidapi_flipkart_products':
+#                 data_query = text(f"""
+#                     SELECT 
+#                         product_title,
+#                         category_name,
+#                         brand,
+#                         product_price,
+#                         product_mrp,
+#                         product_star_rating,
+#                         product_review_count,
+#                         product_photo,
+#                         product_url,
+#                         CASE 
+#                             WHEN product_star_rating >= 4.5 THEN 0.90
+#                             WHEN product_star_rating >= 4.2 THEN 0.85
+#                             WHEN product_star_rating >= 4.0 THEN 0.80
+#                             WHEN product_star_rating >= 3.7 THEN 0.65
+#                             WHEN product_star_rating >= 3.5 THEN 0.55
+#                             WHEN product_star_rating >= 3.2 THEN 0.40
+#                             ELSE 0.25
+#                         END AS sentiment_score
+#                     FROM rapidapi_flipkart_products
+#                     WHERE product_star_rating IS NOT NULL
+#                       AND {rating_condition}
+#                       AND product_title IS NOT NULL
+#                       AND product_price IS NOT NULL
+#                     ORDER BY product_review_count DESC, product_star_rating DESC
+#                     LIMIT :limit OFFSET :offset
+#                 """)
+                
+#             else:  # Amazon
+#                 data_query = text(f"""
+#                     SELECT 
+#                         product_title,
+#                         category_name,
+#                         product_price_numeric AS price,
+#                         product_star_rating_numeric AS rating,
+#                         product_num_ratings AS review_count,
+#                         product_photo,
+#                         product_url,
+#                         CASE 
+#                             WHEN product_star_rating_numeric >= 4.5 THEN 0.90
+#                             WHEN product_star_rating_numeric >= 4.2 THEN 0.85
+#                             WHEN product_star_rating_numeric >= 4.0 THEN 0.80
+#                             WHEN product_star_rating_numeric >= 3.7 THEN 0.65
+#                             WHEN product_star_rating_numeric >= 3.5 THEN 0.55
+#                             WHEN product_star_rating_numeric >= 3.2 THEN 0.40
+#                             ELSE 0.25
+#                         END AS sentiment_score
+#                     FROM rapidapi_amazon_products
+#                     WHERE product_star_rating_numeric IS NOT NULL
+#                       AND {rating_condition}
+#                       AND product_title IS NOT NULL
+#                       AND product_price_numeric IS NOT NULL
+#                     ORDER BY product_num_ratings DESC, product_star_rating_numeric DESC
+#                     LIMIT :limit OFFSET :offset
+#                 """)
+            
+#             result = db.execute(data_query, {"limit": limit, "offset": offset}).mappings().all()
+            
+#             # Format response
+#             for row in result:
+#                 product = dict(row)
+                
+#                 # Normalize field names for frontend
+#                 if table_lower == 'rapidapi_flipkart_products':
+#                     product['price'] = float(product.get('product_price', 0))
+#                     product['rating'] = float(product.get('product_star_rating', 0))
+#                     product['review_count'] = int(product.get('product_review_count', 0))
+#                     product['image_url'] = product.get('product_photo')
+#                 else:
+#                     product['price'] = float(product.get('price', 0))
+#                     product['rating'] = float(product.get('rating', 0))
+#                     product['review_count'] = int(product.get('review_count', 0))
+#                     product['image_url'] = product.get('product_photo')
+                
+#                 product['category'] = product.get('category_name')
+#                 product['sentiment_score'] = float(product.get('sentiment_score', 0))
+                
+#                 products.append(product)
+            
+#             print(f"✅ Returning {len(products)} products")
+        
+#         print(f"{'='*60}\n")
+        
+#         return {
+#             "success": True,
+#             "sentiment": sentiment,
+#             "source": table,
+#             "page": page,
+#             "limit": limit,
+#             "total_products": total_products,
+#             "total_pages": total_pages,
+#             "count": len(products),
+#             "data": products
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ CRITICAL ERROR: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
 @app.get("/products/by-sentiment")
 def get_products_by_sentiment(
     table: str = Query(..., description="rapidapi_flipkart_products or rapidapi_amazon_products"),
     sentiment: str = Query(..., description="positive, neutral, or negative"),
     page: int = Query(1, description="Page number (starts from 1)"),
     limit: int = Query(24, description="Products per page"),
+    category: str = Query(None, description="Optional category filter"),
+    min_price: float = Query(None, description="Minimum price filter"),
+    max_price: float = Query(None, description="Maximum price filter"),
+    min_rating: float = Query(None, description="Minimum rating filter"),
+    date_range: str = Query(None, description="Date range filter"),
+    trending_only: bool = Query(False, description="Show only trending products"),
+    sort_by: str = Query(None, description="Sort by field"),
     db: Session = Depends(get_db)
 ):
     """
-    ✅ COMPLETE FIX: 
+    ✅ COMPLETE FIX with ALL Filters: 
     - Adjusted sentiment ranges: Positive 4.0+, Neutral 3.5-3.99, Negative <3.5
     - Added pagination
+    - Added all filter support (category, price, rating, date, trending, sort)
     - Synced with pie chart logic
     """
     try:
@@ -5470,11 +6442,46 @@ def get_products_by_sentiment(
         else:  # negative
             rating_condition = f"{rating_field} < 3.5"
         
+        # 🆕 Build dynamic filter conditions
+        filter_conditions = []
+        params = {"limit": limit, "offset": offset}
+        
+        # Category filter
+        if category:
+            filter_conditions.append("category_name = :category")
+            params["category"] = category
+        
+        # Price filters
+        if min_price is not None:
+            filter_conditions.append(f"{price_field} >= :min_price")
+            params["min_price"] = min_price
+        
+        if max_price is not None:
+            filter_conditions.append(f"{price_field} <= :max_price")
+            params["max_price"] = max_price
+        
+        # Rating filter
+        if min_rating is not None:
+            filter_conditions.append(f"{rating_field} >= :min_rating")
+            params["min_rating"] = min_rating
+        
+        # Combine all filter conditions
+        additional_filters = ""
+        if filter_conditions:
+            additional_filters = "AND " + " AND ".join(filter_conditions)
+        
         print(f"\n{'='*60}")
-        print(f"🔍 SENTIMENT PRODUCTS QUERY")
+        print(f"🔍 SENTIMENT PRODUCTS QUERY WITH ALL FILTERS")
         print(f"{'='*60}")
         print(f"Table: {table_lower}")
         print(f"Sentiment: {sentiment_lower}")
+        print(f"Filters Applied:")
+        print(f"  - Category: {category if category else 'All'}")
+        print(f"  - Price Range: {min_price or 0} - {max_price or 'unlimited'}")
+        print(f"  - Min Rating: {min_rating if min_rating else 'None'}")
+        print(f"  - Date Range: {date_range if date_range else 'All'}")
+        print(f"  - Trending Only: {trending_only}")
+        print(f"  - Sort By: {sort_by if sort_by else 'default'}")
         print(f"Condition: {rating_condition}")
         print(f"Page: {page}, Limit: {limit}, Offset: {offset}")
         
@@ -5486,9 +6493,10 @@ def get_products_by_sentiment(
               AND {rating_condition}
               AND product_title IS NOT NULL
               AND {price_field} IS NOT NULL
+              {additional_filters}
         """)
         
-        count_result = db.execute(count_query).fetchone()
+        count_result = db.execute(count_query, params).fetchone()
         total_products = count_result.total if count_result else 0
         total_pages = (total_products + limit - 1) // limit if total_products > 0 else 0
         
@@ -5498,6 +6506,17 @@ def get_products_by_sentiment(
         products = []
         
         if total_products > 0:
+            # Determine sort order
+            sort_clause = f"ORDER BY {review_field} DESC, {rating_field} DESC"
+            if sort_by == "price_low":
+                sort_clause = f"ORDER BY {price_field} ASC"
+            elif sort_by == "price_high":
+                sort_clause = f"ORDER BY {price_field} DESC"
+            elif sort_by == "rating":
+                sort_clause = f"ORDER BY {rating_field} DESC"
+            elif sort_by == "reviews":
+                sort_clause = f"ORDER BY {review_field} DESC"
+            
             if table_lower == 'rapidapi_flipkart_products':
                 data_query = text(f"""
                     SELECT 
@@ -5524,7 +6543,8 @@ def get_products_by_sentiment(
                       AND {rating_condition}
                       AND product_title IS NOT NULL
                       AND product_price IS NOT NULL
-                    ORDER BY product_review_count DESC, product_star_rating DESC
+                      {additional_filters}
+                    {sort_clause}
                     LIMIT :limit OFFSET :offset
                 """)
                 
@@ -5552,11 +6572,12 @@ def get_products_by_sentiment(
                       AND {rating_condition}
                       AND product_title IS NOT NULL
                       AND product_price_numeric IS NOT NULL
-                    ORDER BY product_num_ratings DESC, product_star_rating_numeric DESC
+                      {additional_filters}
+                    {sort_clause}
                     LIMIT :limit OFFSET :offset
                 """)
             
-            result = db.execute(data_query, {"limit": limit, "offset": offset}).mappings().all()
+            result = db.execute(data_query, params).mappings().all()
             
             # Format response
             for row in result:
@@ -5589,6 +6610,15 @@ def get_products_by_sentiment(
             "source": table,
             "page": page,
             "limit": limit,
+            "filters_applied": {
+                "category": category,
+                "min_price": min_price,
+                "max_price": max_price,
+                "min_rating": min_rating,
+                "date_range": date_range,
+                "trending_only": trending_only,
+                "sort_by": sort_by
+            },
             "total_products": total_products,
             "total_pages": total_pages,
             "count": len(products),
@@ -5602,429 +6632,341 @@ def get_products_by_sentiment(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def analyze_product_patterns(products: List[Dict]) -> Dict:
-#     """
-#     Analyze product data to extract market intelligence patterns.
-#     Returns comprehensive analysis for AI-based location prediction.
-#     """
-#     if not products:
-#         return {}
     
-#     # Brand analysis
-#     brands = {}
-#     top_brands = []
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class SubscriptionUpdate(BaseModel):
+    user_id: int
+    subscription_tier: str
+
+class AIUsageUpdate(BaseModel):
+    user_id: int
+    increment: int = 1
+    month: str
+
+# ==================== SUBSCRIPTION ENDPOINTS ====================
+
+@app.patch("/users/{user_id}/subscription")
+def update_user_subscription(user_id: int, data: SubscriptionUpdate, db: Session = Depends(get_db)):
+    """
+    Update user's subscription tier in database
     
-#     for p in products:
-#         brand = p.get('brand')
-#         if brand:
-#             brand = str(brand).strip()
-#             brands[brand] = brands.get(brand, 0) + 1
+    Args:
+        user_id: User ID
+        data: SubscriptionUpdate with user_id and subscription_tier
     
-#     if brands:
-#         top_brands = sorted(brands.items(), key=lambda x: x[1], reverse=True)[:5]
-    
-#     # Price distribution analysis
-#     prices = [float(D(p.get('price', 0))) for p in products if p.get('price')]
-#     price_ranges = {
-#         'ultra_budget': len([p for p in prices if p < 300]),
-#         'budget': len([p for p in prices if 300 <= p < 1000]),
-#         'mid_range': len([p for p in prices if 1000 <= p < 3000]),
-#         'premium': len([p for p in prices if 3000 <= p < 10000]),
-#         'luxury': len([p for p in prices if p >= 10000])
-#     }
-    
-#     # Rating analysis
-#     ratings = []
-#     for p in products:
-#         rating = (
-#             p.get('rating') or 
-#             p.get('product_star_rating_numeric') or 
-#             p.get('product_star_rating') or 
-#             0
-#         )
-#         if rating:
-#             ratings.append(float(D(rating)))
-    
-#     avg_rating = sum(ratings) / len(ratings) if ratings else 0
-#     high_rated = len([r for r in ratings if r >= 4.0])
-    
-#     # Sales velocity analysis
-#     total_sales = Decimal("0")
-#     high_sales_products = 0
-    
-#     for p in products:
-#         sales_vol = p.get('sales_volume', '')
-#         if sales_vol:
-#             sales = D(parse_sales_volume(str(sales_vol)))
-#             total_sales += sales
-#             if sales > 1000:
-#                 high_sales_products += 1
+    Returns:
+        Success message with updated user data
+    """
+    try:
+        # Validate subscription tier
+        valid_tiers = ['free', 'basic', 'premium', 'enterprise']
+        if data.subscription_tier not in valid_tiers:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid subscription tier. Must be one of: {', '.join(valid_tiers)}"
+            )
         
-#         estimated = p.get('estimated_sales')
-#         if estimated:
-#             total_sales += D(estimated)
-    
-#     # Review analysis
-#     total_reviews = Decimal("0")
-#     high_engagement = 0
-    
-#     for p in products:
-#         reviews = (
-#             p.get('reviews') or 
-#             p.get('product_num_ratings') or 
-#             p.get('product_review_count') or 
-#             0
-#         )
-#         review_count = D(reviews)
-#         total_reviews += review_count
-#         if review_count > 500:
-#             high_engagement += 1
-    
-#     return {
-#         'total_products': len(products),
-#         'brands': top_brands,
-#         'brand_diversity': len(brands),
-#         'price_distribution': price_ranges,
-#         'avg_rating': avg_rating,
-#         'high_rated_percentage': (high_rated / len(ratings) * 100) if ratings else 0,
-#         'total_sales': float(total_sales),
-#         'high_sales_products': high_sales_products,
-#         'total_reviews': float(total_reviews),
-#         'high_engagement_products': high_engagement,
-#         'avg_price': sum(prices) / len(prices) if prices else 0,
-#         'min_price': min(prices) if prices else 0,
-#         'max_price': max(prices) if prices else 0
-#     }
-
-
-# def get_rule_based_locations(category: str, avg_price: float, analysis: Dict) -> List[LocationInsight]:
-#     """
-#     Fallback rule-based location prediction when AI fails.
-#     Uses category and price-based logic.
-#     """
-#     locations = []
-    
-#     # Determine dominant price segment
-#     price_dist = analysis.get('price_distribution', {})
-#     dominant_segment = max(price_dist.items(), key=lambda x: x[1])[0] if price_dist else 'mid_range'
-    
-#     # Category-specific location mapping
-#     category_lower = category.lower()
-    
-#     # Electronics & Tech products
-#     if any(term in category_lower for term in ['electronic', 'mobile', 'laptop', 'computer', 'gadget', 'tech']):
-#         if avg_price > 5000:
-#             locations = [
-#                 ("Bangalore, Karnataka", 22, "Very High"),
-#                 ("Hyderabad, Telangana", 18, "High"),
-#                 ("Pune, Maharashtra", 16, "High"),
-#                 ("Gurgaon, Haryana", 15, "High"),
-#                 ("Chennai, Tamil Nadu", 14, "High"),
-#                 ("Noida, Uttar Pradesh", 15, "Medium")
-#             ]
-#         else:
-#             locations = [
-#                 ("Delhi, Delhi", 20, "Very High"),
-#                 ("Mumbai, Maharashtra", 18, "High"),
-#                 ("Kolkata, West Bengal", 16, "High"),
-#                 ("Jaipur, Rajasthan", 15, "Medium"),
-#                 ("Lucknow, Uttar Pradesh", 16, "Medium"),
-#                 ("Ahmedabad, Gujarat", 15, "Medium")
-#             ]
-    
-#     # Fashion & Apparel
-#     elif any(term in category_lower for term in ['fashion', 'cloth', 'apparel', 'wear', 'dress', 'shirt']):
-#         if avg_price > 2000:
-#             locations = [
-#                 ("Mumbai, Maharashtra", 22, "Very High"),
-#                 ("Delhi, Delhi", 20, "Very High"),
-#                 ("Bangalore, Karnataka", 17, "High"),
-#                 ("Kolkata, West Bengal", 14, "High"),
-#                 ("Hyderabad, Telangana", 14, "Medium"),
-#                 ("Pune, Maharashtra", 13, "Medium")
-#             ]
-#         else:
-#             locations = [
-#                 ("Tiruppur, Tamil Nadu", 20, "Very High"),
-#                 ("Ludhiana, Punjab", 18, "High"),
-#                 ("Surat, Gujarat", 17, "High"),
-#                 ("Kanpur, Uttar Pradesh", 15, "Medium"),
-#                 ("Erode, Tamil Nadu", 15, "Medium"),
-#                 ("Ahmedabad, Gujarat", 15, "Medium")
-#             ]
-    
-#     # Home & Kitchen
-#     elif any(term in category_lower for term in ['home', 'kitchen', 'furniture', 'decor', 'appliance']):
-#         locations = [
-#             ("Mumbai, Maharashtra", 19, "Very High"),
-#             ("Delhi, Delhi", 18, "High"),
-#             ("Bangalore, Karnataka", 16, "High"),
-#             ("Pune, Maharashtra", 15, "High"),
-#             ("Hyderabad, Telangana", 16, "Medium"),
-#             ("Chennai, Tamil Nadu", 16, "Medium")
-#         ]
-    
-#     # Books & Education
-#     elif any(term in category_lower for term in ['book', 'education', 'stationery', 'study']):
-#         locations = [
-#             ("Kota, Rajasthan", 20, "Very High"),
-#             ("Delhi, Delhi", 18, "High"),
-#             ("Bangalore, Karnataka", 17, "High"),
-#             ("Pune, Maharashtra", 15, "High"),
-#             ("Kolkata, West Bengal", 15, "Medium"),
-#             ("Chennai, Tamil Nadu", 15, "Medium")
-#         ]
-    
-#     # Automotive & Parts
-#     elif any(term in category_lower for term in ['automotive', 'car', 'bike', 'vehicle', 'auto']):
-#         locations = [
-#             ("Chennai, Tamil Nadu", 20, "Very High"),
-#             ("Pune, Maharashtra", 19, "High"),
-#             ("Gurgaon, Haryana", 18, "High"),
-#             ("Bangalore, Karnataka", 15, "High"),
-#             ("Ahmedabad, Gujarat", 14, "Medium"),
-#             ("Ludhiana, Punjab", 14, "Medium")
-#         ]
-    
-#     # Beauty & Personal Care
-#     elif any(term in category_lower for term in ['beauty', 'cosmetic', 'skincare', 'makeup', 'personal care']):
-#         locations = [
-#             ("Mumbai, Maharashtra", 21, "Very High"),
-#             ("Delhi, Delhi", 19, "High"),
-#             ("Bangalore, Karnataka", 17, "High"),
-#             ("Kolkata, West Bengal", 15, "High"),
-#             ("Hyderabad, Telangana", 14, "Medium"),
-#             ("Chennai, Tamil Nadu", 14, "Medium")
-#         ]
-    
-#     # Sports & Fitness
-#     elif any(term in category_lower for term in ['sport', 'fitness', 'gym', 'exercise']):
-#         locations = [
-#             ("Mumbai, Maharashtra", 20, "Very High"),
-#             ("Bangalore, Karnataka", 19, "High"),
-#             ("Delhi, Delhi", 18, "High"),
-#             ("Pune, Maharashtra", 15, "High"),
-#             ("Hyderabad, Telangana", 14, "Medium"),
-#             ("Chennai, Tamil Nadu", 14, "Medium")
-#         ]
-    
-#     # Jewelry & Accessories
-#     elif any(term in category_lower for term in ['jewel', 'gold', 'silver', 'accessory']):
-#         locations = [
-#             ("Jaipur, Rajasthan", 22, "Very High"),
-#             ("Mumbai, Maharashtra", 19, "High"),
-#             ("Coimbatore, Tamil Nadu", 17, "High"),
-#             ("Surat, Gujarat", 15, "High"),
-#             ("Thrissur, Kerala", 14, "Medium"),
-#             ("Kolkata, West Bengal", 13, "Medium")
-#         ]
-    
-#     # Default for unknown categories - Major metros based on price
-#     else:
-#         if avg_price > 3000:
-#             locations = [
-#                 ("Mumbai, Maharashtra", 20, "Very High"),
-#                 ("Delhi, Delhi", 19, "High"),
-#                 ("Bangalore, Karnataka", 18, "High"),
-#                 ("Pune, Maharashtra", 15, "High"),
-#                 ("Hyderabad, Telangana", 14, "Medium"),
-#                 ("Chennai, Tamil Nadu", 14, "Medium")
-#             ]
-#         elif avg_price > 1000:
-#             locations = [
-#                 ("Delhi, Delhi", 19, "Very High"),
-#                 ("Mumbai, Maharashtra", 18, "High"),
-#                 ("Bangalore, Karnataka", 17, "High"),
-#                 ("Kolkata, West Bengal", 15, "High"),
-#                 ("Hyderabad, Telangana", 16, "Medium"),
-#                 ("Pune, Maharashtra", 15, "Medium")
-#             ]
-#         else:
-#             locations = [
-#                 ("Lucknow, Uttar Pradesh", 18, "Very High"),
-#                 ("Kanpur, Uttar Pradesh", 17, "High"),
-#                 ("Patna, Bihar", 16, "High"),
-#                 ("Jaipur, Rajasthan", 16, "High"),
-#                 ("Indore, Madhya Pradesh", 17, "Medium"),
-#                 ("Nagpur, Maharashtra", 16, "Medium")
-#             ]
-    
-#     # Normalize shares to exactly 100
-#     total_share = sum(share for _, share, _ in locations)
-#     if total_share > 0:
-#         locations = [
-#             (city, (share / total_share) * 100, demand)
-#             for city, share, demand in locations
-#         ]
-    
-#     return [
-#         LocationInsight(
-#             country=city,
-#             market_share=f"{share:.1f}%",
-#             demand_level=demand
-#         )
-#         for city, share, demand in locations
-#     ]
-
-
-# def generate_location_insights(products: List[Dict]) -> List[LocationInsight]:
-#     """
-#     Generate AI-driven dynamic location insights with robust fallback.
-#     Primary: AI prediction | Fallback: Rule-based intelligent prediction
-#     """
-    
-#     if not products:
-#         return []
-    
-#     # Extract category
-#     category = products[0].get('category_name') or products[0].get('category', 'General')
-    
-#     # Analyze product patterns
-#     analysis = analyze_product_patterns(products)
-    
-#     if not analysis:
-#         return []
-    
-#     avg_price = analysis.get('avg_price', 0)
-    
-#     # Simplified prompt for Llama 3.2:3b (smaller model needs simpler instructions)
-#     simplified_prompt = f"""You are analyzing Indian e-commerce market for {category} products.
-
-# Price: ₹{avg_price:.0f}
-# Total Products: {analysis['total_products']}
-# Avg Rating: {analysis['avg_rating']:.1f}★
-
-# Task: List 6 Indian cities with highest demand.
-
-# Format ONLY as JSON array (no other text):
-# [
-#   {{"city": "CityName, State", "share": 25.0, "demand": "Very High"}},
-#   {{"city": "CityName, State", "share": 20.0, "demand": "High"}}
-# ]
-
-# Rules:
-# - Total shares = 100
-# - Use real Indian cities
-# - Match price to city tier
-# - Order by share (highest first)
-
-# Output ONLY the JSON array:"""
-
-#     # Try AI prediction with multiple attempts
-#     for attempt in range(2):
-#         try:
-#             print(f"🤖 Attempting AI location prediction (attempt {attempt + 1})...")
-            
-#             result = subprocess.run(
-#                 ["ollama", "run", "llama3.2:3b"],
-#                 input=simplified_prompt,
-#                 capture_output=True,
-#                 text=True,
-#                 encoding="utf-8",
-#                 errors="ignore",
-#                 timeout=60  # Increased timeout
-#             )
-            
-#             output = (result.stdout or result.stderr or "").strip()
-#             print(f"📥 AI Output: {output[:200]}...")
-            
-#             if not output:
-#                 print(f"⚠️ Empty AI response on attempt {attempt + 1}")
-#                 continue
-            
-#             # Try to extract JSON array from response
-#             # Handle various formats: plain JSON, markdown code blocks, text with JSON
-#             json_patterns = [
-#                 r'```json\s*(\[[\s\S]*?\])\s*```',  # Markdown code block
-#                 r'```\s*(\[[\s\S]*?\])\s*```',      # Plain code block
-#                 r'(\[[\s\S]*?\])',                   # Plain JSON array
-#             ]
-            
-#             json_text = None
-#             for pattern in json_patterns:
-#                 match = re.search(pattern, output)
-#                 if match:
-#                     json_text = match.group(1) if match.lastindex else match.group()
-#                     break
-            
-#             if not json_text:
-#                 print(f"⚠️ No JSON found in AI output on attempt {attempt + 1}")
-#                 continue
-            
-#             # Clean up the JSON text
-#             json_text = json_text.strip()
-            
-#             # Try to parse JSON
-#             try:
-#                 locations_data = json.loads(json_text)
-#             except json.JSONDecodeError:
-#                 # Try to fix common JSON issues
-#                 json_text = json_text.replace("'", '"')  # Single to double quotes
-#                 json_text = re.sub(r',(\s*[}\]])', r'\1', json_text)  # Remove trailing commas
-#                 locations_data = json.loads(json_text)
-            
-#             if not isinstance(locations_data, list) or len(locations_data) == 0:
-#                 print(f"⚠️ Invalid JSON structure on attempt {attempt + 1}")
-#                 continue
-            
-#             # Validate and normalize
-#             locations = locations_data[:6]
-            
-#             # Ensure all required fields exist
-#             valid_locations = []
-#             for loc in locations:
-#                 if isinstance(loc, dict) and 'city' in loc and 'share' in loc:
-#                     valid_locations.append(loc)
-            
-#             if len(valid_locations) < 3:  # Need at least 3 valid locations
-#                 print(f"⚠️ Not enough valid locations ({len(valid_locations)}) on attempt {attempt + 1}")
-#                 continue
-            
-#             # Normalize shares to sum to 100
-#             total_share = sum(float(loc.get('share', 0)) for loc in valid_locations)
-            
-#             if total_share <= 0:
-#                 print(f"⚠️ Invalid share totals on attempt {attempt + 1}")
-#                 continue
-            
-#             # Normalize
-#             for loc in valid_locations:
-#                 loc['share'] = (float(loc.get('share', 0)) / total_share) * 100
-            
-#             print(f"✅ Successfully generated {len(valid_locations)} AI-powered locations")
-            
-#             return [
-#                 LocationInsight(
-#                     country=loc.get("city", "Unknown Location"),
-#                     market_share=f"{loc['share']:.1f}%",
-#                     demand_level=loc.get("demand", "Medium")
-#                 )
-#                 for loc in valid_locations
-#             ]
+        # Check if user exists
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         
-#         except json.JSONDecodeError as e:
-#             print(f"❌ JSON parsing failed on attempt {attempt + 1}: {e}")
-#             print(f"Raw output: {output[:300]}")
-#         except subprocess.TimeoutExpired:
-#             print(f"❌ AI request timeout after 60 seconds on attempt {attempt + 1}")
-#         except subprocess.CalledProcessError as e:
-#             print(f"❌ Subprocess error on attempt {attempt + 1}: {e}")
-#         except Exception as e:
-#             print(f"❌ Unexpected error on attempt {attempt + 1}: {e}")
+        # Update subscription tier
+        user.subscription_tier = data.subscription_tier
+        user.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "success": True,
+            "message": f"Subscription updated to {data.subscription_tier}",
+            "user": {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "subscription_tier": user.subscription_tier,
+                "updated_at": str(user.updated_at)
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-    # If AI fails, use intelligent rule-based fallback
-    # print("🔄 AI failed, using intelligent rule-based location prediction...")
-    # return get_rule_based_locations(category, avg_price, analysis)
+
+# ==================== AI USAGE TRACKING ENDPOINTS ====================
+
+@app.post("/users/{user_id}/ai-usage")
+def track_ai_usage(user_id: int, data: AIUsageUpdate, db: Session = Depends(get_db)):
+    """
+    Track and increment AI chat usage for the current month
+    Auto-resets counter if it's a new month
+    
+    Args:
+        user_id: User ID
+        data: AIUsageUpdate with increment and month
+    
+    Returns:
+        Updated AI usage data
+    """
+    try:
+        # Get user
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        current_month = data.month
+        stored_month = user.ai_chat_month
+        current_usage = user.ai_chat_used or 0
+        
+        # Reset counter if new month
+        if stored_month != current_month:
+            new_usage = data.increment
+            print(f"🔄 Resetting AI usage for user {user_id} (new month: {current_month})")
+        else:
+            new_usage = current_usage + data.increment
+            print(f"📊 Incrementing AI usage for user {user_id}: {current_usage} -> {new_usage}")
+        
+        # Update database
+        user.ai_chat_used = new_usage
+        user.ai_chat_month = current_month
+        user.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "success": True,
+            "ai_chat_used": user.ai_chat_used,
+            "ai_chat_month": user.ai_chat_month,
+            "message": "AI usage tracked successfully"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/users/{user_id}/ai-usage")
+def get_ai_usage(user_id: int, db: Session = Depends(get_db)):
+    """
+    Get current AI chat usage for the month
+    Auto-resets if viewing in a new month
+    
+    Args:
+        user_id: User ID
+    
+    Returns:
+        Current AI usage data
+    """
+    try:
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        current_month = datetime.now().strftime("%Y-%m")
+        stored_month = user.ai_chat_month
+        
+        # Reset if new month
+        if stored_month != current_month:
+            usage = 0
+        else:
+            usage = user.ai_chat_used or 0
+        
+        return {
+            "ai_chat_used": usage,
+            "ai_chat_month": stored_month or current_month,
+            "subscription_tier": user.subscription_tier or 'free'
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/users/{user_id}/profile")
+def get_user_profile_complete(user_id: int, db: Session = Depends(get_db)):
+    """
+    Get complete user profile including subscription details
+    
+    Args:
+        user_id: User ID
+    
+    Returns:
+        Complete user profile data
+    """
+    try:
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "business_name": user.business_name,
+            "location": user.location,
+            "business_interests": user.business_interests,
+            "subscription_tier": user.subscription_tier or 'free',
+            "ai_chat_used": user.ai_chat_used or 0,
+            "ai_chat_month": user.ai_chat_month,
+            "created_at": str(user.created_at),
+            "updated_at": str(user.updated_at) if user.updated_at else None,
+            "is_active": user.is_active if hasattr(user, 'is_active') else True
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# ==================== SUBSCRIPTION STATUS ENDPOINTS ====================
+
+@app.get("/users/{user_id}/subscription-status")
+def get_subscription_status(user_id: int, db: Session = Depends(get_db)):
+    """
+    Get detailed subscription status with usage limits
+    
+    Args:
+        user_id: User ID
+    
+    Returns:
+        Subscription tier and all usage limits
+    """
+    try:
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        tier = user.subscription_tier or 'free'
+        
+        # Define limits based on tier
+        tier_limits = {
+            'free': {
+                'maxAIChatMessagesPerMonth': 5,
+                'maxTopN': 5,
+                'hasChartAISummaries': False,
+                'maxNotifications': 5,
+                'maxFullAnalysesPerMonth': 5
+            },
+            'basic': {
+                'maxAIChatMessagesPerMonth': 20,
+                'maxTopN': 20,
+                'hasChartAISummaries': True,
+                'maxNotifications': 15,
+                'maxFullAnalysesPerMonth': 20
+            },
+            'premium': {
+                'maxAIChatMessagesPerMonth': float('inf'),
+                'maxTopN': 100,
+                'hasChartAISummaries': True,
+                'maxNotifications': float('inf'),
+                'maxFullAnalysesPerMonth': float('inf')
+            },
+            'enterprise': {
+                'maxAIChatMessagesPerMonth': float('inf'),
+                'maxTopN': float('inf'),
+                'hasChartAISummaries': True,
+                'maxNotifications': float('inf'),
+                'maxFullAnalysesPerMonth': float('inf')
+            }
+        }
+        
+        current_month = datetime.now().strftime("%Y-%m")
+        stored_month = user.ai_chat_month
+        
+        # Reset if new month
+        if stored_month != current_month:
+            ai_used = 0
+        else:
+            ai_used = user.ai_chat_used or 0
+        
+        # Convert inf to "unlimited" string for JSON serialization
+        limits = tier_limits.get(tier, tier_limits['free'])
+        serializable_limits = {}
+        for key, value in limits.items():
+            if value == float('inf'):
+                serializable_limits[key] = "unlimited"
+            else:
+                serializable_limits[key] = value
+        
+        return {
+            "user_id": user_id,
+            "subscription_tier": tier,
+            "limits": serializable_limits,
+            "usage": {
+                "ai_chat_used": ai_used,
+                "ai_chat_month": stored_month or current_month
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.post("/users/{user_id}/reset-ai-usage")
+def reset_ai_usage(user_id: int, db: Session = Depends(get_db)):
+    """
+    Manually reset AI usage counter (admin function)
+    
+    Args:
+        user_id: User ID
+    
+    Returns:
+        Success message
+    """
+    try:
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        current_month = datetime.now().strftime("%Y-%m")
+        
+        user.ai_chat_used = 0
+        user.ai_chat_month = current_month
+        user.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "success": True,
+            "message": "AI usage reset successfully",
+            "data": {
+                "id": user.id,
+                "ai_chat_used": user.ai_chat_used,
+                "ai_chat_month": user.ai_chat_month
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

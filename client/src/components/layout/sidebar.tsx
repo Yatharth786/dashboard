@@ -226,7 +226,7 @@ const SECTIONS = [
     label: "Analytics",
     items: [
       { href: "/sales", label: "Sales Analytics", icon: TrendingUp },
-      { href: "/revenue", label: "Revenue", icon: DollarSign },
+      { href: "/overview", label: "Overview", icon: DollarSign },
       { href: "/categories", label: "Categories", icon: PieChart },
        { href: "/product-tracker", label: "Product Radar", icon: Target },
     ],

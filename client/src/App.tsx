@@ -256,7 +256,418 @@
 
 
 
-import { Switch, Route } from "wouter";
+// import { Switch, Route } from "wouter";
+// import { QueryClientProvider } from "@tanstack/react-query";
+// import { queryClient } from "./lib/queryClient";
+// import { Toaster } from "@/components/ui/toaster";
+// import { TooltipProvider } from "@/components/ui/tooltip";
+// import { useState, useEffect, createContext, useContext } from "react";
+
+// // Pages
+// import Landing from "@/pages/landing";
+// import PrivacyPolicy from "@/pages/privacy-policy";
+// import TermsOfService from "@/pages/terms-service";
+// import Login from "@/pages/login";
+// import Signup from "@/pages/signup";
+// import Dashboard from "@/pages/dashboard";
+// import Subscription from "@/pages/subscription";
+// import About from "@/pages/about";
+// import Settings from "@/pages/settings";
+// import NotFound from "@/pages/not-found";
+
+// // Analytics Pages
+// import Sales from "@/pages/sales";
+// import Overview from "@/pages/overview";
+// import Categories from "@/pages/categories";
+// import CategoryProducts from "@/pages/category-products";
+// import ProductDetails from "@/pages/product-details";
+// import SentimentProducts from "@/pages/sentiment-products"; 
+// import ProductTracker from "@/pages/product-tracker";
+// import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
+
+
+// // Auth Context
+// interface User {
+//   id: number; // ✅ Changed from string to number to match database
+//   email: string;
+//   name?: string; // ✅ Added optional name
+//   firstName?: string;
+//   lastName?: string;
+//   businessName?: string;
+//   location?: string;
+//   subscriptionTier: string; // ✅ Made required
+//   aiChatUsed?: number; // ✅ Added AI tracking
+//   aiChatMonth?: string; // ✅ Added AI tracking
+//   businessInterests?: string[];
+//   loggedIn?: boolean;
+//   createdAt?: string;
+// }
+
+// interface AuthContextType {
+//   user: User | null;
+//   login: (user: User) => void;
+//   logout: () => void;
+//   isAuthenticated: boolean;
+// }
+
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) throw new Error("useAuth must be used within an AuthProvider");
+//   return context;
+// };
+
+// function AuthProvider({ children }: { children: React.ReactNode }) {
+//   const [user, setUser] = useState<User | null>(null);
+
+//   useEffect(() => {
+//     // ✅ FIXED: Use "user" instead of "ecomai_user" to match Login/Signup
+//     const storedUser = localStorage.getItem("user");
+//     if (storedUser) {
+//       try {
+//         const parsed = JSON.parse(storedUser);
+//         console.log("✅ AuthProvider loaded user:", parsed);
+//         setUser(parsed);
+//       } catch (err) {
+//         console.error("Error parsing user from localStorage:", err);
+//         localStorage.removeItem("user");
+//       }
+//     }
+//   }, []);
+
+//   const login = (userData: User) => {
+//     console.log("✅ AuthProvider: User logged in", userData);
+//     setUser(userData);
+//     // ✅ FIXED: Use "user" instead of "ecomai_user"
+//     localStorage.setItem("user", JSON.stringify(userData));
+//   };
+
+//   const logout = () => {
+//     console.log("✅ AuthProvider: User logged out");
+//     setUser(null);
+//     // ✅ FIXED: Use "user" instead of "ecomai_user"
+//     localStorage.removeItem("user");
+//   };
+
+//   const isAuthenticated = !!user;
+
+//   return (
+//     <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// }
+
+// function Router() {
+//   return (
+//     <Switch>
+//       {/* Landing Page - ROOT */}
+//       <Route path="/" component={Landing} />
+
+//       {/* Analytics Pages */}
+//       <Route path="/dashboard" component={Dashboard} />
+//       <Route path="/sales" component={Sales} />
+//       <Route path="/overview" component={Overview} />
+//       <Route path="/categories" component={Categories} />
+//       <Route path="/category-products/:source/:category" component={CategoryProducts} />
+//       <Route path="/product/:productName" component={ProductDetails} /> 
+//       <Route path="/product-tracker" component={ProductTracker} />
+//       <Route path="/product-tracker/history" component={ProductTrackerHistory} />
+//       <Route path="/sentiment-products/:source/:sentiment" component={SentimentProducts} />
+
+//       {/* Tools Pages */}
+//       <Route path="/subscription" component={Subscription} />
+//       <Route path="/about" component={About} />
+//       <Route path="/privacy-policy" component={PrivacyPolicy} />
+//       <Route path="/terms-service" component={TermsOfService} />
+//       <Route path="/settings" component={Settings} />
+
+//       {/* Auth Pages */}
+//       <Route path="/login" component={Login} />
+//       <Route path="/signup" component={Signup} />
+
+//       {/* 404 Fallback */}
+//       <Route component={NotFound} />
+//     </Switch>
+//   );
+// }
+
+
+// export default function App() {
+//   return (
+//     <QueryClientProvider client={queryClient}>
+//       <TooltipProvider>
+//         <AuthProvider>
+//           <Toaster />
+//           <Router />
+//         </AuthProvider>
+//       </TooltipProvider>
+//     </QueryClientProvider>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { Switch, Route, useLocation } from "wouter";
+// import { QueryClientProvider } from "@tanstack/react-query";
+// import { queryClient } from "./lib/queryClient";
+// import { Toaster } from "@/components/ui/toaster";
+// import { TooltipProvider } from "@/components/ui/tooltip";
+// import { useState, useEffect, createContext, useContext } from "react";
+
+// // Pages
+// import Landing from "@/pages/landing";
+// import PrivacyPolicy from "@/pages/privacy-policy";
+// import TermsOfService from "@/pages/terms-service";
+// import Login from "@/pages/login";
+// import Signup from "@/pages/signup";
+// import Dashboard from "@/pages/dashboard";
+// import Subscription from "@/pages/subscription";
+// import About from "@/pages/about";
+// import Settings from "@/pages/settings";
+// import NotFound from "@/pages/not-found";
+
+// // Analytics Pages
+// import Sales from "@/pages/sales";
+// import Overview from "@/pages/overview";
+// import Categories from "@/pages/categories";
+// import CategoryProducts from "@/pages/category-products";
+// import ProductDetails from "@/pages/product-details";
+// import SentimentProducts from "@/pages/sentiment-products"; 
+// import ProductTracker from "@/pages/product-tracker";
+// import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
+
+// // Auth Context
+// interface User {
+//   id: number;
+//   email: string;
+//   name?: string;
+//   firstName?: string;
+//   lastName?: string;
+//   businessName?: string;
+//   location?: string;
+//   subscriptionTier: string;
+//   aiChatUsed?: number;
+//   aiChatMonth?: string;
+//   businessInterests?: string[];
+//   createdAt?: string;
+// }
+
+// interface AuthContextType {
+//   user: User | null;
+//   login: (user: User) => void;
+//   logout: () => void;
+//   isAuthenticated: boolean;
+//   isLoading: boolean;
+//   refreshUser: () => Promise<void>;
+// }
+
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) throw new Error("useAuth must be used within an AuthProvider");
+//   return context;
+// };
+
+// function AuthProvider({ children }: { children: React.ReactNode }) {
+//   const [user, setUser] = useState<User | null>(null);
+//   const [isLoading, setIsLoading] = useState(true);
+
+//   // Fetch current user session from backend
+//   const fetchCurrentUser = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/auth/me", {
+
+//         method: "GET",
+//         credentials: "include", // Include HTTP-only cookies
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//       });
+
+//       if (response.ok) {
+//         const userData = await response.json();
+//         console.log("✅ User session loaded:", userData);
+//         setUser(userData);
+//       } else {
+//         // Not authenticated or session expired
+//         setUser(null);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching user session:", error);
+//       setUser(null);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   // Check authentication on mount
+//   useEffect(() => {
+//     fetchCurrentUser();
+//   }, []);
+
+//   const login = (userData: User) => {
+//     console.log("✅ User logged in:", userData);
+//     setUser(userData);
+//   };
+
+//   const logout = async () => {
+//     try {
+//       // Call backend logout endpoint to clear session
+//       await fetch("http://localhost:8000/api/auth/logout", {
+
+//         method: "POST",
+//         credentials: "include",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//       });
+//       console.log("✅ User logged out");
+//       setUser(null);
+//     } catch (error) {
+//       console.error("Error during logout:", error);
+//       // Still clear user state even if request fails
+//       setUser(null);
+//     }
+//   };
+
+//   const refreshUser = async () => {
+//     await fetchCurrentUser();
+//   };
+
+//   const isAuthenticated = !!user;
+
+//   return (
+//     <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isLoading, refreshUser }}>
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// }
+// function ProtectedRoute({ component: Component, ...rest }: any) {
+//   const { isAuthenticated, isLoading } = useAuth();
+//   const [, setLocation] = useLocation();
+
+//   // While checking session, show a loading state
+//   if (isLoading) {
+//     return (
+//       <div className="flex h-screen items-center justify-center text-lg font-semibold">
+//         Checking session...
+//       </div>
+//     );
+//   }
+
+//   // If not logged in → redirect to /login
+//   if (!isAuthenticated) {
+//     setLocation("/login");
+//     return null;
+//   }
+
+//   // If logged in → show page
+//   return <Component {...rest} />;
+// }
+
+// // function Router() {
+// //   return (
+// //     <Switch>
+// //       {/* Landing Page - ROOT */}
+// //       <Route path="/" component={Landing} />
+
+// //       {/* Analytics Pages */}
+// //       <Route path="/dashboard" component={Dashboard} />
+// //       <Route path="/sales" component={Sales} />
+// //       <Route path="/overview" component={Overview} />
+// //       <Route path="/categories" component={Categories} />
+// //       <Route path="/category-products/:source/:category" component={CategoryProducts} />
+// //       <Route path="/product/:productName" component={ProductDetails} /> 
+// //       <Route path="/product-tracker" component={ProductTracker} />
+// //       <Route path="/product-tracker/history" component={ProductTrackerHistory} />
+// //       <Route path="/sentiment-products/:source/:sentiment" component={SentimentProducts} />
+
+// //       {/* Tools Pages */}
+// //       <Route path="/subscription" component={Subscription} />
+// //       <Route path="/about" component={About} />
+// //       <Route path="/privacy-policy" component={PrivacyPolicy} />
+// //       <Route path="/terms-service" component={TermsOfService} />
+// //       <Route path="/settings" component={Settings} />
+
+// //       {/* Auth Pages */}
+// //       <Route path="/login" component={Login} />
+// //       <Route path="/signup" component={Signup} />
+
+// //       {/* 404 Fallback */}
+// //       <Route component={NotFound} />
+// //     </Switch>
+// //   );
+// // }
+
+// function Router() {
+//   return (
+//     <Switch>
+//       {/* Public Pages */}
+//       <Route path="/" component={Landing} />
+//       <Route path="/login" component={Login} />
+//       <Route path="/signup" component={Signup} />
+//       <Route path="/about" component={About} />
+//       <Route path="/privacy-policy" component={PrivacyPolicy} />
+//       <Route path="/terms-service" component={TermsOfService} />
+
+//       {/* Protected Pages */}
+//       <ProtectedRoute path="/dashboard" component={Dashboard} />
+//       <ProtectedRoute path="/sales" component={Sales} />
+//       <ProtectedRoute path="/overview" component={Overview} />
+//       <ProtectedRoute path="/categories" component={Categories} />
+//       <ProtectedRoute path="/category-products/:source/:category" component={CategoryProducts} />
+//       <ProtectedRoute path="/product/:productName" component={ProductDetails} />
+//       <ProtectedRoute path="/product-tracker" component={ProductTracker} />
+//       <ProtectedRoute path="/product-tracker/history" component={ProductTrackerHistory} />
+//       <ProtectedRoute path="/sentiment-products/:source/:sentiment" component={SentimentProducts} />
+//       <ProtectedRoute path="/subscription" component={Subscription} />
+//       <ProtectedRoute path="/settings" component={Settings} />
+
+//       {/* 404 */}
+//       <Route component={NotFound} />
+//     </Switch>
+//   );
+// }
+
+
+// export default function App() {
+//   return (
+//     <QueryClientProvider client={queryClient}>
+//       <TooltipProvider>
+//         <AuthProvider>
+//           <Toaster />
+//           <Router />
+//         </AuthProvider>
+//       </TooltipProvider>
+//     </QueryClientProvider>
+//   );
+// }
+
+
+
+
+import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -281,25 +692,25 @@ import Overview from "@/pages/overview";
 import Categories from "@/pages/categories";
 import CategoryProducts from "@/pages/category-products";
 import ProductDetails from "@/pages/product-details";
-import SentimentProducts from "@/pages/sentiment-products"; 
+import SentimentProducts from "@/pages/sentiment-products";
 import ProductTracker from "@/pages/product-tracker";
 import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
 
-
+// ==================
 // Auth Context
+// ==================
 interface User {
-  id: number; // ✅ Changed from string to number to match database
+  id: number;
   email: string;
-  name?: string; // ✅ Added optional name
+  name?: string;
   firstName?: string;
   lastName?: string;
   businessName?: string;
   location?: string;
-  subscriptionTier: string; // ✅ Made required
-  aiChatUsed?: number; // ✅ Added AI tracking
-  aiChatMonth?: string; // ✅ Added AI tracking
+  subscriptionTier: string;
+  aiChatUsed?: number;
+  aiChatMonth?: string;
   businessInterests?: string[];
-  loggedIn?: boolean;
   createdAt?: string;
 }
 
@@ -308,6 +719,8 @@ interface AuthContextType {
   login: (user: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -318,74 +731,140 @@ export const useAuth = () => {
   return context;
 };
 
+// ==================
+// AuthProvider
+// ==================
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/me", {
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser({
+          id: data.id,
+          email: data.email,
+          name: `${data.first_name} ${data.last_name}`,
+          firstName: data.first_name,
+          lastName: data.last_name,
+          businessName: data.business_name,
+          location: data.location,
+          subscriptionTier: data.subscription_tier || "free",
+          aiChatUsed: data.ai_chat_used,
+          aiChatMonth: data.ai_chat_month,
+          businessInterests: data.business_interests,
+          createdAt: data.created_at,
+        });
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error("Error fetching user session:", err);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // ✅ FIXED: Use "user" instead of "ecomai_user" to match Login/Signup
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        console.log("✅ AuthProvider loaded user:", parsed);
-        setUser(parsed);
-      } catch (err) {
-        console.error("Error parsing user from localStorage:", err);
-        localStorage.removeItem("user");
-      }
-    }
+    fetchCurrentUser();
   }, []);
 
   const login = (userData: User) => {
-    console.log("✅ AuthProvider: User logged in", userData);
     setUser(userData);
-    // ✅ FIXED: Use "user" instead of "ecomai_user"
-    localStorage.setItem("user", JSON.stringify(userData));
   };
 
-  const logout = () => {
-    console.log("✅ AuthProvider: User logged out");
-    setUser(null);
-    // ✅ FIXED: Use "user" instead of "ecomai_user"
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      await fetch("http://localhost:8000/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      setUser(null);
+    }
+  };
+
+  const refreshUser = async () => {
+    await fetchCurrentUser();
   };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, isAuthenticated, isLoading, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
+// ==================
+// ProtectedRoute
+// ==================
+function ProtectedRoute({ component: Component, ...rest }: any) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-lg font-semibold">
+        Checking session...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    setLocation("/login");
+    return null;
+  }
+
+  return <Component {...rest} />;
+}
+
+// ==================
+// Router
+// ==================
 function Router() {
   return (
     <Switch>
-      {/* Landing Page - ROOT */}
+      {/* Public Pages */}
       <Route path="/" component={Landing} />
-
-      {/* Analytics Pages */}
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/sales" component={Sales} />
-      <Route path="/overview" component={Overview} />
-      <Route path="/categories" component={Categories} />
-      <Route path="/category-products/:source/:category" component={CategoryProducts} />
-      <Route path="/product/:productName" component={ProductDetails} /> 
-      <Route path="/product-tracker" component={ProductTracker} />
-      <Route path="/product-tracker/history" component={ProductTrackerHistory} />
-      <Route path="/sentiment-products/:source/:sentiment" component={SentimentProducts} />
-
-      {/* Tools Pages */}
-      <Route path="/subscription" component={Subscription} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/about" component={About} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/terms-service" component={TermsOfService} />
-      <Route path="/settings" component={Settings} />
 
-      {/* Auth Pages */}
-      <Route path="/login" component={Login} />
-      <Route path="/signup" component={Signup} />
+      {/* Protected Pages */}
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/sales" component={Sales} />
+      <ProtectedRoute path="/overview" component={Overview} />
+      <ProtectedRoute path="/categories" component={Categories} />
+      <ProtectedRoute
+        path="/category-products/:source/:category"
+        component={CategoryProducts}
+      />
+      <ProtectedRoute path="/product/:productName" component={ProductDetails} />
+      <ProtectedRoute path="/product-tracker" component={ProductTracker} />
+      <ProtectedRoute
+        path="/product-tracker/history"
+        component={ProductTrackerHistory}
+      />
+      <ProtectedRoute
+        path="/sentiment-products/:source/:sentiment"
+        component={SentimentProducts}
+      />
+      <ProtectedRoute path="/subscription" component={Subscription} />
+      <ProtectedRoute path="/settings" component={Settings} />
 
       {/* 404 Fallback */}
       <Route component={NotFound} />
@@ -393,7 +872,9 @@ function Router() {
   );
 }
 
-
+// ==================
+// App
+// ==================
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -406,15 +887,3 @@ export default function App() {
     </QueryClientProvider>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

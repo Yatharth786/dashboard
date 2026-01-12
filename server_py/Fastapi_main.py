@@ -3757,48 +3757,161 @@ def get_flipkart_top_products(n: int = 10, db: Session = Depends(get_db)):
 # FIXED LOGIN ENDPOINT - Replace in Fastapi_main.py
 # ============================================
  
-from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
-from fastapi import HTTPException, Depends
-from sqlalchemy.orm import Session
+# from passlib.context import CryptContext
+# from pydantic import BaseModel, EmailStr
+# from fastapi import HTTPException, Depends
+# from sqlalchemy.orm import Session
 
  
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# # Password hashing
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
  
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+# def verify_password(plain_password: str, hashed_password: str) -> bool:
+#     return pwd_context.verify(plain_password, hashed_password)
  
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+# def get_password_hash(password: str) -> str:
+#     return pwd_context.hash(password)
  
-# ============================================
-# Pydantic Models
-# ============================================
+# # ============================================
+# # Pydantic Models
+# # ============================================
  
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+# class UserLogin(BaseModel):
+#     email: EmailStr
+#     password: str
  
-class PasswordReset(BaseModel):
-    email: EmailStr
-    new_password: str
+# class PasswordReset(BaseModel):
+#     email: EmailStr
+#     new_password: str
  
-class LoginResponse(BaseModel):
-    success: bool
-    message: str
-    user: dict = None 
+# class LoginResponse(BaseModel):
+#     success: bool
+#     message: str
+#     user: dict = None 
     
-# # ============================================
-# # FIXED LOGIN ENDPOINT (without is_active check)
-# # ============================================
+# # # ============================================
+# # # FIXED LOGIN ENDPOINT (without is_active check)
+# # # ============================================
  
+# # @app.post("/users/login", response_model=LoginResponse)
+# # def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+# #     """
+# #     Authenticate user and return user data if successful
+# #     """
+# #     try:
+# #         # Find user by email
+# #         user = db.query(models.User).filter(
+# #             models.User.email == login_data.email
+# #         ).first()
+       
+# #         # Check if user exists
+# #         if not user:
+# #             raise HTTPException(
+# #                 status_code=404,
+# #                 detail="No account found with this email. Please sign up first."
+# #             )
+       
+# #         # Verify password
+# #         if not verify_password(login_data.password, user.password_hash):
+# #             raise HTTPException(
+# #                 status_code=401,
+# #                 detail="Incorrect password. Please try again or reset your password."
+# #             )
+       
+# #         # Successful login
+# #         return {
+# #             "success": True,
+# #             "message": "Login successful",
+# #             "user": {
+# #                 "id": user.id,
+# #                 "first_name": user.first_name,
+# #                 "last_name": user.last_name,
+# #                 "email": user.email,
+# #                 "business_name": user.business_name,
+# #                 "location": user.location,
+# #                 "business_interests": user.business_interests,
+# #                 "created_at": str(user.created_at)
+# #             }
+# #         }
+# #     except HTTPException:
+# #         raise
+# #     except Exception as e:
+# #         print(f"âŒ Login error: {str(e)}")
+# #         raise HTTPException(
+# #             status_code=500,
+# #             detail=f"Login failed: {str(e)}"
+# #         )
+ 
+# # # ============================================
+# # # FIXED SIGNUP ENDPOINT
+# # # ============================================
+ 
+# # @app.post("/users/signup")
+# # def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+# #     """
+# #     Create a new user account
+# #     """
+# #     try:
+# #         # Check if email already exists
+# #         existing_user = db.query(models.User).filter(
+# #             models.User.email == user_data.email
+# #         ).first()
+       
+# #         if existing_user:
+# #             raise HTTPException(
+# #                 status_code=400,
+# #                 detail="Email already registered. Please login instead."
+# #             )
+       
+# #         # Hash the password
+# #         hashed_password = get_password_hash(user_data.password)
+       
+# #         # Create new user (without is_active field)
+# #         new_user = models.User(
+# #             first_name=user_data.first_name,
+# #             last_name=user_data.last_name,
+# #             email=user_data.email,
+# #             password_hash=hashed_password,
+# #             business_name=user_data.business_name,
+# #             location=user_data.location,
+# #             business_interests=user_data.business_interests
+# #         )
+       
+# #         db.add(new_user)
+# #         db.commit()
+# #         db.refresh(new_user)
+       
+# #         return {
+# #             "id": new_user.id,
+# #             "first_name": new_user.first_name,
+# #             "last_name": new_user.last_name,
+# #             "email": new_user.email,
+# #             "business_name": new_user.business_name,
+# #             "location": new_user.location,
+# #             "business_interests": new_user.business_interests,
+# #             "created_at": new_user.created_at,
+# #             "message": "Account created successfully"
+# #         }
+# #     except HTTPException:
+# #         raise
+# #     except Exception as e:
+# #         db.rollback()
+# #         print(f"âŒ Signup error: {str(e)}")
+# #         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+ 
+# # ============================================
+# # FIXED LOGIN ENDPOINT (WITH SUBSCRIPTION DATA)
+# # ============================================
+
+
 # @app.post("/users/login", response_model=LoginResponse)
 # def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
 #     """
-#     Authenticate user and return user data if successful
+#     Authenticate user and return user data with subscription info
 #     """
 #     try:
+#         print(f"🔍 Login attempt for: {login_data.email}")
+        
 #         # Find user by email
 #         user = db.query(models.User).filter(
 #             models.User.email == login_data.email
@@ -3806,6 +3919,7 @@ class LoginResponse(BaseModel):
        
 #         # Check if user exists
 #         if not user:
+#             print(f"❌ User not found: {login_data.email}")
 #             raise HTTPException(
 #                 status_code=404,
 #                 detail="No account found with this email. Please sign up first."
@@ -3813,13 +3927,30 @@ class LoginResponse(BaseModel):
        
 #         # Verify password
 #         if not verify_password(login_data.password, user.password_hash):
+#             print(f"❌ Invalid password for: {login_data.email}")
 #             raise HTTPException(
 #                 status_code=401,
 #                 detail="Incorrect password. Please try again or reset your password."
 #             )
+        
+#         # Check if AI usage should be reset (new month)
+#         current_month = datetime.now().strftime("%Y-%m")
+#         if user.ai_chat_month != current_month:
+#             print(f"🔄 Resetting AI usage for new month: {current_month}")
+#             user.ai_chat_used = 0
+#             user.ai_chat_month = current_month
+#             db.commit()
+#             db.refresh(user)
+        
+#         # ✅ DEBUG: Print what's in the database
+#         print(f"📊 Database values for {user.email}:")
+#         print(f"   - ID: {user.id}")
+#         print(f"   - Subscription Tier: {user.subscription_tier}")
+#         print(f"   - AI Chat Used: {user.ai_chat_used}")
+#         print(f"   - AI Chat Month: {user.ai_chat_month}")
        
-#         # Successful login
-#         return {
+#         # ✅ CRITICAL: Return complete user data with subscription
+#         response_data = {
 #             "success": True,
 #             "message": "Login successful",
 #             "user": {
@@ -3830,26 +3961,41 @@ class LoginResponse(BaseModel):
 #                 "business_name": user.business_name,
 #                 "location": user.location,
 #                 "business_interests": user.business_interests,
+#                 # ✅ CRITICAL: Include subscription fields from database
+#                 "subscription_tier": user.subscription_tier or 'free',
+#                 "ai_chat_used": user.ai_chat_used or 0,
+#                 "ai_chat_month": user.ai_chat_month or current_month,
 #                 "created_at": str(user.created_at)
 #             }
 #         }
+        
+#         print(f"✅ Login successful for {user.email}")
+#         print(f"✅ Returning subscription_tier: {response_data['user']['subscription_tier']}")
+        
+#         return response_data
+        
 #     except HTTPException:
 #         raise
 #     except Exception as e:
-#         print(f"âŒ Login error: {str(e)}")
+#         print(f"❌ Login error: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
 #         raise HTTPException(
 #             status_code=500,
 #             detail=f"Login failed: {str(e)}"
 #         )
- 
+
+
+
+
 # # ============================================
-# # FIXED SIGNUP ENDPOINT
+# # FIXED SIGNUP ENDPOINT (WITH SUBSCRIPTION INITIALIZATION)
 # # ============================================
  
 # @app.post("/users/signup")
 # def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 #     """
-#     Create a new user account
+#     Create a new user account with free tier subscription
 #     """
 #     try:
 #         # Check if email already exists
@@ -3865,8 +4011,11 @@ class LoginResponse(BaseModel):
        
 #         # Hash the password
 #         hashed_password = get_password_hash(user_data.password)
+        
+#         # Get current month for AI usage tracking
+#         current_month = datetime.now().strftime("%Y-%m")
        
-#         # Create new user (without is_active field)
+#         # ✅ CREATE NEW USER WITH SUBSCRIPTION FIELDS
 #         new_user = models.User(
 #             first_name=user_data.first_name,
 #             last_name=user_data.last_name,
@@ -3874,13 +4023,18 @@ class LoginResponse(BaseModel):
 #             password_hash=hashed_password,
 #             business_name=user_data.business_name,
 #             location=user_data.location,
-#             business_interests=user_data.business_interests
+#             business_interests=user_data.business_interests,
+#             # ✅ INITIALIZE SUBSCRIPTION FIELDS
+#             subscription_tier='free',  # Default to free tier
+#             ai_chat_used=0,           # Start with 0 usage
+#             ai_chat_month=current_month  # Set current month
 #         )
        
 #         db.add(new_user)
 #         db.commit()
 #         db.refresh(new_user)
        
+#         # ✅ RETURN USER DATA WITH SUBSCRIPTION
 #         return {
 #             "id": new_user.id,
 #             "first_name": new_user.first_name,
@@ -3889,6 +4043,10 @@ class LoginResponse(BaseModel):
 #             "business_name": new_user.business_name,
 #             "location": new_user.location,
 #             "business_interests": new_user.business_interests,
+#             # ✅ INCLUDE SUBSCRIPTION DATA
+#             "subscription_tier": new_user.subscription_tier,
+#             "ai_chat_used": new_user.ai_chat_used,
+#             "ai_chat_month": new_user.ai_chat_month,
 #             "created_at": new_user.created_at,
 #             "message": "Account created successfully"
 #         }
@@ -3896,18 +4054,229 @@ class LoginResponse(BaseModel):
 #         raise
 #     except Exception as e:
 #         db.rollback()
-#         print(f"âŒ Signup error: {str(e)}")
+#         print(f"❌ Signup error: {str(e)}")
 #         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+# # ============================================
+# # PASSWORD RESET ENDPOINT
+# # ============================================
+
+# @app.post("/users/reset-password")
+# def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
+#     """
+#     Reset user password
+#     """
+#     try:
+#         # Find user by email
+#         user = db.query(models.User).filter(
+#             models.User.email == reset_data.email
+#         ).first()
+       
+#         if not user:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No account found with this email"
+#             )
+       
+#         # Update password
+#         user.password_hash = get_password_hash(reset_data.new_password)
+       
+#         db.commit()
+#         return {
+#             "success": True,
+#             "message": "Password updated successfully"
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         print(f"âŒ Password reset error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Error updating password: {str(e)}"
+#         )
  
+# # ============================================
+# # CHECK EMAIL ENDPOINT
+# # ============================================
+ 
+# @app.get("/users/check-email/{email}")
+# def check_email_exists(email: str, db: Session = Depends(get_db)):
+#     """
+#     Check if an email is already registered
+#     """
+#     user = db.query(models.User).filter(
+#         models.User.email == email
+#     ).first()
+   
+#     return {
+#         "exists": user is not None,
+#         "email": email,
+#         "message": "Email is registered" if user else "Email is available"
+#     }
+ 
+# # # ============================================
+# # # GET USER PROFILE ENDPOINT
+# # # ============================================
+ 
+# # @app.get("/users/profile/{email}")
+# # def get_user_profile(email: str, db: Session = Depends(get_db)):
+# #     """
+# #     Get user profile by email
+# #     """
+# #     user = db.query(models.User).filter(
+# #         models.User.email == email
+# #     ).first()
+   
+# #     if not user:
+# #         raise HTTPException(status_code=404, detail="User not found")
+   
+# #     return {
+# #         "id": user.id,
+# #         "first_name": user.first_name,
+# #         "last_name": user.last_name,
+# #         "email": user.email,
+# #         "business_name": user.business_name,
+# #         "location": user.location,
+# #         "business_interests": user.business_interests,
+# #         "created_at": str(user.created_at)
+# #     }
+ 
+# # ============================================
+# # UPDATED GET USER PROFILE ENDPOINT
+# # ============================================
+ 
+# @app.get("/users/profile/{email}")
+# def get_user_profile(email: str, db: Session = Depends(get_db)):
+#     """
+#     Get user profile by email with subscription data
+#     """
+#     user = db.query(models.User).filter(
+#         models.User.email == email
+#     ).first()
+   
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+    
+#     current_month = datetime.now().strftime("%Y-%m")
+   
+#     return {
+#         "id": user.id,
+#         "first_name": user.first_name,
+#         "last_name": user.last_name,
+#         "email": user.email,
+#         "business_name": user.business_name,
+#         "location": user.location,
+#         "business_interests": user.business_interests,
+#         # ✅ ADD SUBSCRIPTION DATA
+#         "subscription_tier": user.subscription_tier or 'free',
+#         "ai_chat_used": user.ai_chat_used or 0,
+#         "ai_chat_month": user.ai_chat_month or current_month,
+#         "created_at": str(user.created_at)
+#     }
+
+
+from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr
+from fastapi import HTTPException, Depends, Response, Cookie
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+import secrets
+import hashlib
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
 # ============================================
-# FIXED LOGIN ENDPOINT (WITH SUBSCRIPTION DATA)
+# Session Management
 # ============================================
 
+# In-memory session store (use Redis in production)
+active_sessions = {}
+
+def create_session_token() -> str:
+    """Generate a secure session token"""
+    return secrets.token_urlsafe(32)
+
+def create_session(user_id: int, remember_me: bool = False) -> str:
+    """Create a new session and return the session token"""
+    session_token = create_session_token()
+    expires_at = datetime.now() + timedelta(days=30 if remember_me else 1)
+    
+    active_sessions[session_token] = {
+        "user_id": user_id,
+        "created_at": datetime.now(),
+        "expires_at": expires_at
+    }
+    
+    return session_token
+
+def validate_session(session_token: str) -> dict:
+    """Validate session token and return session data"""
+    if not session_token or session_token not in active_sessions:
+        return None
+    
+    session = active_sessions[session_token]
+    
+    # Check if session expired
+    if datetime.now() > session["expires_at"]:
+        del active_sessions[session_token]
+        return None
+    
+    return session
+
+def delete_session(session_token: str):
+    """Delete a session"""
+    if session_token in active_sessions:
+        del active_sessions[session_token]
+
+def get_current_user(session_id: str = Cookie(None), db: Session = Depends(get_db)):
+    """Dependency to get current authenticated user"""
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session = validate_session(session_id)
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    
+    user = db.query(models.User).filter(models.User.id == session["user_id"]).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return user
+
+# ============================================
+# Pydantic Models
+# ============================================
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    remember_me: bool = False
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
+
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+    user: dict = None
+
+# ============================================
+# SECURE LOGIN ENDPOINT (WITH SESSION COOKIES)
+# ============================================
 
 @app.post("/users/login", response_model=LoginResponse)
-def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+def login_user(login_data: UserLogin, response: Response, db: Session = Depends(get_db)):
     """
-    Authenticate user and return user data with subscription info
+    Authenticate user and set secure session cookie
     """
     try:
         print(f"🔍 Login attempt for: {login_data.email}")
@@ -3942,14 +4311,26 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
             db.commit()
             db.refresh(user)
         
-        # ✅ DEBUG: Print what's in the database
+        # ✅ CREATE SESSION
+        session_token = create_session(user.id, login_data.remember_me)
+        
+        # ✅ SET HTTP-ONLY COOKIE
+        max_age = 30 * 24 * 60 * 60 if login_data.remember_me else 24 * 60 * 60
+        response.set_cookie(
+            key="session_id",
+            value=session_token,
+            httponly=True,  # Prevents XSS attacks
+            secure=False,    # HTTPS only in production (set to False for local dev)
+            samesite="lax", # CSRF protection
+            max_age=max_age
+        )
+        
         print(f"📊 Database values for {user.email}:")
         print(f"   - ID: {user.id}")
         print(f"   - Subscription Tier: {user.subscription_tier}")
         print(f"   - AI Chat Used: {user.ai_chat_used}")
-        print(f"   - AI Chat Month: {user.ai_chat_month}")
        
-        # ✅ CRITICAL: Return complete user data with subscription
+        # ✅ RETURN USER DATA
         response_data = {
             "success": True,
             "message": "Login successful",
@@ -3961,7 +4342,6 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
                 "business_name": user.business_name,
                 "location": user.location,
                 "business_interests": user.business_interests,
-                # ✅ CRITICAL: Include subscription fields from database
                 "subscription_tier": user.subscription_tier or 'free',
                 "ai_chat_used": user.ai_chat_used or 0,
                 "ai_chat_month": user.ai_chat_month or current_month,
@@ -3970,7 +4350,7 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
         }
         
         print(f"✅ Login successful for {user.email}")
-        print(f"✅ Returning subscription_tier: {response_data['user']['subscription_tier']}")
+        print(f"✅ Session created: {session_token[:10]}...")
         
         return response_data
         
@@ -3985,17 +4365,14 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
             detail=f"Login failed: {str(e)}"
         )
 
-
-
-
 # ============================================
-# FIXED SIGNUP ENDPOINT (WITH SUBSCRIPTION INITIALIZATION)
+# SECURE SIGNUP ENDPOINT (WITH SESSION COOKIES)
 # ============================================
- 
+
 @app.post("/users/signup")
-def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+def signup_user(user_data: schemas.UserCreate, response: Response, db: Session = Depends(get_db)):
     """
-    Create a new user account with free tier subscription
+    Create a new user account and set session cookie
     """
     try:
         # Check if email already exists
@@ -4024,16 +4401,31 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
             business_name=user_data.business_name,
             location=user_data.location,
             business_interests=user_data.business_interests,
-            # ✅ INITIALIZE SUBSCRIPTION FIELDS
-            subscription_tier='free',  # Default to free tier
-            ai_chat_used=0,           # Start with 0 usage
-            ai_chat_month=current_month  # Set current month
+            subscription_tier='free',
+            ai_chat_used=0,
+            ai_chat_month=current_month
         )
        
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+        
+        # ✅ CREATE SESSION FOR NEW USER
+        session_token = create_session(new_user.id, remember_me=False)
+        
+        # ✅ SET HTTP-ONLY COOKIE
+        response.set_cookie(
+            key="session_id",
+            value=session_token,
+            httponly=True,
+            secure=False,  # Set to False for local dev
+            samesite="lax",
+            max_age=24 * 60 * 60  # 24 hours
+        )
        
+        print(f"✅ New user created: {new_user.email}")
+        print(f"✅ Session created: {session_token[:10]}...")
+        
         # ✅ RETURN USER DATA WITH SUBSCRIPTION
         return {
             "id": new_user.id,
@@ -4043,7 +4435,6 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
             "business_name": new_user.business_name,
             "location": new_user.location,
             "business_interests": new_user.business_interests,
-            # ✅ INCLUDE SUBSCRIPTION DATA
             "subscription_tier": new_user.subscription_tier,
             "ai_chat_used": new_user.ai_chat_used,
             "ai_chat_month": new_user.ai_chat_month,
@@ -4058,6 +4449,121 @@ def signup_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
 # ============================================
+# GET CURRENT USER (SESSION VERIFICATION)
+# ============================================
+
+@app.get("/api/auth/me")
+def get_me(current_user: models.User = Depends(get_current_user)):
+    """
+    Get current authenticated user from session
+    """
+    current_month = datetime.now().strftime("%Y-%m")
+    
+    return {
+        "id": current_user.id,
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "email": current_user.email,
+        "business_name": current_user.business_name,
+        "location": current_user.location,
+        "business_interests": current_user.business_interests,
+        "subscription_tier": current_user.subscription_tier or 'free',
+        "ai_chat_used": current_user.ai_chat_used or 0,
+        "ai_chat_month": current_user.ai_chat_month or current_month,
+        "created_at": str(current_user.created_at)
+    }
+
+# ============================================
+# LOGOUT ENDPOINT
+# ============================================
+
+@app.post("/api/auth/logout")
+def logout(response: Response, session_id: str = Cookie(None)):
+    """
+    Logout user and clear session
+    """
+    if session_id:
+        delete_session(session_id)
+        print(f"✅ Session deleted: {session_id[:10]}...")
+    
+    # Clear the cookie
+    response.delete_cookie(key="session_id")
+    
+    return {"success": True, "message": "Logged out successfully"}
+
+# ============================================
+# DEMO LOGIN ENDPOINT
+# ============================================
+
+# @app.post("/users/demo-login")
+# def demo_login(response: Response, db: Session = Depends(get_db)):
+#     """
+#     Demo login endpoint for testing
+#     """
+#     try:
+#         # Find or create demo user
+#         demo_email = "demo@example.com"
+#         demo_user = db.query(models.User).filter(
+#             models.User.email == demo_email
+#         ).first()
+        
+#         if not demo_user:
+#             # Create demo user if doesn't exist
+#             current_month = datetime.now().strftime("%Y-%m")
+#             demo_user = models.User(
+#                 first_name="Demo",
+#                 last_name="User",
+#                 email=demo_email,
+#                 password_hash=get_password_hash("demo123"),
+#                 business_name="Demo Business",
+#                 location="Mumbai",
+#                 business_interests=["electronics", "fashion", "home"],
+#                 subscription_tier='free',
+#                 ai_chat_used=0,
+#                 ai_chat_month=current_month
+#             )
+#             db.add(demo_user)
+#             db.commit()
+#             db.refresh(demo_user)
+        
+#         # Create session
+#         session_token = create_session(demo_user.id, remember_me=False)
+        
+#         # Set cookie
+#         response.set_cookie(
+#             key="session_id",
+#             value=session_token,
+#             httponly=True,
+#             secure=False,  # Set to False for local dev
+#             samesite="lax",
+#             max_age=24 * 60 * 60
+#         )
+        
+#         current_month = datetime.now().strftime("%Y-%m")
+        
+#         return {
+#             "success": True,
+#             "message": "Demo login successful",
+#             "user": {
+#                 "id": demo_user.id,
+#                 "first_name": demo_user.first_name,
+#                 "last_name": demo_user.last_name,
+#                 "email": demo_user.email,
+#                 "business_name": demo_user.business_name,
+#                 "location": demo_user.location,
+#                 "business_interests": demo_user.business_interests,
+#                 "subscription_tier": demo_user.subscription_tier or 'free',
+#                 "ai_chat_used": demo_user.ai_chat_used or 0,
+#                 "ai_chat_month": demo_user.ai_chat_month or current_month,
+#                 "created_at": str(demo_user.created_at)
+#             }
+#         }
+        
+#     except Exception as e:
+#         print(f"❌ Demo login error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Demo login failed: {str(e)}")
+
+# ============================================
 # PASSWORD RESET ENDPOINT
 # ============================================
 
@@ -4067,7 +4573,6 @@ def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
     Reset user password
     """
     try:
-        # Find user by email
         user = db.query(models.User).filter(
             models.User.email == reset_data.email
         ).first()
@@ -4080,8 +4585,8 @@ def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
        
         # Update password
         user.password_hash = get_password_hash(reset_data.new_password)
-       
         db.commit()
+        
         return {
             "success": True,
             "message": "Password updated successfully"
@@ -4090,16 +4595,16 @@ def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         db.rollback()
-        print(f"âŒ Password reset error: {str(e)}")
+        print(f"❌ Password reset error: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error updating password: {str(e)}"
         )
- 
+
 # ============================================
 # CHECK EMAIL ENDPOINT
 # ============================================
- 
+
 @app.get("/users/check-email/{email}")
 def check_email_exists(email: str, db: Session = Depends(get_db)):
     """
@@ -4114,43 +4619,27 @@ def check_email_exists(email: str, db: Session = Depends(get_db)):
         "email": email,
         "message": "Email is registered" if user else "Email is available"
     }
- 
-# # ============================================
-# # GET USER PROFILE ENDPOINT
-# # ============================================
- 
-# @app.get("/users/profile/{email}")
-# def get_user_profile(email: str, db: Session = Depends(get_db)):
-#     """
-#     Get user profile by email
-#     """
-#     user = db.query(models.User).filter(
-#         models.User.email == email
-#     ).first()
-   
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-   
-#     return {
-#         "id": user.id,
-#         "first_name": user.first_name,
-#         "last_name": user.last_name,
-#         "email": user.email,
-#         "business_name": user.business_name,
-#         "location": user.location,
-#         "business_interests": user.business_interests,
-#         "created_at": str(user.created_at)
-#     }
- 
+
 # ============================================
-# UPDATED GET USER PROFILE ENDPOINT
+# GET USER PROFILE ENDPOINT (PROTECTED)
 # ============================================
- 
+
 @app.get("/users/profile/{email}")
-def get_user_profile(email: str, db: Session = Depends(get_db)):
+def get_user_profile(
+    email: str, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
-    Get user profile by email with subscription data
+    Get user profile by email (requires authentication)
     """
+    # Only allow users to view their own profile or admins
+    if current_user.email != email:
+        raise HTTPException(
+            status_code=403, 
+            detail="Not authorized to view this profile"
+        )
+    
     user = db.query(models.User).filter(
         models.User.email == email
     ).first()
@@ -4168,13 +4657,11 @@ def get_user_profile(email: str, db: Session = Depends(get_db)):
         "business_name": user.business_name,
         "location": user.location,
         "business_interests": user.business_interests,
-        # ✅ ADD SUBSCRIPTION DATA
         "subscription_tier": user.subscription_tier or 'free',
         "ai_chat_used": user.ai_chat_used or 0,
         "ai_chat_month": user.ai_chat_month or current_month,
         "created_at": str(user.created_at)
     }
-
 
 
 
@@ -4741,6 +5228,8 @@ def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = De
         import traceback
         traceback.print_exc()
         raise HTTPException(500, f"Analysis failed: {str(e)}")
+
+  
 
 def get_similar_products(db: Session, product_name: str, category: str, source: str):
     """
@@ -6649,6 +7138,337 @@ def get_products_by_sentiment(
 
 
 
+# class SubscriptionUpdate(BaseModel):
+#     user_id: int
+#     subscription_tier: str
+
+# class AIUsageUpdate(BaseModel):
+#     user_id: int
+#     increment: int = 1
+#     month: str
+
+# # ==================== SUBSCRIPTION ENDPOINTS ====================
+
+# @app.patch("/users/{user_id}/subscription")
+# def update_user_subscription(user_id: int, data: SubscriptionUpdate, db: Session = Depends(get_db)):
+#     """
+#     Update user's subscription tier in database
+    
+#     Args:
+#         user_id: User ID
+#         data: SubscriptionUpdate with user_id and subscription_tier
+    
+#     Returns:
+#         Success message with updated user data
+#     """
+#     try:
+#         # Validate subscription tier
+#         valid_tiers = ['free', 'basic', 'premium', 'enterprise']
+#         if data.subscription_tier not in valid_tiers:
+#             raise HTTPException(
+#                 status_code=400, 
+#                 detail=f"Invalid subscription tier. Must be one of: {', '.join(valid_tiers)}"
+#             )
+        
+#         # Check if user exists
+#         user = db.query(models.User).filter(models.User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         # Update subscription tier
+#         user.subscription_tier = data.subscription_tier
+#         user.updated_at = datetime.now()
+        
+#         db.commit()
+#         db.refresh(user)
+        
+#         return {
+#             "success": True,
+#             "message": f"Subscription updated to {data.subscription_tier}",
+#             "user": {
+#                 "id": user.id,
+#                 "first_name": user.first_name,
+#                 "last_name": user.last_name,
+#                 "email": user.email,
+#                 "subscription_tier": user.subscription_tier,
+#                 "updated_at": str(user.updated_at)
+#             }
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# # ==================== AI USAGE TRACKING ENDPOINTS ====================
+
+# @app.post("/users/{user_id}/ai-usage")
+# def track_ai_usage(user_id: int, data: AIUsageUpdate, db: Session = Depends(get_db)):
+#     """
+#     Track and increment AI chat usage for the current month
+#     Auto-resets counter if it's a new month
+    
+#     Args:
+#         user_id: User ID
+#         data: AIUsageUpdate with increment and month
+    
+#     Returns:
+#         Updated AI usage data
+#     """
+#     try:
+#         # Get user
+#         user = db.query(models.User).filter(models.User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         current_month = data.month
+#         stored_month = user.ai_chat_month
+#         current_usage = user.ai_chat_used or 0
+        
+#         # Reset counter if new month
+#         if stored_month != current_month:
+#             new_usage = data.increment
+#             print(f"🔄 Resetting AI usage for user {user_id} (new month: {current_month})")
+#         else:
+#             new_usage = current_usage + data.increment
+#             print(f"📊 Incrementing AI usage for user {user_id}: {current_usage} -> {new_usage}")
+        
+#         # Update database
+#         user.ai_chat_used = new_usage
+#         user.ai_chat_month = current_month
+#         user.updated_at = datetime.now()
+        
+#         db.commit()
+#         db.refresh(user)
+        
+#         return {
+#             "success": True,
+#             "ai_chat_used": user.ai_chat_used,
+#             "ai_chat_month": user.ai_chat_month,
+#             "message": "AI usage tracked successfully"
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# @app.get("/users/{user_id}/ai-usage")
+# def get_ai_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Get current AI chat usage for the month
+#     Auto-resets if viewing in a new month
+    
+#     Args:
+#         user_id: User ID
+    
+#     Returns:
+#         Current AI usage data
+#     """
+#     try:
+#         user = db.query(models.User).filter(models.User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         current_month = datetime.now().strftime("%Y-%m")
+#         stored_month = user.ai_chat_month
+        
+#         # Reset if new month
+#         if stored_month != current_month:
+#             usage = 0
+#         else:
+#             usage = user.ai_chat_used or 0
+        
+#         return {
+#             "ai_chat_used": usage,
+#             "ai_chat_month": stored_month or current_month,
+#             "subscription_tier": user.subscription_tier or 'free'
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# @app.get("/users/{user_id}/profile")
+# def get_user_profile_complete(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Get complete user profile including subscription details
+    
+#     Args:
+#         user_id: User ID
+    
+#     Returns:
+#         Complete user profile data
+#     """
+#     try:
+#         user = db.query(models.User).filter(models.User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         return {
+#             "id": user.id,
+#             "first_name": user.first_name,
+#             "last_name": user.last_name,
+#             "email": user.email,
+#             "business_name": user.business_name,
+#             "location": user.location,
+#             "business_interests": user.business_interests,
+#             "subscription_tier": user.subscription_tier or 'free',
+#             "ai_chat_used": user.ai_chat_used or 0,
+#             "ai_chat_month": user.ai_chat_month,
+#             "created_at": str(user.created_at),
+#             "updated_at": str(user.updated_at) if user.updated_at else None,
+#             "is_active": user.is_active if hasattr(user, 'is_active') else True
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# # ==================== SUBSCRIPTION STATUS ENDPOINTS ====================
+
+# @app.get("/users/{user_id}/subscription-status")
+# def get_subscription_status(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Get detailed subscription status with usage limits
+    
+#     Args:
+#         user_id: User ID
+    
+#     Returns:
+#         Subscription tier and all usage limits
+#     """
+#     try:
+#         user = db.query(models.User).filter(models.User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         tier = user.subscription_tier or 'free'
+        
+#         # Define limits based on tier
+#         tier_limits = {
+#             'free': {
+#                 'maxAIChatMessagesPerMonth': 5,
+#                 'maxTopN': 5,
+#                 'hasChartAISummaries': False,
+#                 'maxNotifications': 5,
+#                 'maxFullAnalysesPerMonth': 5
+#             },
+#             'basic': {
+#                 'maxAIChatMessagesPerMonth': 20,
+#                 'maxTopN': 20,
+#                 'hasChartAISummaries': True,
+#                 'maxNotifications': 15,
+#                 'maxFullAnalysesPerMonth': 20
+#             },
+#             'premium': {
+#                 'maxAIChatMessagesPerMonth': float('inf'),
+#                 'maxTopN': 100,
+#                 'hasChartAISummaries': True,
+#                 'maxNotifications': float('inf'),
+#                 'maxFullAnalysesPerMonth': float('inf')
+#             },
+#             'enterprise': {
+#                 'maxAIChatMessagesPerMonth': float('inf'),
+#                 'maxTopN': float('inf'),
+#                 'hasChartAISummaries': True,
+#                 'maxNotifications': float('inf'),
+#                 'maxFullAnalysesPerMonth': float('inf')
+#             }
+#         }
+        
+#         current_month = datetime.now().strftime("%Y-%m")
+#         stored_month = user.ai_chat_month
+        
+#         # Reset if new month
+#         if stored_month != current_month:
+#             ai_used = 0
+#         else:
+#             ai_used = user.ai_chat_used or 0
+        
+#         # Convert inf to "unlimited" string for JSON serialization
+#         limits = tier_limits.get(tier, tier_limits['free'])
+#         serializable_limits = {}
+#         for key, value in limits.items():
+#             if value == float('inf'):
+#                 serializable_limits[key] = "unlimited"
+#             else:
+#                 serializable_limits[key] = value
+        
+#         return {
+#             "user_id": user_id,
+#             "subscription_tier": tier,
+#             "limits": serializable_limits,
+#             "usage": {
+#                 "ai_chat_used": ai_used,
+#                 "ai_chat_month": stored_month or current_month
+#             }
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# @app.post("/users/{user_id}/reset-ai-usage")
+# def reset_ai_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Manually reset AI usage counter (admin function)
+    
+#     Args:
+#         user_id: User ID
+    
+#     Returns:
+#         Success message
+#     """
+#     try:
+#         user = db.query(models.User).filter(models.User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         current_month = datetime.now().strftime("%Y-%m")
+        
+#         user.ai_chat_used = 0
+#         user.ai_chat_month = current_month
+#         user.updated_at = datetime.now()
+        
+#         db.commit()
+#         db.refresh(user)
+        
+#         return {
+#             "success": True,
+#             "message": "AI usage reset successfully",
+#             "data": {
+#                 "id": user.id,
+#                 "ai_chat_used": user.ai_chat_used,
+#                 "ai_chat_month": user.ai_chat_month
+#             }
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+
+
+
+
+
+
+
+
 class SubscriptionUpdate(BaseModel):
     user_id: int
     subscription_tier: str
@@ -6661,18 +7481,31 @@ class AIUsageUpdate(BaseModel):
 # ==================== SUBSCRIPTION ENDPOINTS ====================
 
 @app.patch("/users/{user_id}/subscription")
-def update_user_subscription(user_id: int, data: SubscriptionUpdate, db: Session = Depends(get_db)):
+def update_user_subscription(
+    user_id: int, 
+    data: SubscriptionUpdate, 
+    current_user: models.User = Depends(get_current_user),  # ✅ Require authentication
+    db: Session = Depends(get_db)
+):
     """
-    Update user's subscription tier in database
+    Update user's subscription tier in database (requires authentication)
     
     Args:
         user_id: User ID
         data: SubscriptionUpdate with user_id and subscription_tier
+        current_user: Authenticated user from session
     
     Returns:
         Success message with updated user data
     """
     try:
+        # ✅ SECURITY: Verify user can only update their own subscription
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=403, 
+                detail="Not authorized to update this subscription"
+            )
+        
         # Validate subscription tier
         valid_tiers = ['free', 'basic', 'premium', 'enterprise']
         if data.subscription_tier not in valid_tiers:
@@ -6681,28 +7514,25 @@ def update_user_subscription(user_id: int, data: SubscriptionUpdate, db: Session
                 detail=f"Invalid subscription tier. Must be one of: {', '.join(valid_tiers)}"
             )
         
-        # Check if user exists
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
         # Update subscription tier
-        user.subscription_tier = data.subscription_tier
-        user.updated_at = datetime.now()
+        current_user.subscription_tier = data.subscription_tier
+        current_user.updated_at = datetime.now()
         
         db.commit()
-        db.refresh(user)
+        db.refresh(current_user)
         
         return {
             "success": True,
             "message": f"Subscription updated to {data.subscription_tier}",
             "user": {
-                "id": user.id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "subscription_tier": user.subscription_tier,
-                "updated_at": str(user.updated_at)
+                "id": current_user.id,
+                "first_name": current_user.first_name,
+                "last_name": current_user.last_name,
+                "email": current_user.email,
+                "subscription_tier": current_user.subscription_tier,
+                "ai_chat_used": current_user.ai_chat_used,
+                "ai_chat_month": current_user.ai_chat_month,
+                "updated_at": str(current_user.updated_at)
             }
         }
     
@@ -6716,27 +7546,35 @@ def update_user_subscription(user_id: int, data: SubscriptionUpdate, db: Session
 # ==================== AI USAGE TRACKING ENDPOINTS ====================
 
 @app.post("/users/{user_id}/ai-usage")
-def track_ai_usage(user_id: int, data: AIUsageUpdate, db: Session = Depends(get_db)):
+def track_ai_usage(
+    user_id: int, 
+    data: AIUsageUpdate, 
+    current_user: models.User = Depends(get_current_user),  # ✅ Require authentication
+    db: Session = Depends(get_db)
+):
     """
-    Track and increment AI chat usage for the current month
+    Track and increment AI chat usage for the current month (requires authentication)
     Auto-resets counter if it's a new month
     
     Args:
         user_id: User ID
         data: AIUsageUpdate with increment and month
+        current_user: Authenticated user from session
     
     Returns:
         Updated AI usage data
     """
     try:
-        # Get user
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # ✅ SECURITY: Verify user can only track their own usage
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=403, 
+                detail="Not authorized to update this user's AI usage"
+            )
         
         current_month = data.month
-        stored_month = user.ai_chat_month
-        current_usage = user.ai_chat_used or 0
+        stored_month = current_user.ai_chat_month
+        current_usage = current_user.ai_chat_used or 0
         
         # Reset counter if new month
         if stored_month != current_month:
@@ -6747,17 +7585,17 @@ def track_ai_usage(user_id: int, data: AIUsageUpdate, db: Session = Depends(get_
             print(f"📊 Incrementing AI usage for user {user_id}: {current_usage} -> {new_usage}")
         
         # Update database
-        user.ai_chat_used = new_usage
-        user.ai_chat_month = current_month
-        user.updated_at = datetime.now()
+        current_user.ai_chat_used = new_usage
+        current_user.ai_chat_month = current_month
+        current_user.updated_at = datetime.now()
         
         db.commit()
-        db.refresh(user)
+        db.refresh(current_user)
         
         return {
             "success": True,
-            "ai_chat_used": user.ai_chat_used,
-            "ai_chat_month": user.ai_chat_month,
+            "ai_chat_used": current_user.ai_chat_used,
+            "ai_chat_month": current_user.ai_chat_month,
             "message": "AI usage tracked successfully"
         }
     
@@ -6769,35 +7607,43 @@ def track_ai_usage(user_id: int, data: AIUsageUpdate, db: Session = Depends(get_
 
 
 @app.get("/users/{user_id}/ai-usage")
-def get_ai_usage(user_id: int, db: Session = Depends(get_db)):
+def get_ai_usage(
+    user_id: int, 
+    current_user: models.User = Depends(get_current_user),  # ✅ Require authentication
+    db: Session = Depends(get_db)
+):
     """
-    Get current AI chat usage for the month
+    Get current AI chat usage for the month (requires authentication)
     Auto-resets if viewing in a new month
     
     Args:
         user_id: User ID
+        current_user: Authenticated user from session
     
     Returns:
         Current AI usage data
     """
     try:
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # ✅ SECURITY: Verify user can only view their own usage
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=403, 
+                detail="Not authorized to view this user's AI usage"
+            )
         
         current_month = datetime.now().strftime("%Y-%m")
-        stored_month = user.ai_chat_month
+        stored_month = current_user.ai_chat_month
         
         # Reset if new month
         if stored_month != current_month:
             usage = 0
         else:
-            usage = user.ai_chat_used or 0
+            usage = current_user.ai_chat_used or 0
         
         return {
             "ai_chat_used": usage,
             "ai_chat_month": stored_month or current_month,
-            "subscription_tier": user.subscription_tier or 'free'
+            "subscription_tier": current_user.subscription_tier or 'free'
         }
     
     except HTTPException:
@@ -6807,35 +7653,43 @@ def get_ai_usage(user_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/users/{user_id}/profile")
-def get_user_profile_complete(user_id: int, db: Session = Depends(get_db)):
+def get_user_profile_complete(
+    user_id: int, 
+    current_user: models.User = Depends(get_current_user),  # ✅ Require authentication
+    db: Session = Depends(get_db)
+):
     """
-    Get complete user profile including subscription details
+    Get complete user profile including subscription details (requires authentication)
     
     Args:
         user_id: User ID
+        current_user: Authenticated user from session
     
     Returns:
         Complete user profile data
     """
     try:
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # ✅ SECURITY: Verify user can only view their own profile
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=403, 
+                detail="Not authorized to view this profile"
+            )
         
         return {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-            "business_name": user.business_name,
-            "location": user.location,
-            "business_interests": user.business_interests,
-            "subscription_tier": user.subscription_tier or 'free',
-            "ai_chat_used": user.ai_chat_used or 0,
-            "ai_chat_month": user.ai_chat_month,
-            "created_at": str(user.created_at),
-            "updated_at": str(user.updated_at) if user.updated_at else None,
-            "is_active": user.is_active if hasattr(user, 'is_active') else True
+            "id": current_user.id,
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name,
+            "email": current_user.email,
+            "business_name": current_user.business_name,
+            "location": current_user.location,
+            "business_interests": current_user.business_interests,
+            "subscription_tier": current_user.subscription_tier or 'free',
+            "ai_chat_used": current_user.ai_chat_used or 0,
+            "ai_chat_month": current_user.ai_chat_month,
+            "created_at": str(current_user.created_at),
+            "updated_at": str(current_user.updated_at) if current_user.updated_at else None,
+            "is_active": current_user.is_active if hasattr(current_user, 'is_active') else True
         }
     
     except HTTPException:
@@ -6847,22 +7701,30 @@ def get_user_profile_complete(user_id: int, db: Session = Depends(get_db)):
 # ==================== SUBSCRIPTION STATUS ENDPOINTS ====================
 
 @app.get("/users/{user_id}/subscription-status")
-def get_subscription_status(user_id: int, db: Session = Depends(get_db)):
+def get_subscription_status(
+    user_id: int, 
+    current_user: models.User = Depends(get_current_user),  # ✅ Require authentication
+    db: Session = Depends(get_db)
+):
     """
-    Get detailed subscription status with usage limits
+    Get detailed subscription status with usage limits (requires authentication)
     
     Args:
         user_id: User ID
+        current_user: Authenticated user from session
     
     Returns:
         Subscription tier and all usage limits
     """
     try:
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # ✅ SECURITY: Verify user can only view their own subscription status
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=403, 
+                detail="Not authorized to view this subscription status"
+            )
         
-        tier = user.subscription_tier or 'free'
+        tier = current_user.subscription_tier or 'free'
         
         # Define limits based on tier
         tier_limits = {
@@ -6897,13 +7759,13 @@ def get_subscription_status(user_id: int, db: Session = Depends(get_db)):
         }
         
         current_month = datetime.now().strftime("%Y-%m")
-        stored_month = user.ai_chat_month
+        stored_month = current_user.ai_chat_month
         
         # Reset if new month
         if stored_month != current_month:
             ai_used = 0
         else:
-            ai_used = user.ai_chat_used or 0
+            ai_used = current_user.ai_chat_used or 0
         
         # Convert inf to "unlimited" string for JSON serialization
         limits = tier_limits.get(tier, tier_limits['free'])
@@ -6931,37 +7793,46 @@ def get_subscription_status(user_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/users/{user_id}/reset-ai-usage")
-def reset_ai_usage(user_id: int, db: Session = Depends(get_db)):
+def reset_ai_usage(
+    user_id: int, 
+    current_user: models.User = Depends(get_current_user),  # ✅ Require authentication
+    db: Session = Depends(get_db)
+):
     """
-    Manually reset AI usage counter (admin function)
+    Manually reset AI usage counter (requires authentication)
+    Users can only reset their own usage
     
     Args:
         user_id: User ID
+        current_user: Authenticated user from session
     
     Returns:
         Success message
     """
     try:
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # ✅ SECURITY: Verify user can only reset their own usage
+        if current_user.id != user_id:
+            raise HTTPException(
+                status_code=403, 
+                detail="Not authorized to reset this user's AI usage"
+            )
         
         current_month = datetime.now().strftime("%Y-%m")
         
-        user.ai_chat_used = 0
-        user.ai_chat_month = current_month
-        user.updated_at = datetime.now()
+        current_user.ai_chat_used = 0
+        current_user.ai_chat_month = current_month
+        current_user.updated_at = datetime.now()
         
         db.commit()
-        db.refresh(user)
+        db.refresh(current_user)
         
         return {
             "success": True,
             "message": "AI usage reset successfully",
             "data": {
-                "id": user.id,
-                "ai_chat_used": user.ai_chat_used,
-                "ai_chat_month": user.ai_chat_month
+                "id": current_user.id,
+                "ai_chat_used": current_user.ai_chat_used,
+                "ai_chat_month": current_user.ai_chat_month
             }
         }
     
@@ -6970,3 +7841,717 @@ def reset_ai_usage(user_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+# ==================== ADMIN ENDPOINTS (Optional) ====================
+
+@app.patch("/admin/users/{user_id}/subscription")
+def admin_update_subscription(
+    user_id: int,
+    data: SubscriptionUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Admin endpoint to update any user's subscription
+    (Only for admin users - add admin check here)
+    """
+    try:
+        # ✅ TODO: Add admin role check
+        # if not current_user.is_admin:
+        #     raise HTTPException(403, "Admin access required")
+        
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        valid_tiers = ['free', 'basic', 'premium', 'enterprise']
+        if data.subscription_tier not in valid_tiers:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid subscription tier. Must be one of: {', '.join(valid_tiers)}"
+            )
+        
+        user.subscription_tier = data.subscription_tier
+        user.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "success": True,
+            "message": f"Subscription updated to {data.subscription_tier} by admin",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "subscription_tier": user.subscription_tier
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/admin/users/{user_id}/profile")
+def admin_get_user_profile(
+    user_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Admin endpoint to view any user's profile
+    (Only for admin users - add admin check here)
+    """
+    try:
+        # ✅ TODO: Add admin role check
+        # if not current_user.is_admin:
+        #     raise HTTPException(403, "Admin access required")
+        
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "business_name": user.business_name,
+            "location": user.location,
+            "business_interests": user.business_interests,
+            "subscription_tier": user.subscription_tier or 'free',
+            "ai_chat_used": user.ai_chat_used or 0,
+            "ai_chat_month": user.ai_chat_month,
+            "created_at": str(user.created_at),
+            "updated_at": str(user.updated_at) if user.updated_at else None
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# from passlib.context import CryptContext
+# from pydantic import BaseModel, EmailStr
+# from fastapi import HTTPException, Depends, Response, Cookie
+# from sqlalchemy.orm import Session
+# from datetime import datetime, timedelta
+# import secrets
+# import hashlib
+# import redis
+# import json
+
+# # Password hashing
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# def verify_password(plain_password: str, hashed_password: str) -> bool:
+#     return pwd_context.verify(plain_password, hashed_password)
+
+# def get_password_hash(password: str) -> str:
+#     return pwd_context.hash(password)
+
+# # ============================================
+# # Redis Session Management
+# # ============================================
+
+# # Reuse existing Redis client from your app configuration
+# # Assumes you already have: redis_client = redis.Redis(...) defined earlier
+# # If your Redis client has a different name, replace 'redis_client' with that name
+
+# def create_session_token() -> str:
+#     """Generate a secure session token"""
+#     return secrets.token_urlsafe(32)
+
+# def create_session(user_id: int, remember_me: bool = False) -> str:
+#     """Create a new session in Redis and return the session token"""
+#     session_token = create_session_token()
+#     expires_in_seconds = 30 * 24 * 60 * 60 if remember_me else 24 * 60 * 60  # 30 days or 1 day
+    
+#     session_data = {
+#         "user_id": user_id,
+#         "created_at": datetime.now().isoformat(),
+#         "expires_at": (datetime.now() + timedelta(seconds=expires_in_seconds)).isoformat()
+#     }
+    
+#     # Store session in Redis with expiration
+#     redis_client.setex(
+#         f"session:{session_token}",
+#         expires_in_seconds,
+#         json.dumps(session_data)
+#     )
+    
+#     # Also maintain a user->sessions mapping for logout all devices
+#     redis_client.sadd(f"user_sessions:{user_id}", session_token)
+#     redis_client.expire(f"user_sessions:{user_id}", expires_in_seconds)
+    
+#     return session_token
+
+# def validate_session(session_token: str) -> dict:
+#     """Validate session token and return session data from Redis"""
+#     if not session_token:
+#         return None
+    
+#     # Retrieve session from Redis
+#     session_json = redis_client.get(f"session:{session_token}")
+    
+#     if not session_json:
+#         return None
+    
+#     try:
+#         session = json.loads(session_json)
+        
+#         # Check if session expired (Redis TTL should handle this, but double-check)
+#         expires_at = datetime.fromisoformat(session["expires_at"])
+#         if datetime.now() > expires_at:
+#             delete_session(session_token)
+#             return None
+        
+#         return session
+#     except (json.JSONDecodeError, KeyError, ValueError):
+#         return None
+
+# def delete_session(session_token: str):
+#     """Delete a session from Redis"""
+#     # Get user_id before deleting to clean up user_sessions set
+#     session_json = redis_client.get(f"session:{session_token}")
+#     if session_json:
+#         try:
+#             session = json.loads(session_json)
+#             user_id = session.get("user_id")
+#             if user_id:
+#                 redis_client.srem(f"user_sessions:{user_id}", session_token)
+#         except (json.JSONDecodeError, KeyError):
+#             pass
+    
+#     # Delete the session
+#     redis_client.delete(f"session:{session_token}")
+
+# def delete_all_user_sessions(user_id: int):
+#     """Delete all sessions for a specific user (logout from all devices)"""
+#     # Get all session tokens for this user
+#     session_tokens = redis_client.smembers(f"user_sessions:{user_id}")
+    
+#     # Delete each session
+#     for token in session_tokens:
+#         redis_client.delete(f"session:{token}")
+    
+#     # Delete the user sessions set
+#     redis_client.delete(f"user_sessions:{user_id}")
+
+# def get_current_user(session_id: str = Cookie(None), db: Session = Depends(get_db)):
+#     """Dependency to get current authenticated user"""
+#     if not session_id:
+#         raise HTTPException(status_code=401, detail="Not authenticated")
+    
+#     session = validate_session(session_id)
+#     if not session:
+#         raise HTTPException(status_code=401, detail="Invalid or expired session")
+    
+#     user = db.query(models.User).filter(models.User.id == session["user_id"]).first()
+#     if not user:
+#         raise HTTPException(status_code=401, detail="User not found")
+    
+#     return user
+
+# # ============================================
+# # Pydantic Models
+# # ============================================
+
+# class UserLogin(BaseModel):
+#     email: EmailStr
+#     password: str
+#     remember_me: bool = False
+
+# class PasswordReset(BaseModel):
+#     email: EmailStr
+#     new_password: str
+
+# class LoginResponse(BaseModel):
+#     success: bool
+#     message: str
+#     user: dict = None
+
+# # ============================================
+# # SECURE LOGIN ENDPOINT (WITH REDIS SESSION)
+# # ============================================
+
+# @app.post("/users/login", response_model=LoginResponse)
+# def login_user(login_data: UserLogin, response: Response, db: Session = Depends(get_db)):
+#     """
+#     Authenticate user and set secure session cookie (stored in Redis)
+#     """
+#     try:
+#         print(f"🔍 Login attempt for: {login_data.email}")
+        
+#         # Find user by email
+#         user = db.query(models.User).filter(
+#             models.User.email == login_data.email
+#         ).first()
+       
+#         # Check if user exists
+#         if not user:
+#             print(f"❌ User not found: {login_data.email}")
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No account found with this email. Please sign up first."
+#             )
+       
+#         # Verify password
+#         if not verify_password(login_data.password, user.password_hash):
+#             print(f"❌ Invalid password for: {login_data.email}")
+#             raise HTTPException(
+#                 status_code=401,
+#                 detail="Incorrect password. Please try again or reset your password."
+#             )
+        
+#         # Check if AI usage should be reset (new month)
+#         current_month = datetime.now().strftime("%Y-%m")
+#         if user.ai_chat_month != current_month:
+#             print(f"🔄 Resetting AI usage for new month: {current_month}")
+#             user.ai_chat_used = 0
+#             user.ai_chat_month = current_month
+#             db.commit()
+#             db.refresh(user)
+        
+#         # ✅ CREATE SESSION IN REDIS
+#         session_token = create_session(user.id, login_data.remember_me)
+        
+#         # ✅ SET HTTP-ONLY COOKIE
+#         max_age = 30 * 24 * 60 * 60 if login_data.remember_me else 24 * 60 * 60
+#         response.set_cookie(
+#             key="session_id",
+#             value=session_token,
+#             httponly=True,  # Prevents XSS attacks
+#             secure=False,    # HTTPS only in production (set to True in production)
+#             samesite="lax", # CSRF protection
+#             max_age=max_age
+#         )
+        
+#         print(f"📊 Database values for {user.email}:")
+#         print(f"   - ID: {user.id}")
+#         print(f"   - Subscription Tier: {user.subscription_tier}")
+#         print(f"   - AI Chat Used: {user.ai_chat_used}")
+       
+#         # ✅ RETURN USER DATA
+#         response_data = {
+#             "success": True,
+#             "message": "Login successful",
+#             "user": {
+#                 "id": user.id,
+#                 "first_name": user.first_name,
+#                 "last_name": user.last_name,
+#                 "email": user.email,
+#                 "business_name": user.business_name,
+#                 "location": user.location,
+#                 "business_interests": user.business_interests,
+#                 "subscription_tier": user.subscription_tier or 'free',
+#                 "ai_chat_used": user.ai_chat_used or 0,
+#                 "ai_chat_month": user.ai_chat_month or current_month,
+#                 "created_at": str(user.created_at)
+#             }
+#         }
+        
+#         print(f"✅ Login successful for {user.email}")
+#         print(f"✅ Session created in Redis: {session_token[:10]}...")
+        
+#         return response_data
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ Login error: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Login failed: {str(e)}"
+#         )
+
+# # ============================================
+# # SECURE SIGNUP ENDPOINT (WITH REDIS SESSION)
+# # ============================================
+
+# @app.post("/users/signup")
+# def signup_user(user_data: schemas.UserCreate, response: Response, db: Session = Depends(get_db)):
+#     """
+#     Create a new user account and set session cookie (stored in Redis)
+#     """
+#     try:
+#         # Check if email already exists
+#         existing_user = db.query(models.User).filter(
+#             models.User.email == user_data.email
+#         ).first()
+       
+#         if existing_user:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="Email already registered. Please login instead."
+#             )
+       
+#         # Hash the password
+#         hashed_password = get_password_hash(user_data.password)
+        
+#         # Get current month for AI usage tracking
+#         current_month = datetime.now().strftime("%Y-%m")
+       
+#         # ✅ CREATE NEW USER WITH SUBSCRIPTION FIELDS
+#         new_user = models.User(
+#             first_name=user_data.first_name,
+#             last_name=user_data.last_name,
+#             email=user_data.email,
+#             password_hash=hashed_password,
+#             business_name=user_data.business_name,
+#             location=user_data.location,
+#             business_interests=user_data.business_interests,
+#             subscription_tier='free',
+#             ai_chat_used=0,
+#             ai_chat_month=current_month
+#         )
+       
+#         db.add(new_user)
+#         db.commit()
+#         db.refresh(new_user)
+        
+#         # ✅ CREATE SESSION IN REDIS FOR NEW USER
+#         session_token = create_session(new_user.id, remember_me=False)
+        
+#         # ✅ SET HTTP-ONLY COOKIE
+#         response.set_cookie(
+#             key="session_id",
+#             value=session_token,
+#             httponly=True,
+#             secure=False,  # Set to True in production
+#             samesite="lax",
+#             max_age=24 * 60 * 60  # 24 hours
+#         )
+       
+#         print(f"✅ New user created: {new_user.email}")
+#         print(f"✅ Session created in Redis: {session_token[:10]}...")
+        
+#         # ✅ RETURN USER DATA WITH SUBSCRIPTION
+#         return {
+#             "id": new_user.id,
+#             "first_name": new_user.first_name,
+#             "last_name": new_user.last_name,
+#             "email": new_user.email,
+#             "business_name": new_user.business_name,
+#             "location": new_user.location,
+#             "business_interests": new_user.business_interests,
+#             "subscription_tier": new_user.subscription_tier,
+#             "ai_chat_used": new_user.ai_chat_used,
+#             "ai_chat_month": new_user.ai_chat_month,
+#             "created_at": new_user.created_at,
+#             "message": "Account created successfully"
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         print(f"❌ Signup error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+# # ============================================
+# # GET CURRENT USER (SESSION VERIFICATION)
+# # ============================================
+
+# @app.get("/api/auth/me")
+# def get_me(current_user: models.User = Depends(get_current_user)):
+#     """
+#     Get current authenticated user from Redis session
+#     """
+#     current_month = datetime.now().strftime("%Y-%m")
+    
+#     return {
+#         "id": current_user.id,
+#         "first_name": current_user.first_name,
+#         "last_name": current_user.last_name,
+#         "email": current_user.email,
+#         "business_name": current_user.business_name,
+#         "location": current_user.location,
+#         "business_interests": current_user.business_interests,
+#         "subscription_tier": current_user.subscription_tier or 'free',
+#         "ai_chat_used": current_user.ai_chat_used or 0,
+#         "ai_chat_month": current_user.ai_chat_month or current_month,
+#         "created_at": str(current_user.created_at)
+#     }
+
+# # ============================================
+# # LOGOUT ENDPOINT
+# # ============================================
+
+# @app.post("/api/auth/logout")
+# def logout(response: Response, session_id: str = Cookie(None)):
+#     """
+#     Logout user and clear Redis session
+#     """
+#     if session_id:
+#         delete_session(session_id)
+#         print(f"✅ Session deleted from Redis: {session_id[:10]}...")
+    
+#     # Clear the cookie
+#     response.delete_cookie(key="session_id")
+    
+#     return {"success": True, "message": "Logged out successfully"}
+
+# # ============================================
+# # LOGOUT ALL DEVICES ENDPOINT
+# # ============================================
+
+# @app.post("/api/auth/logout-all")
+# def logout_all_devices(
+#     response: Response, 
+#     current_user: models.User = Depends(get_current_user),
+#     session_id: str = Cookie(None)
+# ):
+#     """
+#     Logout user from all devices (delete all sessions)
+#     """
+#     delete_all_user_sessions(current_user.id)
+    
+#     # Clear the cookie
+#     response.delete_cookie(key="session_id")
+    
+#     print(f"✅ All sessions deleted for user: {current_user.email}")
+    
+#     return {"success": True, "message": "Logged out from all devices successfully"}
+
+# # ============================================
+# # DEMO LOGIN ENDPOINT
+# # ============================================
+
+# @app.post("/users/demo-login")
+# def demo_login(response: Response, db: Session = Depends(get_db)):
+#     """
+#     Demo login endpoint for testing (with Redis session)
+#     """
+#     try:
+#         # Find or create demo user
+#         demo_email = "demo@example.com"
+#         demo_user = db.query(models.User).filter(
+#             models.User.email == demo_email
+#         ).first()
+        
+#         if not demo_user:
+#             # Create demo user if doesn't exist
+#             current_month = datetime.now().strftime("%Y-%m")
+#             demo_user = models.User(
+#                 first_name="Demo",
+#                 last_name="User",
+#                 email=demo_email,
+#                 password_hash=get_password_hash("demo123"),
+#                 business_name="Demo Business",
+#                 location="Mumbai",
+#                 business_interests=["electronics", "fashion", "home"],
+#                 subscription_tier='free',
+#                 ai_chat_used=0,
+#                 ai_chat_month=current_month
+#             )
+#             db.add(demo_user)
+#             db.commit()
+#             db.refresh(demo_user)
+        
+#         # Create session in Redis
+#         session_token = create_session(demo_user.id, remember_me=False)
+        
+#         # Set cookie
+#         response.set_cookie(
+#             key="session_id",
+#             value=session_token,
+#             httponly=True,
+#             secure=False,  # Set to True in production
+#             samesite="lax",
+#             max_age=24 * 60 * 60
+#         )
+        
+#         current_month = datetime.now().strftime("%Y-%m")
+        
+#         return {
+#             "success": True,
+#             "message": "Demo login successful",
+#             "user": {
+#                 "id": demo_user.id,
+#                 "first_name": demo_user.first_name,
+#                 "last_name": demo_user.last_name,
+#                 "email": demo_user.email,
+#                 "business_name": demo_user.business_name,
+#                 "location": demo_user.location,
+#                 "business_interests": demo_user.business_interests,
+#                 "subscription_tier": demo_user.subscription_tier or 'free',
+#                 "ai_chat_used": demo_user.ai_chat_used or 0,
+#                 "ai_chat_month": demo_user.ai_chat_month or current_month,
+#                 "created_at": str(demo_user.created_at)
+#             }
+#         }
+        
+#     except Exception as e:
+#         print(f"❌ Demo login error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Demo login failed: {str(e)}")
+
+# # ============================================
+# # PASSWORD RESET ENDPOINT
+# # ============================================
+
+# @app.post("/users/reset-password")
+# def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
+#     """
+#     Reset user password and invalidate all sessions
+#     """
+#     try:
+#         user = db.query(models.User).filter(
+#             models.User.email == reset_data.email
+#         ).first()
+       
+#         if not user:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No account found with this email"
+#             )
+       
+#         # Update password
+#         user.password_hash = get_password_hash(reset_data.new_password)
+#         db.commit()
+        
+#         # Invalidate all sessions for security
+#         delete_all_user_sessions(user.id)
+        
+#         return {
+#             "success": True,
+#             "message": "Password updated successfully. Please login again."
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         print(f"❌ Password reset error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Error updating password: {str(e)}"
+#         )
+
+# # ============================================
+# # CHECK EMAIL ENDPOINT
+# # ============================================
+
+# @app.get("/users/check-email/{email}")
+# def check_email_exists(email: str, db: Session = Depends(get_db)):
+#     """
+#     Check if an email is already registered
+#     """
+#     user = db.query(models.User).filter(
+#         models.User.email == email
+#     ).first()
+   
+#     return {
+#         "exists": user is not None,
+#         "email": email,
+#         "message": "Email is registered" if user else "Email is available"
+#     }
+
+# # ============================================
+# # GET USER PROFILE ENDPOINT (PROTECTED)
+# # ============================================
+
+# @app.get("/users/profile/{email}")
+# def get_user_profile(
+#     email: str, 
+#     current_user: models.User = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get user profile by email (requires authentication)
+#     """
+#     # Only allow users to view their own profile or admins
+#     if current_user.email != email:
+#         raise HTTPException(
+#             status_code=403, 
+#             detail="Not authorized to view this profile"
+#         )
+    
+#     user = db.query(models.User).filter(
+#         models.User.email == email
+#     ).first()
+   
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+    
+#     current_month = datetime.now().strftime("%Y-%m")
+   
+#     return {
+#         "id": user.id,
+#         "first_name": user.first_name,
+#         "last_name": user.last_name,
+#         "email": user.email,
+#         "business_name": user.business_name,
+#         "location": user.location,
+#         "business_interests": user.business_interests,
+#         "subscription_tier": user.subscription_tier or 'free',
+#         "ai_chat_used": user.ai_chat_used or 0,
+#         "ai_chat_month": user.ai_chat_month or current_month,
+#         "created_at": str(user.created_at)
+#     }

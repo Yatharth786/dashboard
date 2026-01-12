@@ -3737,15 +3737,23 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 50 products tracking</span>
+                  <span className="text-sm">Up to 25 products tracking</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Limited AI insights</span>
+                  <span className="text-sm">Top 5 products filter</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Monthly summary reports</span>
+                  <span className="text-sm">5 AI chat messages/month</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">5 notifications</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Weekly reports</span>
                 </li>
               </ul>
               
@@ -3773,7 +3781,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-2xl font-bold text-center mb-2">Basic</h3>
               <div className="text-center mb-4">
-                <span className="text-4xl font-bold">₹499</span>
+                <span className="text-4xl font-bold">₹999</span>
                 <span className="text-gray-500 dark:text-gray-400">/month</span>
               </div>
               <p className="text-center text-gray-600 dark:text-gray-400 mb-6">Ideal for growing businesses</p>
@@ -3789,11 +3797,31 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Enhanced AI insights</span>
+                  <span className="text-sm">Top 20 products filter</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Weekly detailed reports</span>
+                  <span className="text-sm">20 AI chat messages/month</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">15 notifications</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">AI Chart Summaries</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Basic competitor alerts</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Daily reports</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Email support</span>
                 </li>
               </ul>
               
@@ -3826,15 +3854,35 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Up to 2,000 products tracking</span>
+                  <span className="text-sm">Unlimited product tracking</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Advanced AI analytics</span>
+                  <span className="text-sm">Top 100 products filter</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Daily reports & alerts</span>
+                  <span className="text-sm">Unlimited AI chat</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Unlimited notifications</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Advanced AI chatbot</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Real-time data & alerts</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Priority support</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Advanced analytics</span>
                 </li>
               </ul>
               
@@ -3866,15 +3914,11 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Custom tracking limits</span>
+                  <span className="text-sm">White-label options</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">API access & integrations</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Dedicated support & training</span>
+                  <span className="text-sm">24/7 premium support</span>
                 </li>
               </ul>
               

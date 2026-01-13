@@ -193,6 +193,10 @@ class User(Base):
     ai_chat_used = Column(Integer, default=0)
     ai_chat_month = Column(String, nullable=True)  # Format: 'YYYY-MM'
     is_active = Column(Boolean, default=True)
+
+    # ✅ NEW: Product analysis tracking
+    analysis_used = Column(Integer, default=0)
+    analysis_month = Column(String, nullable=True)
    
     # Optional: Add is_active if you want to enable/disable accounts
     # is_active = Column(Boolean, default=True)

@@ -4990,6 +4990,16 @@ class ProductTrackerResponse(BaseModel):
     ai_strategy: str
     warnings: List[str]
 
+class AnalysisUsageResponse(BaseModel):
+    count: int
+    limit: int
+    month: str
+    subscription_tier: str
+    remaining: int
+
+class AnalysisTrackRequest(BaseModel):
+    increment: int = 1    
+
 
 STOPWORDS = {
     "for", "with", "and", "the", "a", "an", "usb", "type", "inch", "in"
@@ -5118,13 +5128,293 @@ def extract_keywords(product_name: str) -> list[str]:
 #         traceback.print_exc()
 #         raise HTTPException(500, f"Analysis failed: {str(e)}")
 
+# @app.post("/product-tracker/analyze", response_model=ProductTrackerResponse)
+# def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = Depends(get_db)):
+#     print(f"🔍 Analyzing market for: {request.product_name} in {request.category}")
+    
+#     # ✅ CRITICAL FIX: Get user email (can be None)
+#     user_email = request.user_email if request.user_email else None
+#     print(f"👤 User Email: {user_email if user_email else 'Anonymous (not logged in)'}")
+    
+#     try:
+#         # Get similar products
+#         similar_products = get_similar_products(db, request.product_name, request.category, request.source)
+#         if not similar_products:
+#             raise HTTPException(404, f"❌ No products found matching '{request.product_name}' in category '{request.category}' on {request.source}")
+        
+#         print(f"📊 Found {len(similar_products)} similar products")
+        
+#         # Validate cost
+#         prices = [float(p.get('price', 0)) for p in similar_products if p.get('price', 0) > 0]
+#         market_max = max(prices) if prices else 0
+#         market_min = min(prices) if prices else 0
+        
+#         if request.base_cost > market_max * 2:
+#             raise HTTPException(400, f"❌ Invalid Cost: Your cost (₹{request.base_cost:,.0f}) seems incorrect. Market range: ₹{market_min:,.0f}-₹{market_max:,.0f}")
+#         if request.base_cost > market_max:
+#             raise HTTPException(400, f"⚠️ Cost Too High: ₹{request.base_cost:,.0f} > market max ₹{market_max:,.0f}")
+        
+#         # Extract keywords
+#         keywords = extract_keywords(request.product_name)
+        
+#         # Run analysis
+#         pricing_insights = analyze_pricing(similar_products, request.base_cost)
+        
+#         sales_insights = analyze_sales_potential(
+#             products=similar_products,
+#             source=request.source,
+#             base_cost=request.base_cost,
+#             recommended_price=pricing_insights['recommended_price'],
+#             category=request.category
+#         )
+        
+#         competition_insights = analyze_competition(similar_products, request.category, keywords)
+#         location_insights = generate_location_insights(similar_products)
+        
+#         ai_strategy = generate_ai_strategy(
+#             pricing_insights, 
+#             sales_insights, 
+#             competition_insights, 
+#             request.base_cost, 
+#             request.product_name, 
+#             request.category,
+#             location_insights
+#         )
+        
+#         warnings = generate_warnings(pricing_insights, competition_insights, request.base_cost)
+        
+#         # Build response
+#         response = ProductTrackerResponse(
+#             success=True,
+#             product_name=request.product_name,
+#             category=request.category,
+#             source=request.source.capitalize(),
+#             pricing=PricingInsights(**pricing_insights),
+#             sales=SalesInsights(**sales_insights),
+#             competition=CompetitorInsights(**competition_insights),
+#             location_insights=location_insights,
+#             ai_strategy=ai_strategy,
+#             warnings=warnings
+#         )
+        
+#         # ✅ CRITICAL: Save to database with user email
+#         try:
+#             analysis_data = {
+#                 'product_name': request.product_name,
+#                 'category': request.category,
+#                 'source': request.source,
+#                 'base_cost': request.base_cost,
+#                 'pricing': pricing_insights,
+#                 'sales': sales_insights,
+#                 'competition': competition_insights,
+#                 'location_insights': [
+#                     {
+#                         'country': loc.country,
+#                         'market_share': loc.market_share,
+#                         'demand_level': loc.demand_level
+#                     } for loc in location_insights
+#                 ],
+#                 'ai_strategy': ai_strategy,
+#                 'warnings': warnings,
+#                 'similar_products': similar_products,
+#                 'success': True
+#             }
+            
+#             # ✅ Pass user_email to CRUD function
+#             saved_analysis = crud.create_tracker_analysis(db, user_email, analysis_data)
+#             print(f"💾 Analysis saved to database - ID: {saved_analysis.id}, User: {user_email if user_email else 'Anonymous'}")
+            
+#         except Exception as e:
+#             print(f"⚠️ Failed to save analysis: {str(e)}")
+#             import traceback
+#             traceback.print_exc()
+        
+#         return response
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ Error in product tracker: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(500, f"Analysis failed: {str(e)}")
+
+
+def get_analysis_limit(tier: str) -> int:
+    """Get analysis limit based on subscription tier"""
+    limits = {
+        'free': 5,
+        'basic': 20,
+        'premium': float('inf'),
+        'enterprise': float('inf')
+    }
+    return limits.get(tier.lower(), 5)
+
+# ==================== ENDPOINTS ====================
+
+@app.get("/users/{user_id}/analysis-usage")
+async def get_analysis_usage(
+    user_id: int,
+    month: str = Query(None, description="Optional YYYY-MM format"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get current analysis usage for a user
+    Returns usage count, limit, and remaining analyses
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    current_month = month or datetime.now().strftime("%Y-%m")
+    
+    # Reset count if month has changed
+    if user.analysis_month != current_month:
+        user.analysis_used = 0
+        user.analysis_month = current_month
+        db.commit()
+        db.refresh(user)
+    
+    tier = user.subscription_tier or 'free'
+    limit = get_analysis_limit(tier)
+    used = user.analysis_used or 0
+    
+    return {
+        "count": used,
+        "limit": limit if limit != float('inf') else -1,  # -1 represents unlimited
+        "month": user.analysis_month or current_month,
+        "subscription_tier": tier,
+        "remaining": limit - used if limit != float('inf') else -1
+    }
+
+
+@app.post("/users/{user_id}/analysis-usage")
+async def track_analysis_usage(
+    user_id: int,
+    request: AnalysisTrackRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Increment analysis usage count for a user
+    Called after each successful product analysis
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    current_month = datetime.now().strftime("%Y-%m")
+    
+    # Reset count if month has changed
+    if user.analysis_month != current_month:
+        user.analysis_used = 0
+        user.analysis_month = current_month
+    
+    # Check if user has reached limit
+    tier = user.subscription_tier or 'free'
+    limit = get_analysis_limit(tier)
+    
+    if limit != float('inf') and (user.analysis_used or 0) >= limit:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Analysis limit reached. You have used {user.analysis_used}/{limit} analyses this month. Upgrade your plan for more."
+        )
+    
+    # Increment usage
+    user.analysis_used = (user.analysis_used or 0) + request.increment
+    user.analysis_month = current_month
+    user.updated_at = datetime.now()
+    
+    db.commit()
+    db.refresh(user)
+    
+    remaining = limit - user.analysis_used if limit != float('inf') else -1
+    
+    return {
+        "success": True,
+        "analysis_used": user.analysis_used,
+        "analysis_month": user.analysis_month,
+        "remaining": remaining,
+        "limit": limit if limit != float('inf') else -1,
+        "message": f"Analysis tracked. {user.analysis_used}/{limit if limit != float('inf') else '∞'} used this month"
+    }
+
+
+@app.post("/users/{user_id}/check-analysis-limit")
+async def check_analysis_limit(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Check if user can perform another analysis
+    Returns boolean and remaining count
+    """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    current_month = datetime.now().strftime("%Y-%m")
+    
+    # Reset if new month
+    if user.analysis_month != current_month:
+        user.analysis_used = 0
+        user.analysis_month = current_month
+        db.commit()
+    
+    tier = user.subscription_tier or 'free'
+    limit = get_analysis_limit(tier)
+    used = user.analysis_used or 0
+    
+    can_analyze = limit == float('inf') or used < limit
+    remaining = limit - used if limit != float('inf') else -1
+    
+    return {
+        "can_analyze": can_analyze,
+        "used": used,
+        "limit": limit if limit != float('inf') else -1,
+        "remaining": remaining,
+        "subscription_tier": tier,
+        "upgrade_required": not can_analyze
+    }
+
+
+# ==================== UPDATE YOUR EXISTING ANALYZE ENDPOINT ====================
+
 @app.post("/product-tracker/analyze", response_model=ProductTrackerResponse)
 def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = Depends(get_db)):
     print(f"🔍 Analyzing market for: {request.product_name} in {request.category}")
     
-    # ✅ CRITICAL FIX: Get user email (can be None)
     user_email = request.user_email if request.user_email else None
     print(f"👤 User Email: {user_email if user_email else 'Anonymous (not logged in)'}")
+    
+    # ✅ NEW: Check analysis limit if user is logged in
+    if user_email:
+        user = db.query(models.User).filter(models.User.email == user_email).first()
+        
+        if user:
+            current_month = datetime.now().strftime("%Y-%m")
+            
+            # Reset if new month
+            if user.analysis_month != current_month:
+                user.analysis_used = 0
+                user.analysis_month = current_month
+                db.commit()
+                db.refresh(user)
+            
+            tier = user.subscription_tier or 'free'
+            limit = get_analysis_limit(tier)
+            used = user.analysis_used or 0
+            
+            # Check limit
+            if limit != float('inf') and used >= limit:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Analysis limit reached. You have used {used}/{limit} analyses this month. Upgrade to {('Basic' if tier == 'free' else 'Premium')} for more analyses."
+                )
+            
+            print(f"✅ Usage check: {used}/{limit if limit != float('inf') else '∞'} analyses used")
     
     try:
         # Get similar products
@@ -5187,7 +5477,7 @@ def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = De
             warnings=warnings
         )
         
-        # ✅ CRITICAL: Save to database with user email
+        # ✅ Save to database
         try:
             analysis_data = {
                 'product_name': request.product_name,
@@ -5210,9 +5500,19 @@ def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = De
                 'success': True
             }
             
-            # ✅ Pass user_email to CRUD function
             saved_analysis = crud.create_tracker_analysis(db, user_email, analysis_data)
-            print(f"💾 Analysis saved to database - ID: {saved_analysis.id}, User: {user_email if user_email else 'Anonymous'}")
+            print(f"💾 Analysis saved - ID: {saved_analysis.id}, User: {user_email if user_email else 'Anonymous'}")
+            
+            # ✅ NEW: Increment analysis usage count
+            if user_email and user:
+                user.analysis_used = (user.analysis_used or 0) + 1
+                user.analysis_month = datetime.now().strftime("%Y-%m")
+                user.updated_at = datetime.now()
+                db.commit()
+                
+                remaining = get_analysis_limit(user.subscription_tier or 'free') - user.analysis_used
+                remaining_display = remaining if remaining != float('inf') else '∞'
+                print(f"✅ Usage updated: {user.analysis_used} used, {remaining_display} remaining")
             
         except Exception as e:
             print(f"⚠️ Failed to save analysis: {str(e)}")
@@ -5228,7 +5528,6 @@ def analyze_product_opportunity(request: ProductTrackerRequest, db: Session = De
         import traceback
         traceback.print_exc()
         raise HTTPException(500, f"Analysis failed: {str(e)}")
-
   
 
 def get_similar_products(db: Session, product_name: str, category: str, source: str):

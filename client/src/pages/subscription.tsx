@@ -1518,6 +1518,7 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   price?: number;
+  oldPrice?: number;
   description: string;
   features: string[];
   limitations: string[];
@@ -1552,6 +1553,7 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "basic",
     name: "Basic",
     price: 999,
+    oldPrice: 3999,
     description: "Ideal for growing businesses",
     icon: <Crown className="h-6 w-6" />,
     isPopular: true,
@@ -1575,6 +1577,7 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "premium",
     name: "Premium",
     price: 1999,
+    oldPrice: 7999,
     description: "For serious e-commerce professionals",
     icon: <Crown className="h-6 w-6 text-yellow-500" />,
     features: [
@@ -1871,12 +1874,20 @@ export default function Subscription() {
                       {plan.name}
                     </CardTitle>
                     {plan.id !== "enterprise" ? (
-                      <div className="text-3xl font-bold mb-1">
-                        ₹{plan.price}
-                        <span className="text-sm font-normal text-muted-foreground">
-                          /month
-                        </span>
-                      </div>
+                      <div className="text-3xl font-bold mb-1 flex items-baseline justify-center gap-2">
+  {plan.oldPrice && (
+    <span className="text-gray-400 text-xl line-through">
+      ₹{plan.oldPrice}
+    </span>
+  )}
+  <span className="text-3xl font-extrabold text-sky-900">
+    ₹{plan.price}
+  </span>
+  <span className="text-sm font-normal text-muted-foreground self-end">
+    /month
+  </span>
+</div>
+
                     ) : (
                       <div className="text-xl font-semibold text-indigo-700 mb-1">
                         Custom Pricing

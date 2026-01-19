@@ -8296,15 +8296,2493 @@ def admin_get_user_profile(
 
 
 
+# class BrandShareData(BaseModel):
+#     brand: str
+#     share_percentage: float
+#     total_reviews: int
+#     total_sales: int
+#     avg_rating: Optional[float]
+#     avg_price: Optional[float]
+#     product_count: int
+
+# class CategorySOVResponse(BaseModel):
+#     category_name: str
+#     total_products: int
+#     total_reviews: int
+#     total_sales: int
+#     brands: List[BrandShareData]
+#     your_brand_share: Optional[float]
+#     market_leader: Optional[str]
+#     marketplace: str
+
+# class KeywordSOVResponse(BaseModel):
+#     keyword: str
+#     total_products: int
+#     total_reviews: int
+#     brands: List[BrandShareData]
+#     price_range: Dict[str, float]
+#     marketplace: str
+
+# class ProgressTrackingData(BaseModel):
+#     date: str
+#     share_percentage: float
+#     reviews: int
+#     sales: int
+
+# class ProgressTrackingResponse(BaseModel):
+#     category_name: str
+#     your_brand: str
+#     current_share: float
+#     target_share: float
+#     start_date: str
+#     target_date: str
+#     days_elapsed: int
+#     days_remaining: int
+#     is_on_track: bool
+#     required_growth_rate: float
+#     actual_growth_rate: float
+#     weekly_progress: List[ProgressTrackingData]
+
+# class CompetitorAnalysis(BaseModel):
+#     competitor_name: str
+#     market_share: float
+#     avg_price: float
+#     total_products: int
+#     avg_rating: Optional[float]
+#     total_reviews: int
+#     total_sales: int
+
+# class CombinedSOVResponse(BaseModel):
+#     category_name: str
+#     combined_brands: List[BrandShareData]
+#     flipkart_data: CategorySOVResponse
+#     amazon_data: CategorySOVResponse
+#     your_brand_combined_share: Optional[float]
+
+# # ==================== Helper Functions ====================
+# def safe_float(value, default=0.0) -> float:
+#     """Safely convert value to float"""
+#     if value is None or value == 'NULL':
+#         return default
+#     try:
+#         from decimal import Decimal
+#         if isinstance(value, Decimal):
+#             return float(value)
+#         return float(value)
+#     except:
+#         return default
+
+# def safe_int(value, default=0) -> int:
+#     """Safely convert value to int"""
+#     if value is None or value == 'NULL':
+#         return default
+#     try:
+#         return int(value)
+#     except:
+#         return default
+
+# def extract_sales_number(sales_text: str) -> int:
+#     """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
+#     if not sales_text or sales_text == 'NULL':
+#         return 0
+    
+#     try:
+#         sales_text = str(sales_text).upper().strip()
+#         multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
+        
+#         match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
+#         if match:
+#             number = float(match.group(1))
+#             unit = match.group(2)
+            
+#             if unit and unit in multipliers:
+#                 return int(number * multipliers[unit])
+#             return int(number)
+#     except:
+#         return 0
+#     return 0
+
+# # ==================== Endpoints (Add to your main app file) ====================
+
+# @app.get("/sov/categories")
+# def get_sov_categories(
+#     marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get list of all available categories for SOV analysis"""
+#     try:
+#         categories = set()
+        
+#         if marketplace in ["flipkart", "all"]:
+#             flipkart_query = text("""
+#                 SELECT DISTINCT category_name 
+#                 FROM rapidapi_flipkart_products 
+#                 WHERE category_name IS NOT NULL AND category_name != 'NULL'
+#                 ORDER BY category_name
+#             """)
+#             result = db.execute(flipkart_query)
+#             categories.update([row[0] for row in result if row[0]])
+        
+#         if marketplace in ["amazon", "all"]:
+#             amazon_query = text("""
+#                 SELECT DISTINCT category_name 
+#                 FROM rapidapi_amazon_products 
+#                 WHERE category_name IS NOT NULL AND category_name != 'NULL'
+#                 ORDER BY category_name
+#             """)
+#             result = db.execute(amazon_query)
+#             categories.update([row[0] for row in result if row[0]])
+        
+#         return {"categories": sorted(list(categories))}
+    
+#     except Exception as e:
+#         return {"error": f"Error fetching categories: {str(e)}"}
+
+
+# @app.get("/sov/category/{category_name}")
+# def get_category_sov(
+#     category_name: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     your_brand: Optional[str] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get Share of Voice analysis for a specific category"""
+#     try:
+#         if marketplace == "flipkart":
+#             query = text("""
+#                 SELECT 
+#                     brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+#                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+#                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+#                     COALESCE(AVG(product_price), 0) as avg_price
+#                 FROM rapidapi_flipkart_products
+#                 WHERE category_name = :category_name
+#                     AND brand IS NOT NULL
+#                     AND brand != 'NULL'
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+#         else:  # amazon
+#             query = text("""
+#                 SELECT 
+#                     SPLIT_PART(product_title, ' ', 1) as brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+#                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+#                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+#                     COALESCE(AVG(product_price_numeric), 0) as avg_price
+#                 FROM rapidapi_amazon_products
+#                 WHERE category_name = :category_name
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+        
+#         result = db.execute(query, {"category_name": category_name})
+#         rows = result.fetchall()
+        
+#         if not rows:
+#             return {"error": f"No data found for category: {category_name}"}
+        
+#         # Calculate totals
+#         total_reviews = sum(safe_int(row[2]) for row in rows)
+#         total_sales = sum(safe_int(row[3]) for row in rows)
+#         total_products = sum(safe_int(row[1]) for row in rows)
+        
+#         # Build brand data
+#         brands = []
+#         your_brand_share = None
+#         market_leader = None
+#         max_share = 0
+        
+#         for row in rows:
+#             brand_name = row[0] or "Unknown"
+#             review_count = safe_int(row[2])
+#             sales_count = safe_int(row[3])
+            
+#             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+#             brand_data = {
+#                 "brand": brand_name,
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": review_count,
+#                 "total_sales": sales_count,
+#                 "avg_rating": round(safe_float(row[4]), 2),
+#                 "avg_price": round(safe_float(row[5]), 2),
+#                 "product_count": safe_int(row[1])
+#             }
+#             brands.append(brand_data)
+            
+#             # Track market leader
+#             if share_pct > max_share:
+#                 max_share = share_pct
+#                 market_leader = brand_name
+            
+#             # Check if this is your brand
+#             if your_brand and brand_name.lower() == your_brand.lower():
+#                 your_brand_share = share_pct
+        
+#         return {
+#             "category_name": category_name,
+#             "total_products": total_products,
+#             "total_reviews": total_reviews,
+#             "total_sales": total_sales,
+#             "brands": brands,
+#             "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
+#             "market_leader": market_leader,
+#             "marketplace": marketplace
+#         }
+    
+#     except Exception as e:
+#         return {"error": f"Error analyzing category: {str(e)}"}
+
+
+# @app.get("/sov/keyword/{keyword}")
+# def get_keyword_sov(
+#     keyword: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     price_min: Optional[float] = Query(default=None),
+#     price_max: Optional[float] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get Share of Voice analysis for products matching a keyword"""
+#     try:
+#         price_filter = ""
+#         if marketplace == "flipkart":
+#             if price_min is not None:
+#                 price_filter += f" AND product_price >= {price_min}"
+#             if price_max is not None:
+#                 price_filter += f" AND product_price <= {price_max}"
+            
+#             query = text(f"""
+#                 SELECT 
+#                     brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+#                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+#                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+#                     COALESCE(AVG(product_price), 0) as avg_price,
+#                     MIN(product_price) as min_price,
+#                     MAX(product_price) as max_price
+#                 FROM rapidapi_flipkart_products
+#                 WHERE (LOWER(product_title) LIKE LOWER(:keyword) 
+#                     OR LOWER(category_name) LIKE LOWER(:keyword))
+#                     AND brand IS NOT NULL
+#                     AND brand != 'NULL'
+#                     {price_filter}
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+#         else:  # amazon
+#             if price_min is not None:
+#                 price_filter += f" AND product_price_numeric >= {price_min}"
+#             if price_max is not None:
+#                 price_filter += f" AND product_price_numeric <= {price_max}"
+            
+#             query = text(f"""
+#                 SELECT 
+#                     SPLIT_PART(product_title, ' ', 1) as brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+#                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+#                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+#                     COALESCE(AVG(product_price_numeric), 0) as avg_price,
+#                     MIN(product_price_numeric) as min_price,
+#                     MAX(product_price_numeric) as max_price
+#                 FROM rapidapi_amazon_products
+#                 WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+#                     OR LOWER(category_name) LIKE LOWER(:keyword))
+#                     {price_filter}
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+        
+#         result = db.execute(query, {"keyword": f"%{keyword}%"})
+#         rows = result.fetchall()
+        
+#         if not rows:
+#             return {"error": f"No products found matching keyword: {keyword}"}
+        
+#         total_reviews = sum(safe_int(row[2]) for row in rows)
+#         total_products = sum(safe_int(row[1]) for row in rows)
+        
+#         brands = []
+#         min_price = float('inf')
+#         max_price = 0
+        
+#         for row in rows:
+#             review_count = safe_int(row[2])
+#             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+#             brands.append({
+#                 "brand": row[0] or "Unknown",
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": review_count,
+#                 "total_sales": safe_int(row[3]),
+#                 "avg_rating": round(safe_float(row[4]), 2),
+#                 "avg_price": round(safe_float(row[5]), 2),
+#                 "product_count": safe_int(row[1])
+#             })
+            
+#             min_price = min(min_price, safe_float(row[6], float('inf')))
+#             max_price = max(max_price, safe_float(row[7], 0))
+        
+#         return {
+#             "keyword": keyword,
+#             "total_products": total_products,
+#             "total_reviews": total_reviews,
+#             "brands": brands,
+#             "price_range": {
+#                 "min": round(min_price if min_price != float('inf') else 0, 2),
+#                 "max": round(max_price, 2)
+#             },
+#             "marketplace": marketplace
+#         }
+    
+#     except Exception as e:
+#         return {"error": f"Error analyzing keyword: {str(e)}"}
+
+
+# @app.get("/sov/progress/{category_name}")
+# def track_sov_progress(
+#     category_name: str,
+#     your_brand: str,
+#     target_share: float = Query(default=20.0, ge=0, le=100),
+#     target_days: int = Query(default=90, ge=1),
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Track progress towards target market share"""
+#     try:
+#         from datetime import datetime, timedelta
+        
+#         # Get current SOV
+#         current_sov = get_category_sov(category_name, marketplace, your_brand, db)
+        
+#         if "error" in current_sov:
+#             return current_sov
+        
+#         current_share = current_sov.get("your_brand_share") or 0
+        
+#         # Calculate dates
+#         start_date = datetime.now() - timedelta(days=30)
+#         target_date = datetime.now() + timedelta(days=target_days)
+#         days_elapsed = 30
+#         days_remaining = target_days
+        
+#         # Calculate growth rates
+#         required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
+#         actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
+        
+#         is_on_track = actual_growth_rate >= required_growth_rate
+        
+#         # Generate weekly progress
+#         weekly_progress = []
+#         weeks = min(12, (days_elapsed + days_remaining) // 7)
+        
+#         for week in range(weeks):
+#             week_date = start_date + timedelta(weeks=week)
+#             projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
+            
+#             weekly_progress.append({
+#                 "date": week_date.strftime("%Y-%m-%d"),
+#                 "share_percentage": round(projected_share, 2),
+#                 "reviews": int(current_sov["total_reviews"] * projected_share / 100),
+#                 "sales": int(current_sov["total_sales"] * projected_share / 100)
+#             })
+        
+#         return {
+#             "category_name": category_name,
+#             "your_brand": your_brand,
+#             "current_share": round(current_share, 2),
+#             "target_share": target_share,
+#             "start_date": start_date.strftime("%Y-%m-%d"),
+#             "target_date": target_date.strftime("%Y-%m-%d"),
+#             "days_elapsed": days_elapsed,
+#             "days_remaining": days_remaining,
+#             "is_on_track": is_on_track,
+#             "required_growth_rate": round(required_growth_rate, 4),
+#             "actual_growth_rate": round(actual_growth_rate, 4),
+#             "weekly_progress": weekly_progress
+#         }
+    
+#     except Exception as e:
+#         return {"error": f"Error tracking progress: {str(e)}"}
+
+
+# @app.get("/sov/competitors/{category_name}")
+# def analyze_sov_competitors(
+#     category_name: str,
+#     your_brand: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     limit: int = Query(default=10, ge=1, le=50),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get detailed competitor analysis"""
+#     try:
+#         sov_data = get_category_sov(category_name, marketplace, your_brand, db)
+        
+#         if "error" in sov_data:
+#             return sov_data
+        
+#         competitors = []
+#         for brand in sov_data["brands"]:
+#             if brand["brand"].lower() != your_brand.lower():
+#                 competitors.append({
+#                     "competitor_name": brand["brand"],
+#                     "market_share": brand["share_percentage"],
+#                     "avg_price": brand["avg_price"],
+#                     "total_products": brand["product_count"],
+#                     "avg_rating": brand["avg_rating"],
+#                     "total_reviews": brand["total_reviews"],
+#                     "total_sales": brand["total_sales"]
+#                 })
+        
+#         # Sort by market share and limit
+#         competitors.sort(key=lambda x: x["market_share"], reverse=True)
+#         return {"competitors": competitors[:limit]}
+    
+#     except Exception as e:
+#         return {"error": f"Error analyzing competitors: {str(e)}"}
+
+
+# @app.get("/sov/combined/{category_name}")
+# def get_combined_sov(
+#     category_name: str,
+#     your_brand: Optional[str] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get combined Share of Voice from both Flipkart and Amazon"""
+#     try:
+#         flipkart_data = get_category_sov(category_name, "flipkart", your_brand, db)
+#         amazon_data = get_category_sov(category_name, "amazon", your_brand, db)
+        
+#         # Handle errors
+#         if "error" in flipkart_data and "error" in amazon_data:
+#             return {"error": "No data found in either marketplace"}
+        
+#         # Combine brand data
+#         brand_map = {}
+        
+#         for data in [flipkart_data, amazon_data]:
+#             if "error" not in data:
+#                 for brand in data["brands"]:
+#                     brand_name = brand["brand"]
+#                     if brand_name not in brand_map:
+#                         brand_map[brand_name] = {
+#                             "reviews": 0,
+#                             "sales": 0,
+#                             "products": 0,
+#                             "ratings": [],
+#                             "prices": []
+#                         }
+                    
+#                     brand_map[brand_name]["reviews"] += brand["total_reviews"]
+#                     brand_map[brand_name]["sales"] += brand["total_sales"]
+#                     brand_map[brand_name]["products"] += brand["product_count"]
+#                     if brand["avg_rating"]:
+#                         brand_map[brand_name]["ratings"].append(brand["avg_rating"])
+#                     if brand["avg_price"]:
+#                         brand_map[brand_name]["prices"].append(brand["avg_price"])
+        
+#         total_reviews = sum(b["reviews"] for b in brand_map.values())
+        
+#         combined_brands = []
+#         your_brand_combined_share = None
+        
+#         for brand_name, data in brand_map.items():
+#             share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
+            
+#             combined_brand = {
+#                 "brand": brand_name,
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": data["reviews"],
+#                 "total_sales": data["sales"],
+#                 "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
+#                 "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
+#                 "product_count": data["products"]
+#             }
+#             combined_brands.append(combined_brand)
+            
+#             if your_brand and brand_name.lower() == your_brand.lower():
+#                 your_brand_combined_share = share_pct
+        
+#         combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
+        
+#         return {
+#             "category_name": category_name,
+#             "combined_brands": combined_brands,
+#             "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
+#             "amazon_data": amazon_data if "error" not in amazon_data else None,
+#             "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
+#         }
+    
+#     except Exception as e:
+#         return {"error": f"Error getting combined SOV: {str(e)}"}
+
+
+# @app.get("/sov/brands")
+# def get_all_brands(
+#     marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get list of all available brands"""
+#     try:
+#         brands = set()
+        
+#         if marketplace in ["flipkart", "all"]:
+#             flipkart_query = text("""
+#                 SELECT DISTINCT brand 
+#                 FROM rapidapi_flipkart_products 
+#                 WHERE brand IS NOT NULL AND brand != 'NULL'
+#                 ORDER BY brand
+#             """)
+#             result = db.execute(flipkart_query)
+#             brands.update([row[0] for row in result if row[0]])
+        
+#         if marketplace in ["amazon", "all"]:
+#             amazon_query = text("""
+#                 SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
+#                 FROM rapidapi_amazon_products 
+#                 WHERE product_title IS NOT NULL
+#                 ORDER BY brand
+#             """)
+#             result = db.execute(amazon_query)
+#             brands.update([row[0] for row in result if row[0]])
+        
+#         return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
+    
+#     except Exception as e:
+#         return {"error": f"Error fetching brands: {str(e)}"}
+
+
+
+
+class BrandShareData(BaseModel):
+    brand: str
+    share_percentage: float
+    total_reviews: int
+    total_sales: int
+    avg_rating: Optional[float]
+    avg_price: Optional[float]
+    product_count: int
+
+class CategorySOVResponse(BaseModel):
+    category_name: str
+    total_products: int
+    total_reviews: int
+    total_sales: int
+    brands: List[BrandShareData]
+    your_brand_share: Optional[float]
+    market_leader: Optional[str]
+    marketplace: str
+
+class KeywordSOVResponse(BaseModel):
+    keyword: str
+    total_products: int
+    total_reviews: int
+    brands: List[BrandShareData]
+    price_range: Dict[str, float]
+    marketplace: str
+
+class ProgressTrackingData(BaseModel):
+    date: str
+    share_percentage: float
+    reviews: int
+    sales: int
+
+class ProgressTrackingResponse(BaseModel):
+    category_name: str
+    your_brand: str
+    current_share: float
+    target_share: float
+    start_date: str
+    target_date: str
+    days_elapsed: int
+    days_remaining: int
+    is_on_track: bool
+    required_growth_rate: float
+    actual_growth_rate: float
+    weekly_progress: List[ProgressTrackingData]
+
+class CompetitorAnalysis(BaseModel):
+    competitor_name: str
+    market_share: float
+    avg_price: float
+    total_products: int
+    avg_rating: Optional[float]
+    total_reviews: int
+    total_sales: int
+
+class CombinedSOVResponse(BaseModel):
+    category_name: str
+    combined_brands: List[BrandShareData]
+    flipkart_data: CategorySOVResponse
+    amazon_data: CategorySOVResponse
+    your_brand_combined_share: Optional[float]
+
+# ==================== Helper Functions ====================
+def safe_float(value, default=0.0) -> float:
+    """Safely convert value to float"""
+    if value is None or value == 'NULL':
+        return default
+    try:
+        from decimal import Decimal
+        if isinstance(value, Decimal):
+            return float(value)
+        return float(value)
+    except:
+        return default
+
+def safe_int(value, default=0) -> int:
+    """Safely convert value to int"""
+    if value is None or value == 'NULL':
+        return default
+    try:
+        return int(value)
+    except:
+        return default
+
+def extract_sales_number(sales_text: str) -> int:
+    """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
+    if not sales_text or sales_text == 'NULL':
+        return 0
+    
+    try:
+        sales_text = str(sales_text).upper().strip()
+        multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
+        
+        match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
+        if match:
+            number = float(match.group(1))
+            unit = match.group(2)
+            
+            if unit and unit in multipliers:
+                return int(number * multipliers[unit])
+            return int(number)
+    except:
+        return 0
+    return 0
+
+# ==================== Endpoints (Add to your main app file) ====================
+
+@app.get("/sov/categories")
+def get_sov_categories(
+    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+    db: Session = Depends(get_db)
+):
+    """Get list of all available categories for SOV analysis"""
+    try:
+        categories = set()
+        
+        if marketplace in ["flipkart", "all"]:
+            flipkart_query = text("""
+                SELECT DISTINCT category_name 
+                FROM rapidapi_flipkart_products 
+                WHERE category_name IS NOT NULL AND category_name != 'NULL'
+                ORDER BY category_name
+            """)
+            result = db.execute(flipkart_query)
+            categories.update([row[0] for row in result if row[0]])
+        
+        if marketplace in ["amazon", "all"]:
+            amazon_query = text("""
+                SELECT DISTINCT category_name 
+                FROM rapidapi_amazon_products 
+                WHERE category_name IS NOT NULL AND category_name != 'NULL'
+                ORDER BY category_name
+            """)
+            result = db.execute(amazon_query)
+            categories.update([row[0] for row in result if row[0]])
+        
+        return {"categories": sorted(list(categories))}
+    
+    except Exception as e:
+        return {"error": f"Error fetching categories: {str(e)}"}
+
+
+@app.get("/sov/category/{category_name}")
+def get_category_sov(
+    category_name: str,
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    your_brand: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    """Get Share of Voice analysis for a specific category"""
+    try:
+        if marketplace == "flipkart":
+            query = text("""
+                SELECT 
+                    brand,
+                    COUNT(*) as product_count,
+                    COALESCE(SUM(product_rating_count), 0) as total_reviews,
+                    COALESCE(SUM(estimated_sales), 0) as total_sales,
+                    COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+                    COALESCE(AVG(product_price), 0) as avg_price
+                FROM rapidapi_flipkart_products
+                WHERE category_name = :category_name
+                    AND brand IS NOT NULL
+                    AND brand != 'NULL'
+                GROUP BY brand
+                ORDER BY total_reviews DESC
+            """)
+        else:  # amazon
+            query = text("""
+                SELECT 
+                    SPLIT_PART(product_title, ' ', 1) as brand,
+                    COUNT(*) as product_count,
+                    COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+                    COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+                    COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+                    COALESCE(AVG(product_price_numeric), 0) as avg_price
+                FROM rapidapi_amazon_products
+                WHERE category_name = :category_name
+                GROUP BY brand
+                ORDER BY total_reviews DESC
+            """)
+        
+        result = db.execute(query, {"category_name": category_name})
+        rows = result.fetchall()
+        
+        if not rows:
+            return {"error": f"No data found for category: {category_name}"}
+        
+        # Calculate totals
+        total_reviews = sum(safe_int(row[2]) for row in rows)
+        total_sales = sum(safe_int(row[3]) for row in rows)
+        total_products = sum(safe_int(row[1]) for row in rows)
+        
+        # Build brand data
+        brands = []
+        your_brand_share = None
+        market_leader = None
+        max_share = 0
+        
+        for row in rows:
+            brand_name = row[0] or "Unknown"
+            review_count = safe_int(row[2])
+            sales_count = safe_int(row[3])
+            
+            share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+            brand_data = {
+                "brand": brand_name,
+                "share_percentage": round(share_pct, 2),
+                "total_reviews": review_count,
+                "total_sales": sales_count,
+                "avg_rating": round(safe_float(row[4]), 2),
+                "avg_price": round(safe_float(row[5]), 2),
+                "product_count": safe_int(row[1])
+            }
+            brands.append(brand_data)
+            
+            # Track market leader
+            if share_pct > max_share:
+                max_share = share_pct
+                market_leader = brand_name
+            
+            # Check if this is your brand
+            if your_brand and brand_name.lower() == your_brand.lower():
+                your_brand_share = share_pct
+        
+        return {
+            "category_name": category_name,
+            "total_products": total_products,
+            "total_reviews": total_reviews,
+            "total_sales": total_sales,
+            "brands": brands,
+            "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
+            "market_leader": market_leader,
+            "marketplace": marketplace
+        }
+    
+    except Exception as e:
+        return {"error": f"Error analyzing category: {str(e)}"}
+
+
+
+@app.get("/sov/keyword/{keyword}")
+def get_keyword_sov(
+    keyword: str,
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    price_min: Optional[float] = Query(default=None),
+    price_max: Optional[float] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    """Get Share of Voice analysis for products matching a keyword"""
+    try:
+        price_filter = ""
+        if marketplace == "flipkart":
+            if price_min is not None:
+                price_filter += f" AND product_price >= {price_min}"
+            if price_max is not None:
+                price_filter += f" AND product_price <= {price_max}"
+            
+            query = text(f"""
+                SELECT 
+                    brand,
+                    COUNT(*) as product_count,
+                    COALESCE(SUM(product_rating_count), 0) as total_reviews,
+                    COALESCE(SUM(estimated_sales), 0) as total_sales,
+                    COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+                    COALESCE(AVG(product_price), 0) as avg_price,
+                    MIN(product_price) as min_price,
+                    MAX(product_price) as max_price
+                FROM rapidapi_flipkart_products
+                WHERE (LOWER(product_title) LIKE LOWER(:keyword) 
+                    OR LOWER(category_name) LIKE LOWER(:keyword))
+                    AND brand IS NOT NULL
+                    AND brand != 'NULL'
+                    {price_filter}
+                GROUP BY brand
+                ORDER BY total_reviews DESC
+            """)
+        else:  # amazon
+            if price_min is not None:
+                price_filter += f" AND product_price_numeric >= {price_min}"
+            if price_max is not None:
+                price_filter += f" AND product_price_numeric <= {price_max}"
+            
+            query = text(f"""
+                SELECT 
+                    SPLIT_PART(product_title, ' ', 1) as brand,
+                    COUNT(*) as product_count,
+                    COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+                    COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+                    COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+                    COALESCE(AVG(product_price_numeric), 0) as avg_price,
+                    MIN(product_price_numeric) as min_price,
+                    MAX(product_price_numeric) as max_price
+                FROM rapidapi_amazon_products
+                WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+                    OR LOWER(category_name) LIKE LOWER(:keyword))
+                    {price_filter}
+                GROUP BY brand
+                ORDER BY total_reviews DESC
+            """)
+        
+        result = db.execute(query, {"keyword": f"%{keyword}%"})
+        rows = result.fetchall()
+        
+        if not rows:
+            return {"error": f"No products found matching keyword: {keyword}"}
+        
+        total_reviews = sum(safe_int(row[2]) for row in rows)
+        total_products = sum(safe_int(row[1]) for row in rows)
+        
+        brands = []
+        min_price = float('inf')
+        max_price = 0
+        
+        for row in rows:
+            review_count = safe_int(row[2])
+            share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+            brands.append({
+                "brand": row[0] or "Unknown",
+                "share_percentage": round(share_pct, 2),
+                "total_reviews": review_count,
+                "total_sales": safe_int(row[3]),
+                "avg_rating": round(safe_float(row[4]), 2),
+                "avg_price": round(safe_float(row[5]), 2),
+                "product_count": safe_int(row[1])
+            })
+            
+            min_price = min(min_price, safe_float(row[6], float('inf')))
+            max_price = max(max_price, safe_float(row[7], 0))
+        
+        return {
+            "keyword": keyword,
+            "total_products": total_products,
+            "total_reviews": total_reviews,
+            "brands": brands,
+            "price_range": {
+                "min": round(min_price if min_price != float('inf') else 0, 2),
+                "max": round(max_price, 2)
+            },
+            "marketplace": marketplace
+        }
+    
+    except Exception as e:
+        return {"error": f"Error analyzing keyword: {str(e)}"}
+
+
+@app.get("/sov/progress/{category_name}")
+def track_sov_progress(
+    category_name: str,
+    your_brand: str,
+    target_share: float = Query(default=20.0, ge=0, le=100),
+    target_days: int = Query(default=90, ge=1),
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    db: Session = Depends(get_db)
+):
+    """Track progress towards target market share"""
+    try:
+        from datetime import datetime, timedelta
+        
+        # Get current SOV
+        current_sov = get_category_sov(category_name, marketplace, your_brand, db)
+        
+        if "error" in current_sov:
+            return current_sov
+        
+        current_share = current_sov.get("your_brand_share") or 0
+        
+        # Calculate dates
+        start_date = datetime.now() - timedelta(days=30)
+        target_date = datetime.now() + timedelta(days=target_days)
+        days_elapsed = 30
+        days_remaining = target_days
+        
+        # Calculate growth rates
+        required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
+        actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
+        
+        is_on_track = actual_growth_rate >= required_growth_rate
+        
+        # Generate weekly progress
+        weekly_progress = []
+        weeks = min(12, (days_elapsed + days_remaining) // 7)
+        
+        for week in range(weeks):
+            week_date = start_date + timedelta(weeks=week)
+            projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
+            
+            weekly_progress.append({
+                "date": week_date.strftime("%Y-%m-%d"),
+                "share_percentage": round(projected_share, 2),
+                "reviews": int(current_sov["total_reviews"] * projected_share / 100),
+                "sales": int(current_sov["total_sales"] * projected_share / 100)
+            })
+        
+        return {
+            "category_name": category_name,
+            "your_brand": your_brand,
+            "current_share": round(current_share, 2),
+            "target_share": target_share,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "target_date": target_date.strftime("%Y-%m-%d"),
+            "days_elapsed": days_elapsed,
+            "days_remaining": days_remaining,
+            "is_on_track": is_on_track,
+            "required_growth_rate": round(required_growth_rate, 4),
+            "actual_growth_rate": round(actual_growth_rate, 4),
+            "weekly_progress": weekly_progress
+        }
+    
+    except Exception as e:
+        return {"error": f"Error tracking progress: {str(e)}"}
+
+
+@app.get("/sov/competitors/{category_name}")
+def analyze_sov_competitors(
+    category_name: str,
+    your_brand: str,
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    limit: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """Get detailed competitor analysis"""
+    try:
+        sov_data = get_category_sov(category_name, marketplace, your_brand, db)
+        
+        if "error" in sov_data:
+            return sov_data
+        
+        competitors = []
+        for brand in sov_data["brands"]:
+            if brand["brand"].lower() != your_brand.lower():
+                competitors.append({
+                    "competitor_name": brand["brand"],
+                    "market_share": brand["share_percentage"],
+                    "avg_price": brand["avg_price"],
+                    "total_products": brand["product_count"],
+                    "avg_rating": brand["avg_rating"],
+                    "total_reviews": brand["total_reviews"],
+                    "total_sales": brand["total_sales"]
+                })
+        
+        # Sort by market share and limit
+        competitors.sort(key=lambda x: x["market_share"], reverse=True)
+        return {"competitors": competitors[:limit]}
+    
+    except Exception as e:
+        return {"error": f"Error analyzing competitors: {str(e)}"}
+
+
+@app.get("/sov/combined/{category_name}")
+def get_combined_sov(
+    category_name: str,
+    your_brand: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    """Get combined Share of Voice from both Flipkart and Amazon"""
+    try:
+        flipkart_data = get_category_sov(category_name, "flipkart", your_brand, db)
+        amazon_data = get_category_sov(category_name, "amazon", your_brand, db)
+        
+        # Handle errors
+        if "error" in flipkart_data and "error" in amazon_data:
+            return {"error": "No data found in either marketplace"}
+        
+        # Combine brand data
+        brand_map = {}
+        
+        for data in [flipkart_data, amazon_data]:
+            if "error" not in data:
+                for brand in data["brands"]:
+                    brand_name = brand["brand"]
+                    if brand_name not in brand_map:
+                        brand_map[brand_name] = {
+                            "reviews": 0,
+                            "sales": 0,
+                            "products": 0,
+                            "ratings": [],
+                            "prices": []
+                        }
+                    
+                    brand_map[brand_name]["reviews"] += brand["total_reviews"]
+                    brand_map[brand_name]["sales"] += brand["total_sales"]
+                    brand_map[brand_name]["products"] += brand["product_count"]
+                    if brand["avg_rating"]:
+                        brand_map[brand_name]["ratings"].append(brand["avg_rating"])
+                    if brand["avg_price"]:
+                        brand_map[brand_name]["prices"].append(brand["avg_price"])
+        
+        total_reviews = sum(b["reviews"] for b in brand_map.values())
+        
+        combined_brands = []
+        your_brand_combined_share = None
+        
+        for brand_name, data in brand_map.items():
+            share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
+            
+            combined_brand = {
+                "brand": brand_name,
+                "share_percentage": round(share_pct, 2),
+                "total_reviews": data["reviews"],
+                "total_sales": data["sales"],
+                "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
+                "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
+                "product_count": data["products"]
+            }
+            combined_brands.append(combined_brand)
+            
+            if your_brand and brand_name.lower() == your_brand.lower():
+                your_brand_combined_share = share_pct
+        
+        combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
+        
+        return {
+            "category_name": category_name,
+            "combined_brands": combined_brands,
+            "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
+            "amazon_data": amazon_data if "error" not in amazon_data else None,
+            "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
+        }
+    
+    except Exception as e:
+        return {"error": f"Error getting combined SOV: {str(e)}"}
+
+
+@app.get("/sov/brands")
+def get_all_brands(
+    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+    db: Session = Depends(get_db)
+):
+    """Get list of all available brands"""
+    try:
+        brands = set()
+        
+        if marketplace in ["flipkart", "all"]:
+            flipkart_query = text("""
+                SELECT DISTINCT brand 
+                FROM rapidapi_flipkart_products 
+                WHERE brand IS NOT NULL AND brand != 'NULL'
+                ORDER BY brand
+            """)
+            result = db.execute(flipkart_query)
+            brands.update([row[0] for row in result if row[0]])
+        
+        if marketplace in ["amazon", "all"]:
+            amazon_query = text("""
+                SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
+                FROM rapidapi_amazon_products 
+                WHERE product_title IS NOT NULL
+                ORDER BY brand
+            """)
+            result = db.execute(amazon_query)
+            brands.update([row[0] for row in result if row[0]])
+        
+        return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
+    
+    except Exception as e:
+        return {"error": f"Error fetching brands: {str(e)}"}
+
+
+# @app.post("/sov/ai-insights")
+# def get_ai_insights(
+#     category_name: str = Query(...),
+#     your_brand: str = Query(...),
+#     target_share: float = Query(default=25.0),
+#     target_days: int = Query(default=60),
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get AI-powered insights and recommendations using Ollama Mistral"""
+#     try:
+#         import subprocess
+#         import json
+        
+#         # Get current SOV data
+#         sov_data = get_category_sov(category_name, marketplace, your_brand, db)
+        
+#         if "error" in sov_data:
+#             return sov_data
+        
+#         current_share = sov_data.get("your_brand_share") or 0
+#         market_leader = sov_data.get("market_leader")
+#         brands = sov_data.get("brands", [])
+        
+#         # Find your brand data
+#         your_brand_data = next((b for b in brands if b["brand"].lower() == your_brand.lower()), None)
+        
+#         # Find market leader data
+#         leader_data = next((b for b in brands if b["brand"] == market_leader), None)
+        
+#         # Calculate gaps and opportunities
+#         insights = {
+#             "current_analysis": {
+#                 "current_share": current_share,
+#                 "target_share": target_share,
+#                 "gap": round(target_share - current_share, 2),
+#                 "days_to_target": target_days,
+#                 "required_daily_growth": round((target_share - current_share) / target_days, 4) if target_days > 0 else 0
+#             },
+#             "market_position": {
+#                 "rank": next((i + 1 for i, b in enumerate(brands) if b["brand"].lower() == your_brand.lower()), None),
+#                 "total_brands": len(brands),
+#                 "distance_from_leader": round((leader_data["share_percentage"] if leader_data else 0) - current_share, 2),
+#                 "market_leader": market_leader
+#             },
+#             "competitive_analysis": [],
+#             "actionable_recommendations": [],
+#             "growth_strategy": [],
+#             "product_gaps": [],
+#             "pricing_insights": {},
+#             "ai_generated_insights": ""
+#         }
+        
+#         # Competitive Analysis - Compare with top 5
+#         top_5_brands = brands[:5]
+#         for idx, competitor in enumerate(top_5_brands):
+#             if competitor["brand"].lower() != your_brand.lower():
+#                 insights["competitive_analysis"].append({
+#                     "brand": competitor["brand"],
+#                     "share": competitor["share_percentage"],
+#                     "products": competitor["product_count"],
+#                     "avg_price": competitor["avg_price"],
+#                     "avg_rating": competitor["avg_rating"],
+#                     "reviews": competitor["total_reviews"],
+#                     "advantage": "Higher" if competitor["share_percentage"] > current_share else "Lower",
+#                     "price_comparison": "Cheaper" if competitor["avg_price"] < (your_brand_data["avg_price"] if your_brand_data else 0) else "More Expensive"
+#                 })
+        
+#         # Prepare data for AI analysis
+#         ai_context = {
+#             "brand": your_brand,
+#             "category": category_name,
+#             "current_share": current_share,
+#             "target_share": target_share,
+#             "target_days": target_days,
+#             "rank": insights["market_position"]["rank"],
+#             "total_brands": insights["market_position"]["total_brands"],
+#             "market_leader": market_leader,
+#             "leader_share": leader_data["share_percentage"] if leader_data else 0,
+#             "your_data": {
+#                 "products": your_brand_data["product_count"] if your_brand_data else 0,
+#                 "avg_price": your_brand_data["avg_price"] if your_brand_data else 0,
+#                 "avg_rating": your_brand_data["avg_rating"] if your_brand_data else 0,
+#                 "reviews": your_brand_data["total_reviews"] if your_brand_data else 0
+#             },
+#             "top_competitors": [
+#                 {
+#                     "brand": c["brand"],
+#                     "share": c["share"],
+#                     "products": c["products"],
+#                     "price": c["avg_price"],
+#                     "rating": c["avg_rating"]
+#                 } for c in insights["competitive_analysis"][:3]
+#             ]
+#         }
+        
+#         # Create AI prompt for Ollama Mistral
+#         ai_prompt = f"""You are an expert market analyst. Analyze this e-commerce market data and provide strategic insights.
+
+# MARKET DATA:
+# - Brand: {ai_context['brand']}
+# - Category: {ai_context['category']}
+# - Current Market Share: {ai_context['current_share']}%
+# - Target Market Share: {ai_context['target_share']}%
+# - Timeline: {ai_context['target_days']} days
+# - Current Rank: #{ai_context['rank']} out of {ai_context['total_brands']} brands
+# - Market Leader: {ai_context['market_leader']} ({ai_context['leader_share']}% share)
+
+# YOUR BRAND METRICS:
+# - Products: {ai_context['your_data']['products']}
+# - Average Price: ₹{ai_context['your_data']['avg_price']}
+# - Average Rating: {ai_context['your_data']['avg_rating']}
+# - Total Reviews: {ai_context['your_data']['reviews']}
+
+# TOP 3 COMPETITORS:
+# {chr(10).join([f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} avg price, {c['rating']} rating" for c in ai_context['top_competitors']])}
+
+# TASK: Provide a strategic analysis in exactly this format:
+
+# 1. KEY INSIGHTS (3 bullet points):
+# - [Critical observation about market position]
+# - [Major opportunity identified]
+# - [Biggest challenge to address]
+
+# 2. PRIORITY ACTIONS (Top 3, numbered):
+# 1. [Specific action with expected impact]
+# 2. [Specific action with expected impact]
+# 3. [Specific action with expected impact]
+
+# 3. COMPETITIVE ADVANTAGE:
+# [One sentence on how to differentiate from competitors]
+
+# 4. RISK FACTORS:
+# [One sentence on main risks to achieving target]
+
+# Keep response concise and actionable. No preamble or conclusion."""
+
+#         # Call Ollama Mistral
+#         try:
+#             result = subprocess.run(
+#                 ["ollama", "run", "mistral"],
+#                 input=ai_prompt,
+#                 capture_output=True,
+#                 text=True,
+#                 encoding="utf-8",
+#                 errors="ignore",
+#                 timeout=60
+#             )
+            
+#             ai_output = (result.stdout or result.stderr or "").strip()
+            
+#             # Clean the output
+#             ai_output = (
+#                 ai_output.replace("<|MODEL_RESPONSE|>", "")
+#                 .replace("</s>", "")
+#                 .replace("```", "")
+#                 .strip()
+#             )
+            
+#             insights["ai_generated_insights"] = ai_output if ai_output else "AI analysis temporarily unavailable."
+            
+#         except subprocess.TimeoutExpired:
+#             insights["ai_generated_insights"] = "AI analysis timed out. Using rule-based recommendations."
+#         except FileNotFoundError:
+#             insights["ai_generated_insights"] = "Ollama not available. Using rule-based recommendations."
+#         except Exception as e:
+#             insights["ai_generated_insights"] = f"AI service error: {str(e)}"
+        
+#         # Generate rule-based Actionable Recommendations
+#         if your_brand_data:
+#             # Product Count Recommendation
+#             avg_products = sum(b["product_count"] for b in top_5_brands) / len(top_5_brands)
+#             if your_brand_data["product_count"] < avg_products:
+#                 insights["actionable_recommendations"].append({
+#                     "type": "Product Expansion",
+#                     "priority": "High",
+#                     "current": your_brand_data["product_count"],
+#                     "benchmark": int(avg_products),
+#                     "action": f"Expand product line by {int(avg_products - your_brand_data['product_count'])} products to match competitors",
+#                     "impact": "Could increase market share by 2-5%"
+#                 })
+            
+#             # Rating Recommendation
+#             avg_rating = sum(b["avg_rating"] for b in top_5_brands if b["avg_rating"]) / len([b for b in top_5_brands if b["avg_rating"]])
+#             if your_brand_data["avg_rating"] and your_brand_data["avg_rating"] < avg_rating:
+#                 insights["actionable_recommendations"].append({
+#                     "type": "Quality Improvement",
+#                     "priority": "High",
+#                     "current": your_brand_data["avg_rating"],
+#                     "benchmark": round(avg_rating, 2),
+#                     "action": f"Improve product rating by {round(avg_rating - your_brand_data['avg_rating'], 2)} points through quality enhancements",
+#                     "impact": "Better ratings can increase conversions by 15-20%"
+#                 })
+            
+#             # Review Generation
+#             avg_reviews = sum(b["total_reviews"] for b in top_5_brands) / len(top_5_brands)
+#             if your_brand_data["total_reviews"] < avg_reviews:
+#                 insights["actionable_recommendations"].append({
+#                     "type": "Review Generation",
+#                     "priority": "Medium",
+#                     "current": your_brand_data["total_reviews"],
+#                     "benchmark": int(avg_reviews),
+#                     "action": f"Increase reviews by {int(avg_reviews - your_brand_data['total_reviews'])} through customer engagement campaigns",
+#                     "impact": "More reviews increase trust and visibility"
+#                 })
+            
+#             # Pricing Strategy
+#             avg_price = sum(b["avg_price"] for b in top_5_brands if b["avg_price"]) / len([b for b in top_5_brands if b["avg_price"]])
+#             price_diff = your_brand_data["avg_price"] - avg_price if your_brand_data["avg_price"] else 0
+            
+#             if abs(price_diff) > avg_price * 0.15:  # More than 15% difference
+#                 if price_diff > 0:
+#                     insights["actionable_recommendations"].append({
+#                         "type": "Pricing Optimization",
+#                         "priority": "Medium",
+#                         "current": your_brand_data["avg_price"],
+#                         "benchmark": round(avg_price, 2),
+#                         "action": f"Consider reducing price by ₹{round(price_diff, 2)} to be more competitive",
+#                         "impact": "Price optimization can increase sales by 10-15%"
+#                     })
+#                 else:
+#                     insights["actionable_recommendations"].append({
+#                         "type": "Premium Positioning",
+#                         "priority": "Low",
+#                         "current": your_brand_data["avg_price"],
+#                         "benchmark": round(avg_price, 2),
+#                         "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
+#                         "impact": "Could justify price increase with improved marketing"
+#                     })
+        
+#         # Growth Strategy based on gap
+#         gap = target_share - current_share
+        
+#         if gap > 10:
+#             insights["growth_strategy"] = [
+#                 {
+#                     "phase": "Phase 1 (Days 1-20)",
+#                     "focus": "Quick Wins",
+#                     "actions": [
+#                         "Launch aggressive review generation campaign",
+#                         "Optimize product listings with better keywords",
+#                         "Run promotional pricing on top 3 products"
+#                     ],
+#                     "target": f"{round(current_share + gap * 0.3, 2)}% market share"
+#                 },
+#                 {
+#                     "phase": "Phase 2 (Days 21-40)",
+#                     "focus": "Product Expansion",
+#                     "actions": [
+#                         "Add 3-5 new product variants",
+#                         "Improve product images and descriptions",
+#                         "Launch influencer marketing campaign"
+#                     ],
+#                     "target": f"{round(current_share + gap * 0.6, 2)}% market share"
+#                 },
+#                 {
+#                     "phase": "Phase 3 (Days 41-60)",
+#                     "focus": "Market Dominance",
+#                     "actions": [
+#                         "Scale successful products",
+#                         "Target competitor weak points",
+#                         "Implement loyalty program"
+#                     ],
+#                     "target": f"{target_share}% market share"
+#                 }
+#             ]
+#         else:
+#             insights["growth_strategy"] = [
+#                 {
+#                     "phase": "Continuous Improvement",
+#                     "focus": "Incremental Growth",
+#                     "actions": [
+#                         "Maintain consistent review generation",
+#                         "Monitor competitor pricing",
+#                         "Optimize existing product listings"
+#                     ],
+#                     "target": f"{target_share}% market share in {target_days} days"
+#                 }
+#             ]
+        
+#         # Product Gaps Analysis
+#         if marketplace == "flipkart":
+#             gaps_query = text(f"""
+#                 SELECT 
+#                     product_title,
+#                     COUNT(*) as competitor_products,
+#                     AVG(product_price) as avg_price,
+#                     AVG(CAST(product_star_rating AS FLOAT)) as avg_rating,
+#                     SUM(product_rating_count) as total_reviews
+#                 FROM rapidapi_flipkart_products
+#                 WHERE category_name = :category_name
+#                     AND brand != :your_brand
+#                 GROUP BY product_title
+#                 HAVING COUNT(*) >= 2
+#                 ORDER BY total_reviews DESC
+#                 LIMIT 10
+#             """)
+#         else:
+#             gaps_query = text(f"""
+#                 SELECT 
+#                     product_title,
+#                     COUNT(*) as competitor_products,
+#                     AVG(product_price_numeric) as avg_price,
+#                     AVG(product_star_rating_numeric) as avg_rating,
+#                     SUM(product_num_ratings) as total_reviews
+#                 FROM rapidapi_amazon_products
+#                 WHERE category_name = :category_name
+#                 GROUP BY product_title
+#                 HAVING COUNT(*) >= 2
+#                 ORDER BY total_reviews DESC
+#                 LIMIT 10
+#             """)
+        
+#         result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
+#         gaps = result.fetchall()
+        
+#         for gap in gaps[:5]:
+#             insights["product_gaps"].append({
+#                 "product_type": gap[0][:100],  # Truncate long titles
+#                 "competitors_offering": safe_int(gap[1]),
+#                 "avg_price": round(safe_float(gap[2]), 2),
+#                 "avg_rating": round(safe_float(gap[3]), 2),
+#                 "total_demand": safe_int(gap[4]),
+#                 "opportunity": "High" if safe_int(gap[4]) > 1000 else "Medium" if safe_int(gap[4]) > 500 else "Low"
+#             })
+        
+#         # Pricing Insights
+#         if your_brand_data and your_brand_data["avg_price"]:
+#             price_ranges = {
+#                 "budget": [b for b in brands if b["avg_price"] and b["avg_price"] < your_brand_data["avg_price"] * 0.8],
+#                 "similar": [b for b in brands if b["avg_price"] and your_brand_data["avg_price"] * 0.8 <= b["avg_price"] <= your_brand_data["avg_price"] * 1.2],
+#                 "premium": [b for b in brands if b["avg_price"] and b["avg_price"] > your_brand_data["avg_price"] * 1.2]
+#             }
+            
+#             insights["pricing_insights"] = {
+#                 "your_price": your_brand_data["avg_price"],
+#                 "market_average": round(sum(b["avg_price"] for b in brands if b["avg_price"]) / len([b for b in brands if b["avg_price"]]), 2),
+#                 "budget_competitors": len(price_ranges["budget"]),
+#                 "similar_price_competitors": len(price_ranges["similar"]),
+#                 "premium_competitors": len(price_ranges["premium"]),
+#                 "price_positioning": "Budget" if your_brand_data["avg_price"] < avg_price * 0.8 else "Premium" if your_brand_data["avg_price"] > avg_price * 1.2 else "Mid-Range",
+#                 "recommendation": "Your pricing is competitive" if len(price_ranges["similar"]) > len(price_ranges["budget"]) else "Consider price adjustment to be more competitive"
+#             }
+        
+#         return insights
+    
+#     except Exception as e:
+#         return {"error": f"Error generating AI insights: {str(e)}"}
+
+
+
+
+# @app.post("/sov/ai-insights")
+# def get_ai_insights(
+#     category_name: str = Query(...),
+#     your_brand: str = Query(...),
+#     target_share: float = Query(default=25.0),
+#     target_days: int = Query(default=60),
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get AI-powered insights and recommendations using Ollama Mistral"""
+#     try:
+#         import subprocess
+#         import json
+        
+#         # Get current SOV data
+#         sov_data = get_category_sov(category_name, marketplace, your_brand, db)
+        
+#         if "error" in sov_data:
+#             return {"error": sov_data["error"], "ai_generated_insights": "Cannot generate insights without valid SOV data"}
+        
+#         current_share = sov_data.get("your_brand_share") or 0
+#         market_leader = sov_data.get("market_leader")
+#         brands = sov_data.get("brands", [])
+        
+#         # Validate that we have data
+#         if not brands or len(brands) == 0:
+#             return {
+#                 "error": "No brand data found",
+#                 "ai_generated_insights": "No brands found in this category for the selected marketplace"
+#             }
+        
+#         # Find your brand data - case insensitive search
+#         your_brand_data = None
+#         for b in brands:
+#             if b["brand"].lower() == your_brand.lower():
+#                 your_brand_data = b
+#                 break
+        
+#         # If brand not found, return error
+#         if not your_brand_data:
+#             available_brands = [b["brand"] for b in brands[:10]]
+#             return {
+#                 "error": f"Brand '{your_brand}' not found in {marketplace}",
+#                 "ai_generated_insights": f"Brand not found. Available brands include: {', '.join(available_brands)}",
+#                 "available_brands": available_brands
+#             }
+        
+#         # Find market leader data
+#         leader_data = None
+#         for b in brands:
+#             if b["brand"] == market_leader:
+#                 leader_data = b
+#                 break
+        
+#         # Initialize insights structure
+#         insights = {
+#             "current_analysis": {
+#                 "current_share": current_share,
+#                 "target_share": target_share,
+#                 "gap": round(target_share - current_share, 2),
+#                 "days_to_target": target_days,
+#                 "required_daily_growth": round((target_share - current_share) / target_days, 4) if target_days > 0 else 0
+#             },
+#             "market_position": {
+#                 "rank": None,
+#                 "total_brands": len(brands),
+#                 "distance_from_leader": 0,
+#                 "market_leader": market_leader
+#             },
+#             "competitive_analysis": [],
+#             "actionable_recommendations": [],
+#             "growth_strategy": [],
+#             "product_gaps": [],
+#             "pricing_insights": {},
+#             "ai_generated_insights": ""
+#         }
+        
+#         # Calculate market position
+#         for i, b in enumerate(brands):
+#             if b["brand"].lower() == your_brand.lower():
+#                 insights["market_position"]["rank"] = i + 1
+#                 break
+        
+#         if leader_data:
+#             insights["market_position"]["distance_from_leader"] = round(
+#                 (leader_data.get("share_percentage", 0) or 0) - current_share, 2
+#             )
+        
+#         # Competitive Analysis - Compare with top 5
+#         top_5_brands = brands[:5]
+#         for competitor in top_5_brands:
+#             if competitor["brand"].lower() != your_brand.lower():
+#                 insights["competitive_analysis"].append({
+#                     "brand": competitor["brand"],
+#                     "share": competitor.get("share_percentage", 0) or 0,
+#                     "products": competitor.get("product_count", 0) or 0,
+#                     "avg_price": competitor.get("avg_price", 0) or 0,
+#                     "avg_rating": competitor.get("avg_rating", 0) or 0,
+#                     "reviews": competitor.get("total_reviews", 0) or 0,
+#                     "advantage": "Higher" if (competitor.get("share_percentage", 0) or 0) > current_share else "Lower",
+#                     "price_comparison": "Cheaper" if (competitor.get("avg_price", 0) or 0) < (your_brand_data.get("avg_price", 0) or 0) else "More Expensive"
+#                 })
+        
+#         # Prepare data for AI analysis
+#         ai_context = {
+#             "brand": your_brand,
+#             "category": category_name,
+#             "marketplace": marketplace,
+#             "current_share": current_share,
+#             "target_share": target_share,
+#             "target_days": target_days,
+#             "rank": insights["market_position"]["rank"],
+#             "total_brands": insights["market_position"]["total_brands"],
+#             "market_leader": market_leader,
+#             "leader_share": leader_data.get("share_percentage", 0) if leader_data else 0,
+#             "your_data": {
+#                 "products": your_brand_data.get("product_count", 0) or 0,
+#                 "avg_price": your_brand_data.get("avg_price", 0) or 0,
+#                 "avg_rating": your_brand_data.get("avg_rating", 0) or 0,
+#                 "reviews": your_brand_data.get("total_reviews", 0) or 0
+#             },
+#             "top_competitors": [
+#                 {
+#                     "brand": c["brand"],
+#                     "share": c.get("share", 0) or 0,
+#                     "products": c.get("products", 0) or 0,
+#                     "price": c.get("avg_price", 0) or 0,
+#                     "rating": c.get("avg_rating", 0) or 0
+#                 } for c in insights["competitive_analysis"][:3]
+#             ]
+#         }
+        
+#         # Create AI prompt for Ollama Mistral
+#         ai_prompt = f"""You are an expert market analyst. Analyze this e-commerce market data and provide strategic insights.
+
+# MARKET DATA:
+# - Marketplace: {ai_context['marketplace'].upper()}
+# - Brand: {ai_context['brand']}
+# - Category: {ai_context['category']}
+# - Current Market Share: {ai_context['current_share']}%
+# - Target Market Share: {ai_context['target_share']}%
+# - Timeline: {ai_context['target_days']} days
+# - Current Rank: #{ai_context['rank']} out of {ai_context['total_brands']} brands
+# - Market Leader: {ai_context['market_leader']} ({ai_context['leader_share']}% share)
+
+# YOUR BRAND METRICS:
+# - Products: {ai_context['your_data']['products']}
+# - Average Price: ₹{ai_context['your_data']['avg_price']}
+# - Average Rating: {ai_context['your_data']['avg_rating']}
+# - Total Reviews: {ai_context['your_data']['reviews']}
+
+# TOP 3 COMPETITORS:
+# {chr(10).join([f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} avg price, {c['rating']} rating" for c in ai_context['top_competitors']]) if ai_context['top_competitors'] else "- No competitor data available"}
+
+# TASK: Provide a strategic analysis in exactly this format:
+
+# 1. KEY INSIGHTS (3 bullet points):
+# - [Critical observation about market position]
+# - [Major opportunity identified]
+# - [Biggest challenge to address]
+
+# 2. PRIORITY ACTIONS (Top 3, numbered):
+# 1. [Specific action with expected impact]
+# 2. [Specific action with expected impact]
+# 3. [Specific action with expected impact]
+
+# 3. COMPETITIVE ADVANTAGE:
+# [One sentence on how to differentiate from competitors]
+
+# 4. RISK FACTORS:
+# [One sentence on main risks to achieving target]
+
+# Keep response concise and actionable. No preamble or conclusion."""
+
+#         # Call Ollama Mistral with better error handling
+#         try:
+#             result = subprocess.run(
+#                 ["ollama", "run", "mistral"],
+#                 input=ai_prompt,
+#                 capture_output=True,
+#                 text=True,
+#                 encoding="utf-8",
+#                 errors="ignore",
+#                 timeout=30  # Reduced timeout to 30 seconds
+#             )
+            
+#             ai_output = (result.stdout or result.stderr or "").strip()
+            
+#             # Clean the output
+#             ai_output = (
+#                 ai_output.replace("<|MODEL_RESPONSE|>", "")
+#                 .replace("</s>", "")
+#                 .replace("```", "")
+#                 .strip()
+#             )
+            
+#             if ai_output and len(ai_output) > 20:  # Valid response
+#                 insights["ai_generated_insights"] = ai_output
+#             else:
+#                 insights["ai_generated_insights"] = "AI analysis temporarily unavailable. Using rule-based recommendations below."
+            
+#         except subprocess.TimeoutExpired:
+#             insights["ai_generated_insights"] = "AI analysis timed out. Using rule-based recommendations below."
+#         except FileNotFoundError:
+#             insights["ai_generated_insights"] = "Ollama service not found. Using rule-based recommendations below."
+#         except Exception as e:
+#             print(f"AI service error: {str(e)}")  # Log the error
+#             insights["ai_generated_insights"] = f"AI service under maintenance. Using rule-based recommendations below."
+        
+#         # Generate rule-based Actionable Recommendations
+#         if your_brand_data:
+#             # Calculate averages safely
+#             valid_products = [b.get("product_count", 0) for b in top_5_brands if b.get("product_count")]
+#             avg_products = sum(valid_products) / len(valid_products) if valid_products else 0
+            
+#             valid_ratings = [b.get("avg_rating", 0) for b in top_5_brands if b.get("avg_rating")]
+#             avg_rating = sum(valid_ratings) / len(valid_ratings) if valid_ratings else 0
+            
+#             valid_reviews = [b.get("total_reviews", 0) for b in top_5_brands if b.get("total_reviews")]
+#             avg_reviews = sum(valid_reviews) / len(valid_reviews) if valid_reviews else 0
+            
+#             valid_prices = [b.get("avg_price", 0) for b in top_5_brands if b.get("avg_price")]
+#             avg_price = sum(valid_prices) / len(valid_prices) if valid_prices else 0
+            
+#             # Product Count Recommendation
+#             brand_products = your_brand_data.get("product_count", 0) or 0
+#             if avg_products > 0 and brand_products < avg_products:
+#                 insights["actionable_recommendations"].append({
+#                     "type": "Product Expansion",
+#                     "priority": "High",
+#                     "current": brand_products,
+#                     "benchmark": int(avg_products),
+#                     "action": f"Expand product line by {int(avg_products - brand_products)} products to match competitors",
+#                     "impact": "Could increase market share by 2-5%"
+#                 })
+            
+#             # Rating Recommendation
+#             brand_rating = your_brand_data.get("avg_rating", 0) or 0
+#             if avg_rating > 0 and brand_rating > 0 and brand_rating < avg_rating:
+#                 insights["actionable_recommendations"].append({
+#                     "type": "Quality Improvement",
+#                     "priority": "High",
+#                     "current": brand_rating,
+#                     "benchmark": round(avg_rating, 2),
+#                     "action": f"Improve product rating by {round(avg_rating - brand_rating, 2)} points through quality enhancements",
+#                     "impact": "Better ratings can increase conversions by 15-20%"
+#                 })
+            
+#             # Review Generation
+#             brand_reviews = your_brand_data.get("total_reviews", 0) or 0
+#             if avg_reviews > 0 and brand_reviews < avg_reviews:
+#                 insights["actionable_recommendations"].append({
+#                     "type": "Review Generation",
+#                     "priority": "Medium",
+#                     "current": brand_reviews,
+#                     "benchmark": int(avg_reviews),
+#                     "action": f"Increase reviews by {int(avg_reviews - brand_reviews)} through customer engagement campaigns",
+#                     "impact": "More reviews increase trust and visibility"
+#                 })
+            
+#             # Pricing Strategy
+#             brand_price = your_brand_data.get("avg_price", 0) or 0
+#             if avg_price > 0 and brand_price > 0:
+#                 price_diff = brand_price - avg_price
+                
+#                 if abs(price_diff) > avg_price * 0.15:  # More than 15% difference
+#                     if price_diff > 0:
+#                         insights["actionable_recommendations"].append({
+#                             "type": "Pricing Optimization",
+#                             "priority": "Medium",
+#                             "current": brand_price,
+#                             "benchmark": round(avg_price, 2),
+#                             "action": f"Consider reducing price by ₹{round(price_diff, 2)} to be more competitive",
+#                             "impact": "Price optimization can increase sales by 10-15%"
+#                         })
+#                     else:
+#                         insights["actionable_recommendations"].append({
+#                             "type": "Premium Positioning",
+#                             "priority": "Low",
+#                             "current": brand_price,
+#                             "benchmark": round(avg_price, 2),
+#                             "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
+#                             "impact": "Could justify price increase with improved marketing"
+#                         })
+        
+#         # Growth Strategy based on gap
+#         gap = target_share - current_share
+        
+#         if gap > 10:
+#             insights["growth_strategy"] = [
+#                 {
+#                     "phase": "Phase 1 (Days 1-20)",
+#                     "focus": "Quick Wins",
+#                     "actions": [
+#                         "Launch aggressive review generation campaign",
+#                         "Optimize product listings with better keywords",
+#                         "Run promotional pricing on top 3 products"
+#                     ],
+#                     "target": f"{round(current_share + gap * 0.3, 2)}% market share"
+#                 },
+#                 {
+#                     "phase": "Phase 2 (Days 21-40)",
+#                     "focus": "Product Expansion",
+#                     "actions": [
+#                         "Add 3-5 new product variants",
+#                         "Improve product images and descriptions",
+#                         "Launch influencer marketing campaign"
+#                     ],
+#                     "target": f"{round(current_share + gap * 0.6, 2)}% market share"
+#                 },
+#                 {
+#                     "phase": "Phase 3 (Days 41-60)",
+#                     "focus": "Market Dominance",
+#                     "actions": [
+#                         "Scale successful products",
+#                         "Target competitor weak points",
+#                         "Implement loyalty program"
+#                     ],
+#                     "target": f"{target_share}% market share"
+#                 }
+#             ]
+#         else:
+#             insights["growth_strategy"] = [
+#                 {
+#                     "phase": "Continuous Improvement",
+#                     "focus": "Incremental Growth",
+#                     "actions": [
+#                         "Maintain consistent review generation",
+#                         "Monitor competitor pricing",
+#                         "Optimize existing product listings"
+#                     ],
+#                     "target": f"{target_share}% market share in {target_days} days"
+#                 }
+#             ]
+        
+#         # Product Gaps Analysis - with proper marketplace handling
+#         try:
+#             if marketplace == "flipkart":
+#                 gaps_query = text("""
+#                     SELECT 
+#                         product_title,
+#                         COUNT(*) as competitor_products,
+#                         AVG(product_price) as avg_price,
+#                         AVG(CAST(product_star_rating AS FLOAT)) as avg_rating,
+#                         SUM(product_rating_count) as total_reviews
+#                     FROM rapidapi_flipkart_products
+#                     WHERE category_name = :category_name
+#                         AND LOWER(brand) != LOWER(:your_brand)
+#                     GROUP BY product_title
+#                     HAVING COUNT(*) >= 2
+#                     ORDER BY total_reviews DESC
+#                     LIMIT 10
+#                 """)
+#             else:  # amazon
+#                 gaps_query = text("""
+#                     SELECT 
+#                         product_title,
+#                         COUNT(*) as competitor_products,
+#                         AVG(product_price_numeric) as avg_price,
+#                         AVG(product_star_rating_numeric) as avg_rating,
+#                         SUM(product_num_ratings) as total_reviews
+#                     FROM rapidapi_amazon_products
+#                     WHERE category_name = :category_name
+#                         AND LOWER(brand) != LOWER(:your_brand)
+#                     GROUP BY product_title
+#                     HAVING COUNT(*) >= 2
+#                     ORDER BY total_reviews DESC
+#                     LIMIT 10
+#                 """)
+            
+#             result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
+#             gaps = result.fetchall()
+            
+#             for gap in gaps[:5]:
+#                 insights["product_gaps"].append({
+#                     "product_type": gap[0][:100] if gap[0] else "Unknown",
+#                     "competitors_offering": int(gap[1]) if gap[1] else 0,
+#                     "avg_price": round(float(gap[2]), 2) if gap[2] else 0,
+#                     "avg_rating": round(float(gap[3]), 2) if gap[3] else 0,
+#                     "total_demand": int(gap[4]) if gap[4] else 0,
+#                     "opportunity": "High" if (gap[4] and int(gap[4]) > 1000) else "Medium" if (gap[4] and int(gap[4]) > 500) else "Low"
+#                 })
+#         except Exception as e:
+#             print(f"Product gaps error: {str(e)}")
+#             # Continue without product gaps
+        
+#         # Pricing Insights
+#         brand_avg_price = your_brand_data.get("avg_price", 0) or 0
+#         if brand_avg_price and avg_price > 0:
+#             price_ranges = {
+#                 "budget": [b for b in brands if b.get("avg_price") and b["avg_price"] < brand_avg_price * 0.8],
+#                 "similar": [b for b in brands if b.get("avg_price") and brand_avg_price * 0.8 <= b["avg_price"] <= brand_avg_price * 1.2],
+#                 "premium": [b for b in brands if b.get("avg_price") and b["avg_price"] > brand_avg_price * 1.2]
+#             }
+            
+#             insights["pricing_insights"] = {
+#                 "your_price": brand_avg_price,
+#                 "market_average": round(avg_price, 2),
+#                 "budget_competitors": len(price_ranges["budget"]),
+#                 "similar_price_competitors": len(price_ranges["similar"]),
+#                 "premium_competitors": len(price_ranges["premium"]),
+#                 "price_positioning": "Budget" if brand_avg_price < avg_price * 0.8 else "Premium" if brand_avg_price > avg_price * 1.2 else "Mid-Range",
+#                 "recommendation": "Your pricing is competitive" if len(price_ranges["similar"]) > len(price_ranges["budget"]) else "Consider price adjustment to be more competitive"
+#             }
+        
+#         return insights
+    
+#     except Exception as e:
+#         import traceback
+#         error_details = traceback.format_exc()
+#         print(f"Error in AI insights: {error_details}")
+#         return {
+#             "error": f"Error generating AI insights: {str(e)}",
+#             "ai_generated_insights": "Unable to generate insights due to an error. Please try again.",
+#             "details": str(e)
+#         }
+
+
+@app.post("/sov/ai-insights")
+def get_ai_insights(
+    category_name: str = Query(...),
+    your_brand: str = Query(...),
+    target_share: float = Query(default=25.0),
+    target_days: int = Query(default=60),
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    db: Session = Depends(get_db)
+):
+    """Get AI-powered insights and recommendations using Ollama Mistral"""
+    try:
+        import subprocess
+        import json
+        
+        # Get current SOV data
+        sov_data = get_category_sov(category_name, marketplace, your_brand, db)
+        
+        if "error" in sov_data:
+            return {"error": sov_data["error"], "ai_generated_insights": "Cannot generate insights without valid SOV data"}
+        
+        current_share = sov_data.get("your_brand_share") or 0
+        market_leader = sov_data.get("market_leader")
+        brands = sov_data.get("brands", [])
+        
+        # Validate that we have data
+        if not brands or len(brands) == 0:
+            return {
+                "error": "No brand data found",
+                "ai_generated_insights": "No brands found in this category for the selected marketplace"
+            }
+        
+        # Find your brand data - case insensitive search
+        your_brand_data = None
+        for b in brands:
+            if b["brand"].lower() == your_brand.lower():
+                your_brand_data = b
+                break
+        
+        # If brand not found, return error
+        if not your_brand_data:
+            available_brands = [b["brand"] for b in brands[:10]]
+            return {
+                "error": f"Brand '{your_brand}' not found in {marketplace}",
+                "ai_generated_insights": f"Brand not found. Available brands include: {', '.join(available_brands)}",
+                "available_brands": available_brands
+            }
+        
+        # Find market leader data
+        leader_data = None
+        for b in brands:
+            if b["brand"] == market_leader:
+                leader_data = b
+                break
+        
+        # Initialize insights structure
+        insights = {
+            "current_analysis": {
+                "current_share": current_share,
+                "target_share": target_share,
+                "gap": round(target_share - current_share, 2),
+                "days_to_target": target_days,
+                "required_daily_growth": round((target_share - current_share) / target_days, 4) if target_days > 0 else 0
+            },
+            "market_position": {
+                "rank": None,
+                "total_brands": len(brands),
+                "distance_from_leader": 0,
+                "market_leader": market_leader
+            },
+            "competitive_analysis": [],
+            "actionable_recommendations": [],
+            "growth_strategy": [],
+            "product_gaps": [],
+            "pricing_insights": {},
+            "ai_generated_insights": ""
+        }
+        
+        # Calculate market position
+        for i, b in enumerate(brands):
+            if b["brand"].lower() == your_brand.lower():
+                insights["market_position"]["rank"] = i + 1
+                break
+        
+        if leader_data:
+            insights["market_position"]["distance_from_leader"] = round(
+                (leader_data.get("share_percentage", 0) or 0) - current_share, 2
+            )
+        
+        # Competitive Analysis - Compare with top 5
+        top_5_brands = brands[:5]
+        for competitor in top_5_brands:
+            if competitor["brand"].lower() != your_brand.lower():
+                insights["competitive_analysis"].append({
+                    "brand": competitor["brand"],
+                    "share": competitor.get("share_percentage", 0) or 0,
+                    "products": competitor.get("product_count", 0) or 0,
+                    "avg_price": competitor.get("avg_price", 0) or 0,
+                    "avg_rating": competitor.get("avg_rating", 0) or 0,
+                    "reviews": competitor.get("total_reviews", 0) or 0,
+                    "advantage": "Higher" if (competitor.get("share_percentage", 0) or 0) > current_share else "Lower",
+                    "price_comparison": "Cheaper" if (competitor.get("avg_price", 0) or 0) < (your_brand_data.get("avg_price", 0) or 0) else "More Expensive"
+                })
+        
+        # Prepare data for AI analysis
+        ai_context = {
+            "brand": your_brand,
+            "category": category_name,
+            "marketplace": marketplace,
+            "current_share": current_share,
+            "target_share": target_share,
+            "target_days": target_days,
+            "rank": insights["market_position"]["rank"],
+            "total_brands": insights["market_position"]["total_brands"],
+            "market_leader": market_leader,
+            "leader_share": leader_data.get("share_percentage", 0) if leader_data else 0,
+            "your_data": {
+                "products": your_brand_data.get("product_count", 0) or 0,
+                "avg_price": your_brand_data.get("avg_price", 0) or 0,
+                "avg_rating": your_brand_data.get("avg_rating", 0) or 0,
+                "reviews": your_brand_data.get("total_reviews", 0) or 0
+            },
+            "top_competitors": [
+                {
+                    "brand": c["brand"],
+                    "share": c.get("share", 0) or 0,
+                    "products": c.get("products", 0) or 0,
+                    "price": c.get("avg_price", 0) or 0,
+                    "rating": c.get("avg_rating", 0) or 0
+                } for c in insights["competitive_analysis"][:3]
+            ]
+        }
+        
+        # Create AI prompt for Ollama Mistral - Main Insights
+        ai_prompt = f"""You are an expert market analyst. Analyze this e-commerce market data and provide strategic insights.
+
+MARKET DATA:
+- Marketplace: {ai_context['marketplace'].upper()}
+- Brand: {ai_context['brand']}
+- Category: {ai_context['category']}
+- Current Market Share: {ai_context['current_share']}%
+- Target Market Share: {ai_context['target_share']}%
+- Timeline: {ai_context['target_days']} days
+- Current Rank: #{ai_context['rank']} out of {ai_context['total_brands']} brands
+- Market Leader: {ai_context['market_leader']} ({ai_context['leader_share']}% share)
+
+YOUR BRAND METRICS:
+- Products: {ai_context['your_data']['products']}
+- Average Price: ₹{ai_context['your_data']['avg_price']}
+- Average Rating: {ai_context['your_data']['avg_rating']}
+- Total Reviews: {ai_context['your_data']['reviews']}
+
+TOP 3 COMPETITORS:
+{chr(10).join([f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} avg price, {c['rating']} rating" for c in ai_context['top_competitors']]) if ai_context['top_competitors'] else "- No competitor data available"}
+
+TASK: Provide a strategic analysis in exactly this format:
+
+1. KEY INSIGHTS (3 bullet points):
+- [Critical observation about market position]
+- [Major opportunity identified]
+- [Biggest challenge to address]
+
+2. PRIORITY ACTIONS (Top 3, numbered):
+-  [Specific action with expected impact]
+-  [Specific action with expected impact]
+-  [Specific action with expected impact]
+
+3. COMPETITIVE ADVANTAGE:
+[One sentence on how to differentiate from competitors]
+
+4. RISK FACTORS:
+[One sentence on main risks to achieving target]
+
+Keep response concise and actionable. No preamble or conclusion."""
+
+        # Call Ollama Mistral for main insights
+        try:
+            result = subprocess.run(
+                ["ollama", "run", "mistral"],
+                input=ai_prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                timeout=30
+            )
+            
+            ai_output = (result.stdout or result.stderr or "").strip()
+            ai_output = (
+                ai_output.replace("<|MODEL_RESPONSE|>", "")
+                .replace("</s>", "")
+                .replace("```", "")
+                .strip()
+            )
+            
+            if ai_output and len(ai_output) > 20:
+                insights["ai_generated_insights"] = ai_output
+            else:
+                insights["ai_generated_insights"] = "AI analysis temporarily unavailable. Using rule-based recommendations below."
+            
+        except subprocess.TimeoutExpired:
+            insights["ai_generated_insights"] = "AI analysis timed out. Using rule-based recommendations below."
+        except FileNotFoundError:
+            insights["ai_generated_insights"] = "Ollama service not found. Using rule-based recommendations below."
+        except Exception as e:
+            print(f"AI service error: {str(e)}")
+            insights["ai_generated_insights"] = f"AI service under maintenance. Using rule-based recommendations below."
+        
+        # Generate rule-based Actionable Recommendations
+        if your_brand_data:
+            # Calculate averages safely
+            valid_products = [b.get("product_count", 0) for b in top_5_brands if b.get("product_count")]
+            avg_products = sum(valid_products) / len(valid_products) if valid_products else 0
+            
+            valid_ratings = [b.get("avg_rating", 0) for b in top_5_brands if b.get("avg_rating")]
+            avg_rating = sum(valid_ratings) / len(valid_ratings) if valid_ratings else 0
+            
+            valid_reviews = [b.get("total_reviews", 0) for b in top_5_brands if b.get("total_reviews")]
+            avg_reviews = sum(valid_reviews) / len(valid_reviews) if valid_reviews else 0
+            
+            valid_prices = [b.get("avg_price", 0) for b in top_5_brands if b.get("avg_price")]
+            avg_price = sum(valid_prices) / len(valid_prices) if valid_prices else 0
+            
+            # Product Count Recommendation
+            brand_products = your_brand_data.get("product_count", 0) or 0
+            if avg_products > 0 and brand_products < avg_products:
+                insights["actionable_recommendations"].append({
+                    "type": "Product Expansion",
+                    "priority": "High",
+                    "current": brand_products,
+                    "benchmark": int(avg_products),
+                    "action": f"Expand product line by {int(avg_products - brand_products)} products to match competitors",
+                    "impact": "Could increase market share by 2-5%"
+                })
+            
+            # Rating Recommendation
+            brand_rating = your_brand_data.get("avg_rating", 0) or 0
+            if avg_rating > 0 and brand_rating > 0 and brand_rating < avg_rating:
+                insights["actionable_recommendations"].append({
+                    "type": "Quality Improvement",
+                    "priority": "High",
+                    "current": brand_rating,
+                    "benchmark": round(avg_rating, 2),
+                    "action": f"Improve product rating by {round(avg_rating - brand_rating, 2)} points through quality enhancements",
+                    "impact": "Better ratings can increase conversions by 15-20%"
+                })
+            
+            # Review Generation
+            brand_reviews = your_brand_data.get("total_reviews", 0) or 0
+            if avg_reviews > 0 and brand_reviews < avg_reviews:
+                insights["actionable_recommendations"].append({
+                    "type": "Review Generation",
+                    "priority": "Medium",
+                    "current": brand_reviews,
+                    "benchmark": int(avg_reviews),
+                    "action": f"Increase reviews by {int(avg_reviews - brand_reviews)} through customer engagement campaigns",
+                    "impact": "More reviews increase trust and visibility"
+                })
+            
+            # Pricing Strategy
+            brand_price = your_brand_data.get("avg_price", 0) or 0
+            if avg_price > 0 and brand_price > 0:
+                price_diff = brand_price - avg_price
+                
+                if abs(price_diff) > avg_price * 0.15:
+                    if price_diff > 0:
+                        insights["actionable_recommendations"].append({
+                            "type": "Pricing Optimization",
+                            "priority": "Medium",
+                            "current": brand_price,
+                            "benchmark": round(avg_price, 2),
+                            "action": f"Consider reducing price by ₹{round(price_diff, 2)} to be more competitive",
+                            "impact": "Price optimization can increase sales by 10-15%"
+                        })
+                    else:
+                        insights["actionable_recommendations"].append({
+                            "type": "Premium Positioning",
+                            "priority": "Low",
+                            "current": brand_price,
+                            "benchmark": round(avg_price, 2),
+                            "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
+                            "impact": "Could justify price increase with improved marketing"
+                        })
+        
+        # AI-Generated Dynamic Growth Strategy
+        gap = target_share - current_share
+        
+        # Determine number of phases based on timeline and gap
+        if target_days <= 30:
+            num_phases = 2
+        elif target_days <= 60:
+            num_phases = 3
+        else:
+            num_phases = 4
+        
+        # Create AI prompt for growth strategy
+        growth_prompt = f"""You are a strategic growth consultant for e-commerce brands. Create a {num_phases}-phase growth roadmap.
+
+CONTEXT:
+- Brand: {your_brand}
+- Marketplace: {marketplace.upper()}
+- Category: {category_name}
+- Current Share: {current_share}%
+- Target Share: {target_share}%
+- Gap to Close: {gap}%
+- Timeline: {target_days} days
+- Current Rank: #{insights['market_position']['rank']}
+- Products: {ai_context['your_data']['products']}
+- Avg Price: ₹{ai_context['your_data']['avg_price']}
+- Avg Rating: {ai_context['your_data']['avg_rating']}
+- Reviews: {ai_context['your_data']['reviews']}
+
+COMPETITORS ANALYSIS:
+{chr(10).join([f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} price, {c['rating']} rating" for c in ai_context['top_competitors'][:3]])}
+
+TASK: Create {num_phases} growth phases. For each phase, provide ONLY a JSON object with this exact structure:
+{{
+  "phases": [
+    {{
+      "phase": "Phase 1 (Days X-Y)",
+      "focus": "[Strategic Focus Area]",
+      "actions": [
+        "[Specific action 1]",
+        "[Specific action 2]",
+        "[Specific action 3]"
+      ],
+      "target": "X.X% market share"
+    }}
+  ]
+}}
+
+Requirements:
+- Phase 1 should focus on quick wins (pricing, listings, reviews)
+- Middle phases on product expansion and marketing
+- Final phase on scaling and market dominance
+- Each phase should have 3-4 specific, actionable items
+- Target percentages should progressively reach {target_share}%
+- Actions must be specific to {marketplace} platform
+- Consider the current weaknesses vs competitors
+
+Return ONLY the JSON, no explanation or markdown."""
+
+        # Generate dynamic growth strategy with AI
+        try:
+            growth_result = subprocess.run(
+                ["ollama", "run", "mistral"],
+                input=growth_prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                timeout=40
+            )
+            
+            growth_output = (growth_result.stdout or growth_result.stderr or "").strip()
+            
+            # Clean the output
+            growth_output = growth_output.replace("```json", "").replace("```", "").strip()
+            
+            # Try to parse JSON
+            try:
+                growth_data = json.loads(growth_output)
+                if "phases" in growth_data and isinstance(growth_data["phases"], list) and len(growth_data["phases"]) > 0:
+                    insights["growth_strategy"] = growth_data["phases"]
+                    print("✓ AI-generated growth strategy successfully created")
+                else:
+                    raise ValueError("Invalid growth strategy format")
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"Failed to parse AI growth strategy: {str(e)}")
+                # Fallback to rule-based strategy
+                insights["growth_strategy"] = generate_fallback_strategy(
+                    gap, target_days, current_share, target_share, num_phases
+                )
+        
+        except subprocess.TimeoutExpired:
+            print("Growth strategy generation timed out - using fallback")
+            insights["growth_strategy"] = generate_fallback_strategy(
+                gap, target_days, current_share, target_share, num_phases
+            )
+        except Exception as e:
+            print(f"Growth strategy error: {str(e)} - using fallback")
+            insights["growth_strategy"] = generate_fallback_strategy(
+                gap, target_days, current_share, target_share, num_phases
+            )
+        
+        # Product Gaps Analysis
+        try:
+            if marketplace == "flipkart":
+                gaps_query = text("""
+                    SELECT 
+                        product_title,
+                        COUNT(*) as competitor_products,
+                        AVG(product_price) as avg_price,
+                        AVG(CAST(product_star_rating AS FLOAT)) as avg_rating,
+                        SUM(product_rating_count) as total_reviews
+                    FROM rapidapi_flipkart_products
+                    WHERE category_name = :category_name
+                        AND LOWER(brand) != LOWER(:your_brand)
+                    GROUP BY product_title
+                    HAVING COUNT(*) >= 2
+                    ORDER BY total_reviews DESC
+                    LIMIT 10
+                """)
+            else:
+                gaps_query = text("""
+                    SELECT 
+                        product_title,
+                        COUNT(*) as competitor_products,
+                        AVG(product_price_numeric) as avg_price,
+                        AVG(product_star_rating_numeric) as avg_rating,
+                        SUM(product_num_ratings) as total_reviews
+                    FROM rapidapi_amazon_products
+                    WHERE category_name = :category_name
+                        AND LOWER(brand) != LOWER(:your_brand)
+                    GROUP BY product_title
+                    HAVING COUNT(*) >= 2
+                    ORDER BY total_reviews DESC
+                    LIMIT 10
+                """)
+            
+            result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
+            gaps = result.fetchall()
+            
+            for gap_item in gaps[:5]:
+                insights["product_gaps"].append({
+                    "product_type": gap_item[0][:100] if gap_item[0] else "Unknown",
+                    "competitors_offering": int(gap_item[1]) if gap_item[1] else 0,
+                    "avg_price": round(float(gap_item[2]), 2) if gap_item[2] else 0,
+                    "avg_rating": round(float(gap_item[3]), 2) if gap_item[3] else 0,
+                    "total_demand": int(gap_item[4]) if gap_item[4] else 0,
+                    "opportunity": "High" if (gap_item[4] and int(gap_item[4]) > 1000) else "Medium" if (gap_item[4] and int(gap_item[4]) > 500) else "Low"
+                })
+        except Exception as e:
+            print(f"Product gaps error: {str(e)}")
+        
+        # Pricing Insights
+        brand_avg_price = your_brand_data.get("avg_price", 0) or 0
+        if brand_avg_price and avg_price > 0:
+            price_ranges = {
+                "budget": [b for b in brands if b.get("avg_price") and b["avg_price"] < brand_avg_price * 0.8],
+                "similar": [b for b in brands if b.get("avg_price") and brand_avg_price * 0.8 <= b["avg_price"] <= brand_avg_price * 1.2],
+                "premium": [b for b in brands if b.get("avg_price") and b["avg_price"] > brand_avg_price * 1.2]
+            }
+            
+            insights["pricing_insights"] = {
+                "your_price": brand_avg_price,
+                "market_average": round(avg_price, 2),
+                "budget_competitors": len(price_ranges["budget"]),
+                "similar_price_competitors": len(price_ranges["similar"]),
+                "premium_competitors": len(price_ranges["premium"]),
+                "price_positioning": "Budget" if brand_avg_price < avg_price * 0.8 else "Premium" if brand_avg_price > avg_price * 1.2 else "Mid-Range",
+                "recommendation": "Your pricing is competitive" if len(price_ranges["similar"]) > len(price_ranges["budget"]) else "Consider price adjustment to be more competitive"
+            }
+        
+        return insights
+    
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in AI insights: {error_details}")
+        return {
+            "error": f"Error generating AI insights: {str(e)}",
+            "ai_generated_insights": "Unable to generate insights due to an error. Please try again.",
+            "details": str(e)
+        }
+
+
+# Helper function for fallback growth strategy
+def generate_fallback_strategy(gap, target_days, current_share, target_share, num_phases):
+    """Generate rule-based growth strategy when AI is unavailable"""
+    
+    days_per_phase = target_days // num_phases
+    strategies = []
+    
+    for i in range(num_phases):
+        start_day = i * days_per_phase + 1
+        end_day = (i + 1) * days_per_phase if i < num_phases - 1 else target_days
+        
+        # Calculate progressive target
+        progress_ratio = (i + 1) / num_phases
+        phase_target = round(current_share + (gap * progress_ratio), 2)
+        
+        if i == 0:
+            # Phase 1: Quick Wins
+            phase = {
+                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+                "focus": "Quick Wins & Foundation",
+                "actions": [
+                    "Launch aggressive review generation campaign with post-purchase emails",
+                    "Optimize top 5 product listings with better keywords and images",
+                    "Run limited-time promotional pricing on bestsellers",
+                    "Set up automated customer feedback system"
+                ],
+                "target": f"{phase_target}% market share"
+            }
+        elif i == num_phases - 1:
+            # Final Phase: Scaling
+            phase = {
+                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+                "focus": "Market Dominance & Scaling",
+                "actions": [
+                    "Scale successful products with increased inventory",
+                    "Launch premium product line to capture higher margins",
+                    "Implement customer loyalty and referral program",
+                    "Expand to adjacent categories with proven success formula"
+                ],
+                "target": f"{target_share}% market share"
+            }
+        elif i == 1:
+            # Phase 2: Product & Marketing
+            phase = {
+                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+                "focus": "Product Expansion & Marketing",
+                "actions": [
+                    "Add 5-7 new product variants based on competitor gaps",
+                    "Launch influencer marketing campaign with micro-influencers",
+                    "Improve product photography and video content",
+                    "Implement A/B testing on product descriptions and pricing"
+                ],
+                "target": f"{phase_target}% market share"
+            }
+        else:
+            # Middle phases: Growth & Optimization
+            phase = {
+                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+                "focus": "Growth Acceleration",
+                "actions": [
+                    "Expand product catalog with data-driven selections",
+                    "Launch seasonal promotions and bundle offers",
+                    "Optimize pricing strategy based on competitor monitoring",
+                    "Increase advertising spend on top-performing products"
+                ],
+                "target": f"{phase_target}% market share"
+            }
+        
+        strategies.append(phase)
+    
+    return strategies
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # from passlib.context import CryptContext
 # from pydantic import BaseModel, EmailStr
 # from fastapi import HTTPException, Depends, Response, Cookie
 # from sqlalchemy.orm import Session
 # from datetime import datetime, timedelta
 # import secrets
-# import hashlib
-# import redis
+# import random
+# import sib_api_v3_sdk
+# from sib_api_v3_sdk.rest import ApiException
 # import json
+# import os
+# from dotenv import load_dotenv
+
+# # Load environment variables
+# load_dotenv()
+
+# # ============================================
+# # Environment Variables
+# # ============================================
+# BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+# BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "noreply@insydz.com")
+# BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Insydz")
+
+# SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+# SESSION_EXPIRE_DAYS_REMEMBER = int(os.getenv("SESSION_EXPIRE_DAYS_REMEMBER", 30))
+# SESSION_EXPIRE_DAYS_NO_REMEMBER = int(os.getenv("SESSION_EXPIRE_DAYS_NO_REMEMBER", 1))
+
+# OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", 10))
+# OTP_MAX_ATTEMPTS = int(os.getenv("OTP_MAX_ATTEMPTS", 5))
+# OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", 60))
+
+# # ============================================
+# # YOUR EXISTING REDIS CLIENT 'r' IS ALREADY HERE
+# # ============================================
+# # Example:
+# # r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 # # Password hashing
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -8316,92 +10794,246 @@ def admin_get_user_profile(
 #     return pwd_context.hash(password)
 
 # # ============================================
-# # Redis Session Management
+# # Brevo Email Configuration
 # # ============================================
 
-# # Reuse existing Redis client from your app configuration
-# # Assumes you already have: redis_client = redis.Redis(...) defined earlier
-# # If your Redis client has a different name, replace 'redis_client' with that name
+# if not BREVO_API_KEY:
+#     print("⚠️ WARNING: BREVO_API_KEY not set in environment variables")
+
+# configuration = sib_api_v3_sdk.Configuration()
+# configuration.api_key['api-key'] = BREVO_API_KEY
+
+# def generate_otp() -> str:
+#     """Generate a 6-digit OTP"""
+#     return str(random.randint(100000, 999999))
+
+# def send_otp_email(email: str, otp: str) -> bool:
+#     """Send OTP via Brevo email"""
+#     try:
+#         api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+#             sib_api_v3_sdk.ApiClient(configuration)
+#         )
+        
+#         send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+#             to=[{"email": email}],
+#             sender={"email": BREVO_SENDER_EMAIL, "name": BREVO_SENDER_NAME},
+#             subject="Password Reset OTP - Insydz",
+#             html_content=f"""
+#             <!DOCTYPE html>
+#             <html>
+#             <head>
+#                 <style>
+#                     body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+#                     .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+#                     .header {{ 
+#                         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+#                         color: white; 
+#                         padding: 30px; 
+#                         text-align: center; 
+#                         border-radius: 10px 10px 0 0; 
+#                     }}
+#                     .content {{ 
+#                         background: #f9f9f9; 
+#                         padding: 30px; 
+#                         border-radius: 0 0 10px 10px; 
+#                     }}
+#                     .otp-box {{ 
+#                         background: white; 
+#                         border: 2px dashed #667eea; 
+#                         padding: 20px; 
+#                         text-align: center; 
+#                         font-size: 32px; 
+#                         font-weight: bold; 
+#                         letter-spacing: 8px; 
+#                         margin: 20px 0; 
+#                         border-radius: 8px; 
+#                         color: #667eea;
+#                     }}
+#                     .warning {{ 
+#                         background: #fff3cd; 
+#                         border-left: 4px solid #ffc107; 
+#                         padding: 15px; 
+#                         margin: 20px 0; 
+#                     }}
+#                     .footer {{ 
+#                         text-align: center; 
+#                         margin-top: 20px; 
+#                         color: #666; 
+#                         font-size: 12px; 
+#                     }}
+#                 </style>
+#             </head>
+#             <body>
+#                 <div class="container">
+#                     <div class="header">
+#                         <h1>🔐 Password Reset Request</h1>
+#                     </div>
+#                     <div class="content">
+#                         <p>Hello,</p>
+#                         <p>We received a request to reset your password for your Insydz account.</p>
+#                         <p>Your One-Time Password (OTP) is:</p>
+                        
+#                         <div class="otp-box">
+#                             {otp}
+#                         </div>
+                        
+#                         <div class="warning">
+#                             <strong>⚠️ Security Notice:</strong>
+#                             <ul style="margin: 10px 0;">
+#                                 <li>This OTP is valid for {OTP_EXPIRY_MINUTES} minutes only</li>
+#                                 <li>Never share this OTP with anyone</li>
+#                                 <li>Insydz will never ask for your OTP via phone or email</li>
+#                             </ul>
+#                         </div>
+                        
+#                         <p>If you didn't request this password reset, please ignore this email or contact our support team.</p>
+                        
+#                         <p>Best regards,<br>The Insydz Team</p>
+#                     </div>
+#                     <div class="footer">
+#                         <p>© 2025 Insydz. All rights reserved.</p>
+#                         <p>This is an automated email. Please do not reply.</p>
+#                     </div>
+#                 </div>
+#             </body>
+#             </html>
+#             """
+#         )
+        
+#         api_response = api_instance.send_transac_email(send_smtp_email)
+#         print(f"✅ OTP email sent to {email}")
+#         return True
+        
+#     except ApiException as e:
+#         print(f"❌ Brevo API error: {e}")
+#         return False
+#     except Exception as e:
+#         print(f"❌ Error sending email: {str(e)}")
+#         return False
+
+# # ============================================
+# # Redis Helper Functions with Prefixes
+# # ============================================
+# # Using prefixes to avoid conflicts with existing Redis data
+
+# OTP_PREFIX = "otp:"
+# SESSION_PREFIX = "session:"
+
+# def store_otp(email: str, otp_data: dict):
+#     """Store OTP in Redis with expiry"""
+#     try:
+#         key = f"{OTP_PREFIX}{email}"
+#         r.setex(
+#             key,
+#             OTP_EXPIRY_MINUTES * 60,  # Convert minutes to seconds
+#             json.dumps(otp_data)
+#         )
+#     except Exception as e:
+#         print(f"❌ Redis store OTP error: {e}")
+#         raise HTTPException(status_code=500, detail="Failed to store OTP")
+
+# def get_otp(email: str) -> dict:
+#     """Retrieve OTP from Redis"""
+#     try:
+#         key = f"{OTP_PREFIX}{email}"
+#         data = r.get(key)
+#         return json.loads(data) if data else None
+#     except Exception as e:
+#         print(f"❌ Redis get OTP error: {e}")
+#         return None
+
+# def delete_otp(email: str):
+#     """Delete OTP from Redis"""
+#     try:
+#         key = f"{OTP_PREFIX}{email}"
+#         r.delete(key)
+#     except Exception as e:
+#         print(f"❌ Redis delete OTP error: {e}")
+
+# def update_otp(email: str, otp_data: dict):
+#     """Update OTP data in Redis (keep same TTL)"""
+#     try:
+#         key = f"{OTP_PREFIX}{email}"
+#         ttl = r.ttl(key)
+#         if ttl > 0:
+#             r.setex(key, ttl, json.dumps(otp_data))
+#         else:
+#             # If no TTL, set default expiry
+#             r.setex(key, OTP_EXPIRY_MINUTES * 60, json.dumps(otp_data))
+#     except Exception as e:
+#         print(f"❌ Redis update OTP error: {e}")
+
+# # ============================================
+# # Session Management with Redis
+# # ============================================
 
 # def create_session_token() -> str:
 #     """Generate a secure session token"""
 #     return secrets.token_urlsafe(32)
 
 # def create_session(user_id: int, remember_me: bool = False) -> str:
-#     """Create a new session in Redis and return the session token"""
+#     """Create a new session and store in Redis"""
 #     session_token = create_session_token()
-#     expires_in_seconds = 30 * 24 * 60 * 60 if remember_me else 24 * 60 * 60  # 30 days or 1 day
+#     expires_days = SESSION_EXPIRE_DAYS_REMEMBER if remember_me else SESSION_EXPIRE_DAYS_NO_REMEMBER
     
 #     session_data = {
 #         "user_id": user_id,
 #         "created_at": datetime.now().isoformat(),
-#         "expires_at": (datetime.now() + timedelta(seconds=expires_in_seconds)).isoformat()
+#         "remember_me": remember_me
 #     }
     
-#     # Store session in Redis with expiration
-#     redis_client.setex(
-#         f"session:{session_token}",
-#         expires_in_seconds,
-#         json.dumps(session_data)
-#     )
-    
-#     # Also maintain a user->sessions mapping for logout all devices
-#     redis_client.sadd(f"user_sessions:{user_id}", session_token)
-#     redis_client.expire(f"user_sessions:{user_id}", expires_in_seconds)
-    
-#     return session_token
+#     try:
+#         key = f"{SESSION_PREFIX}{session_token}"
+#         r.setex(
+#             key,
+#             expires_days * 24 * 60 * 60,  # Convert days to seconds
+#             json.dumps(session_data)
+#         )
+#         return session_token
+#     except Exception as e:
+#         print(f"❌ Redis create session error: {e}")
+#         raise HTTPException(status_code=500, detail="Failed to create session")
 
 # def validate_session(session_token: str) -> dict:
-#     """Validate session token and return session data from Redis"""
+#     """Validate session token and return session data"""
 #     if not session_token:
 #         return None
     
-#     # Retrieve session from Redis
-#     session_json = redis_client.get(f"session:{session_token}")
-    
-#     if not session_json:
-#         return None
-    
 #     try:
-#         session = json.loads(session_json)
-        
-#         # Check if session expired (Redis TTL should handle this, but double-check)
-#         expires_at = datetime.fromisoformat(session["expires_at"])
-#         if datetime.now() > expires_at:
-#             delete_session(session_token)
-#             return None
-        
-#         return session
-#     except (json.JSONDecodeError, KeyError, ValueError):
+#         key = f"{SESSION_PREFIX}{session_token}"
+#         data = r.get(key)
+#         if data:
+#             return json.loads(data)
+#         return None
+#     except Exception as e:
+#         print(f"❌ Redis validate session error: {e}")
 #         return None
 
 # def delete_session(session_token: str):
 #     """Delete a session from Redis"""
-#     # Get user_id before deleting to clean up user_sessions set
-#     session_json = redis_client.get(f"session:{session_token}")
-#     if session_json:
-#         try:
-#             session = json.loads(session_json)
-#             user_id = session.get("user_id")
-#             if user_id:
-#                 redis_client.srem(f"user_sessions:{user_id}", session_token)
-#         except (json.JSONDecodeError, KeyError):
-#             pass
-    
-#     # Delete the session
-#     redis_client.delete(f"session:{session_token}")
+#     try:
+#         key = f"{SESSION_PREFIX}{session_token}"
+#         r.delete(key)
+#     except Exception as e:
+#         print(f"❌ Redis delete session error: {e}")
 
 # def delete_all_user_sessions(user_id: int):
-#     """Delete all sessions for a specific user (logout from all devices)"""
-#     # Get all session tokens for this user
-#     session_tokens = redis_client.smembers(f"user_sessions:{user_id}")
-    
-#     # Delete each session
-#     for token in session_tokens:
-#         redis_client.delete(f"session:{token}")
-    
-#     # Delete the user sessions set
-#     redis_client.delete(f"user_sessions:{user_id}")
+#     """Delete all sessions for a specific user"""
+#     try:
+#         # Scan for all session keys
+#         cursor = 0
+#         while True:
+#             cursor, keys = r.scan(cursor, match=f"{SESSION_PREFIX}*", count=100)
+#             for key in keys:
+#                 data = r.get(key)
+#                 if data:
+#                     session_data = json.loads(data)
+#                     if session_data.get("user_id") == user_id:
+#                         r.delete(key)
+#             if cursor == 0:
+#                 break
+#     except Exception as e:
+#         print(f"❌ Redis delete user sessions error: {e}")
 
 # def get_current_user(session_id: str = Cookie(None), db: Session = Depends(get_db)):
 #     """Dependency to get current authenticated user"""
@@ -8427,8 +11059,16 @@ def admin_get_user_profile(
 #     password: str
 #     remember_me: bool = False
 
-# class PasswordReset(BaseModel):
+# class ForgotPasswordRequest(BaseModel):
 #     email: EmailStr
+
+# class VerifyOTPRequest(BaseModel):
+#     email: EmailStr
+#     otp: str
+
+# class ResetPasswordRequest(BaseModel):
+#     email: EmailStr
+#     otp: str
 #     new_password: str
 
 # class LoginResponse(BaseModel):
@@ -8437,23 +11077,287 @@ def admin_get_user_profile(
 #     user: dict = None
 
 # # ============================================
-# # SECURE LOGIN ENDPOINT (WITH REDIS SESSION)
+# # FORGOT PASSWORD - STEP 1: REQUEST OTP
+# # ============================================
+
+# @app.post("/api/auth/forgot-password")
+# def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+#     """
+#     Step 1: Verify email exists and send OTP
+#     """
+#     try:
+#         # Check if user exists
+#         user = db.query(models.User).filter(
+#             models.User.email == request.email
+#         ).first()
+        
+#         if not user:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No account found with this email address"
+#             )
+        
+#         # Generate OTP
+#         otp = generate_otp()
+        
+#         # Store OTP in Redis with metadata
+#         otp_data = {
+#             "otp": otp,
+#             "created_at": datetime.now().isoformat(),
+#             "attempts": 0,
+#             "verified": False
+#         }
+#         store_otp(request.email, otp_data)
+        
+#         # Send OTP via email
+#         email_sent = send_otp_email(request.email, otp)
+        
+#         if not email_sent:
+#             delete_otp(request.email)
+#             raise HTTPException(
+#                 status_code=500,
+#                 detail="Failed to send OTP email. Please try again."
+#             )
+        
+#         print(f"✅ OTP generated for {request.email}: {otp}")
+        
+#         return {
+#             "success": True,
+#             "message": "OTP sent successfully to your email",
+#             "email": request.email
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ Forgot password error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Error processing request: {str(e)}"
+#         )
+
+# # ============================================
+# # FORGOT PASSWORD - STEP 2: VERIFY OTP
+# # ============================================
+
+# @app.post("/api/auth/verify-otp")
+# def verify_otp(request: VerifyOTPRequest):
+#     """
+#     Step 2: Verify the OTP entered by user
+#     """
+#     try:
+#         # Get OTP data from Redis
+#         otp_data = get_otp(request.email)
+        
+#         if not otp_data:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="No OTP request found or OTP has expired. Please request a new OTP."
+#             )
+        
+#         # Check attempts (max 5 attempts)
+#         if otp_data.get("attempts", 0) >= OTP_MAX_ATTEMPTS:
+#             delete_otp(request.email)
+#             raise HTTPException(
+#                 status_code=429,
+#                 detail="Too many failed attempts. Please request a new OTP."
+#             )
+        
+#         # Verify OTP
+#         if otp_data["otp"] != request.otp:
+#             otp_data["attempts"] = otp_data.get("attempts", 0) + 1
+#             update_otp(request.email, otp_data)
+#             remaining = OTP_MAX_ATTEMPTS - otp_data["attempts"]
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail=f"Invalid OTP. {remaining} attempts remaining."
+#             )
+        
+#         # Mark OTP as verified
+#         otp_data["verified"] = True
+#         update_otp(request.email, otp_data)
+        
+#         print(f"✅ OTP verified for {request.email}")
+        
+#         return {
+#             "success": True,
+#             "message": "OTP verified successfully",
+#             "email": request.email
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ OTP verification error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Error verifying OTP: {str(e)}"
+#         )
+
+# # ============================================
+# # FORGOT PASSWORD - STEP 3: RESET PASSWORD
+# # ============================================
+
+# @app.post("/api/auth/reset-password-with-otp")
+# def reset_password_with_otp(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+#     """
+#     Step 3: Reset password after OTP verification
+#     """
+#     try:
+#         # Get OTP data from Redis
+#         otp_data = get_otp(request.email)
+        
+#         if not otp_data:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="OTP has expired. Please request a new one."
+#             )
+        
+#         # Check if OTP was verified
+#         if not otp_data.get("verified", False):
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="OTP not verified. Please verify your OTP first."
+#             )
+        
+#         # Double check OTP matches (security)
+#         if otp_data["otp"] != request.otp:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="Invalid OTP"
+#             )
+        
+#         # Validate password
+#         if len(request.new_password) < 6:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="Password must be at least 6 characters long"
+#             )
+        
+#         # Find user
+#         user = db.query(models.User).filter(
+#             models.User.email == request.email
+#         ).first()
+        
+#         if not user:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="User not found"
+#             )
+        
+#         # Update password
+#         user.password_hash = get_password_hash(request.new_password)
+#         db.commit()
+        
+#         # Clear OTP from Redis
+#         delete_otp(request.email)
+        
+#         # Invalidate all existing sessions for this user (force re-login)
+#         delete_all_user_sessions(user.id)
+        
+#         print(f"✅ Password reset successful for {request.email}")
+        
+#         return {
+#             "success": True,
+#             "message": "Password reset successful. Please login with your new password."
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         print(f"❌ Password reset error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Error resetting password: {str(e)}"
+#         )
+
+# # ============================================
+# # RESEND OTP
+# # ============================================
+
+# @app.post("/api/auth/resend-otp")
+# def resend_otp(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+#     """
+#     Resend OTP to user's email
+#     """
+#     try:
+#         # Check if user exists
+#         user = db.query(models.User).filter(
+#             models.User.email == request.email
+#         ).first()
+        
+#         if not user:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="No account found with this email address"
+#             )
+        
+#         # Check if previous OTP exists
+#         existing_otp = get_otp(request.email)
+#         if existing_otp:
+#             created_at = datetime.fromisoformat(existing_otp["created_at"])
+#             time_diff = (datetime.now() - created_at).total_seconds()
+            
+#             if time_diff < OTP_RESEND_COOLDOWN_SECONDS:
+#                 wait_time = int(OTP_RESEND_COOLDOWN_SECONDS - time_diff)
+#                 raise HTTPException(
+#                     status_code=429,
+#                     detail=f"Please wait {wait_time} seconds before requesting a new OTP"
+#                 )
+        
+#         # Generate new OTP
+#         otp = generate_otp()
+        
+#         # Store new OTP in Redis
+#         otp_data = {
+#             "otp": otp,
+#             "created_at": datetime.now().isoformat(),
+#             "attempts": 0,
+#             "verified": False
+#         }
+#         store_otp(request.email, otp_data)
+        
+#         # Send OTP via email
+#         email_sent = send_otp_email(request.email, otp)
+        
+#         if not email_sent:
+#             delete_otp(request.email)
+#             raise HTTPException(
+#                 status_code=500,
+#                 detail="Failed to send OTP email. Please try again."
+#             )
+        
+#         print(f"✅ OTP resent to {request.email}: {otp}")
+        
+#         return {
+#             "success": True,
+#             "message": "New OTP sent successfully to your email"
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         print(f"❌ Resend OTP error: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Error resending OTP: {str(e)}"
+#         )
+
+# # ============================================
+# # LOGIN ENDPOINT
 # # ============================================
 
 # @app.post("/users/login", response_model=LoginResponse)
 # def login_user(login_data: UserLogin, response: Response, db: Session = Depends(get_db)):
-#     """
-#     Authenticate user and set secure session cookie (stored in Redis)
-#     """
+#     """Authenticate user and set secure session cookie"""
 #     try:
 #         print(f"🔍 Login attempt for: {login_data.email}")
         
-#         # Find user by email
 #         user = db.query(models.User).filter(
 #             models.User.email == login_data.email
 #         ).first()
        
-#         # Check if user exists
 #         if not user:
 #             print(f"❌ User not found: {login_data.email}")
 #             raise HTTPException(
@@ -8461,7 +11365,6 @@ def admin_get_user_profile(
 #                 detail="No account found with this email. Please sign up first."
 #             )
        
-#         # Verify password
 #         if not verify_password(login_data.password, user.password_hash):
 #             print(f"❌ Invalid password for: {login_data.email}")
 #             raise HTTPException(
@@ -8469,7 +11372,6 @@ def admin_get_user_profile(
 #                 detail="Incorrect password. Please try again or reset your password."
 #             )
         
-#         # Check if AI usage should be reset (new month)
 #         current_month = datetime.now().strftime("%Y-%m")
 #         if user.ai_chat_month != current_month:
 #             print(f"🔄 Resetting AI usage for new month: {current_month}")
@@ -8478,26 +11380,19 @@ def admin_get_user_profile(
 #             db.commit()
 #             db.refresh(user)
         
-#         # ✅ CREATE SESSION IN REDIS
+#         # Create session in Redis
 #         session_token = create_session(user.id, login_data.remember_me)
         
-#         # ✅ SET HTTP-ONLY COOKIE
-#         max_age = 30 * 24 * 60 * 60 if login_data.remember_me else 24 * 60 * 60
+#         max_age = SESSION_EXPIRE_DAYS_REMEMBER * 24 * 60 * 60 if login_data.remember_me else SESSION_EXPIRE_DAYS_NO_REMEMBER * 24 * 60 * 60
 #         response.set_cookie(
 #             key="session_id",
 #             value=session_token,
-#             httponly=True,  # Prevents XSS attacks
-#             secure=False,    # HTTPS only in production (set to True in production)
-#             samesite="lax", # CSRF protection
+#             httponly=True,
+#             secure=SESSION_COOKIE_SECURE,
+#             samesite="lax",
 #             max_age=max_age
 #         )
         
-#         print(f"📊 Database values for {user.email}:")
-#         print(f"   - ID: {user.id}")
-#         print(f"   - Subscription Tier: {user.subscription_tier}")
-#         print(f"   - AI Chat Used: {user.ai_chat_used}")
-       
-#         # ✅ RETURN USER DATA
 #         response_data = {
 #             "success": True,
 #             "message": "Login successful",
@@ -8517,8 +11412,6 @@ def admin_get_user_profile(
 #         }
         
 #         print(f"✅ Login successful for {user.email}")
-#         print(f"✅ Session created in Redis: {session_token[:10]}...")
-        
 #         return response_data
         
 #     except HTTPException:
@@ -8533,16 +11426,13 @@ def admin_get_user_profile(
 #         )
 
 # # ============================================
-# # SECURE SIGNUP ENDPOINT (WITH REDIS SESSION)
+# # SIGNUP ENDPOINT
 # # ============================================
 
 # @app.post("/users/signup")
 # def signup_user(user_data: schemas.UserCreate, response: Response, db: Session = Depends(get_db)):
-#     """
-#     Create a new user account and set session cookie (stored in Redis)
-#     """
+#     """Create a new user account and set session cookie"""
 #     try:
-#         # Check if email already exists
 #         existing_user = db.query(models.User).filter(
 #             models.User.email == user_data.email
 #         ).first()
@@ -8553,13 +11443,9 @@ def admin_get_user_profile(
 #                 detail="Email already registered. Please login instead."
 #             )
        
-#         # Hash the password
 #         hashed_password = get_password_hash(user_data.password)
-        
-#         # Get current month for AI usage tracking
 #         current_month = datetime.now().strftime("%Y-%m")
        
-#         # ✅ CREATE NEW USER WITH SUBSCRIPTION FIELDS
 #         new_user = models.User(
 #             first_name=user_data.first_name,
 #             last_name=user_data.last_name,
@@ -8577,23 +11463,20 @@ def admin_get_user_profile(
 #         db.commit()
 #         db.refresh(new_user)
         
-#         # ✅ CREATE SESSION IN REDIS FOR NEW USER
+#         # Create session in Redis
 #         session_token = create_session(new_user.id, remember_me=False)
         
-#         # ✅ SET HTTP-ONLY COOKIE
 #         response.set_cookie(
 #             key="session_id",
 #             value=session_token,
 #             httponly=True,
-#             secure=False,  # Set to True in production
+#             secure=SESSION_COOKIE_SECURE,
 #             samesite="lax",
-#             max_age=24 * 60 * 60  # 24 hours
+#             max_age=SESSION_EXPIRE_DAYS_NO_REMEMBER * 24 * 60 * 60
 #         )
        
 #         print(f"✅ New user created: {new_user.email}")
-#         print(f"✅ Session created in Redis: {session_token[:10]}...")
         
-#         # ✅ RETURN USER DATA WITH SUBSCRIPTION
 #         return {
 #             "id": new_user.id,
 #             "first_name": new_user.first_name,
@@ -8616,14 +11499,12 @@ def admin_get_user_profile(
 #         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
 # # ============================================
-# # GET CURRENT USER (SESSION VERIFICATION)
+# # GET CURRENT USER
 # # ============================================
 
 # @app.get("/api/auth/me")
 # def get_me(current_user: models.User = Depends(get_current_user)):
-#     """
-#     Get current authenticated user from Redis session
-#     """
+#     """Get current authenticated user from session"""
 #     current_month = datetime.now().strftime("%Y-%m")
     
 #     return {
@@ -8646,152 +11527,14 @@ def admin_get_user_profile(
 
 # @app.post("/api/auth/logout")
 # def logout(response: Response, session_id: str = Cookie(None)):
-#     """
-#     Logout user and clear Redis session
-#     """
+#     """Logout user and clear session"""
 #     if session_id:
 #         delete_session(session_id)
-#         print(f"✅ Session deleted from Redis: {session_id[:10]}...")
+#         print(f"✅ Session deleted from Redis")
     
-#     # Clear the cookie
 #     response.delete_cookie(key="session_id")
     
 #     return {"success": True, "message": "Logged out successfully"}
-
-# # ============================================
-# # LOGOUT ALL DEVICES ENDPOINT
-# # ============================================
-
-# @app.post("/api/auth/logout-all")
-# def logout_all_devices(
-#     response: Response, 
-#     current_user: models.User = Depends(get_current_user),
-#     session_id: str = Cookie(None)
-# ):
-#     """
-#     Logout user from all devices (delete all sessions)
-#     """
-#     delete_all_user_sessions(current_user.id)
-    
-#     # Clear the cookie
-#     response.delete_cookie(key="session_id")
-    
-#     print(f"✅ All sessions deleted for user: {current_user.email}")
-    
-#     return {"success": True, "message": "Logged out from all devices successfully"}
-
-# # ============================================
-# # DEMO LOGIN ENDPOINT
-# # ============================================
-
-# @app.post("/users/demo-login")
-# def demo_login(response: Response, db: Session = Depends(get_db)):
-#     """
-#     Demo login endpoint for testing (with Redis session)
-#     """
-#     try:
-#         # Find or create demo user
-#         demo_email = "demo@example.com"
-#         demo_user = db.query(models.User).filter(
-#             models.User.email == demo_email
-#         ).first()
-        
-#         if not demo_user:
-#             # Create demo user if doesn't exist
-#             current_month = datetime.now().strftime("%Y-%m")
-#             demo_user = models.User(
-#                 first_name="Demo",
-#                 last_name="User",
-#                 email=demo_email,
-#                 password_hash=get_password_hash("demo123"),
-#                 business_name="Demo Business",
-#                 location="Mumbai",
-#                 business_interests=["electronics", "fashion", "home"],
-#                 subscription_tier='free',
-#                 ai_chat_used=0,
-#                 ai_chat_month=current_month
-#             )
-#             db.add(demo_user)
-#             db.commit()
-#             db.refresh(demo_user)
-        
-#         # Create session in Redis
-#         session_token = create_session(demo_user.id, remember_me=False)
-        
-#         # Set cookie
-#         response.set_cookie(
-#             key="session_id",
-#             value=session_token,
-#             httponly=True,
-#             secure=False,  # Set to True in production
-#             samesite="lax",
-#             max_age=24 * 60 * 60
-#         )
-        
-#         current_month = datetime.now().strftime("%Y-%m")
-        
-#         return {
-#             "success": True,
-#             "message": "Demo login successful",
-#             "user": {
-#                 "id": demo_user.id,
-#                 "first_name": demo_user.first_name,
-#                 "last_name": demo_user.last_name,
-#                 "email": demo_user.email,
-#                 "business_name": demo_user.business_name,
-#                 "location": demo_user.location,
-#                 "business_interests": demo_user.business_interests,
-#                 "subscription_tier": demo_user.subscription_tier or 'free',
-#                 "ai_chat_used": demo_user.ai_chat_used or 0,
-#                 "ai_chat_month": demo_user.ai_chat_month or current_month,
-#                 "created_at": str(demo_user.created_at)
-#             }
-#         }
-        
-#     except Exception as e:
-#         print(f"❌ Demo login error: {str(e)}")
-#         raise HTTPException(status_code=500, detail=f"Demo login failed: {str(e)}")
-
-# # ============================================
-# # PASSWORD RESET ENDPOINT
-# # ============================================
-
-# @app.post("/users/reset-password")
-# def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
-#     """
-#     Reset user password and invalidate all sessions
-#     """
-#     try:
-#         user = db.query(models.User).filter(
-#             models.User.email == reset_data.email
-#         ).first()
-       
-#         if not user:
-#             raise HTTPException(
-#                 status_code=404,
-#                 detail="No account found with this email"
-#             )
-       
-#         # Update password
-#         user.password_hash = get_password_hash(reset_data.new_password)
-#         db.commit()
-        
-#         # Invalidate all sessions for security
-#         delete_all_user_sessions(user.id)
-        
-#         return {
-#             "success": True,
-#             "message": "Password updated successfully. Please login again."
-#         }
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         db.rollback()
-#         print(f"❌ Password reset error: {str(e)}")
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Error updating password: {str(e)}"
-#         )
 
 # # ============================================
 # # CHECK EMAIL ENDPOINT
@@ -8799,9 +11542,7 @@ def admin_get_user_profile(
 
 # @app.get("/users/check-email/{email}")
 # def check_email_exists(email: str, db: Session = Depends(get_db)):
-#     """
-#     Check if an email is already registered
-#     """
+#     """Check if an email is already registered"""
 #     user = db.query(models.User).filter(
 #         models.User.email == email
 #     ).first()
@@ -8822,10 +11563,7 @@ def admin_get_user_profile(
 #     current_user: models.User = Depends(get_current_user),
 #     db: Session = Depends(get_db)
 # ):
-#     """
-#     Get user profile by email (requires authentication)
-#     """
-#     # Only allow users to view their own profile or admins
+#     """Get user profile by email (requires authentication)"""
 #     if current_user.email != email:
 #         raise HTTPException(
 #             status_code=403, 
@@ -8854,3 +11592,29 @@ def admin_get_user_profile(
 #         "ai_chat_month": user.ai_chat_month or current_month,
 #         "created_at": str(user.created_at)
 #     }
+
+
+
+
+# # ============================================
+# # Brevo Email Service Configuration
+# # ============================================
+# BREVO_API_KEY=your-brevo-api-key-here
+# BREVO_SENDER_EMAIL=noreply@yourdomain.com
+# BREVO_SENDER_NAME=Insydz
+
+# # ============================================
+# # Session & Cookie Settings
+# # ============================================
+# SESSION_COOKIE_SECURE=false
+# # Set to true in production (requires HTTPS)
+
+# SESSION_EXPIRE_DAYS_REMEMBER=30
+# SESSION_EXPIRE_DAYS_NO_REMEMBER=1
+
+# # ============================================
+# # OTP Configuration
+# # ============================================
+# OTP_EXPIRY_MINUTES=10
+# OTP_MAX_ATTEMPTS=5
+# OTP_RESEND_COOLDOWN_SECONDS=60

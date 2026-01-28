@@ -496,7 +496,7 @@
 //   // Fetch current user session from backend
 //   const fetchCurrentUser = async () => {
 //     try {
-//       const response = await fetch("http://localhost:8000/api/auth/me", {
+//       const response = await fetch("https://api.insydz.com/api/auth/me", {
 
 //         method: "GET",
 //         credentials: "include", // Include HTTP-only cookies
@@ -534,7 +534,7 @@
 //   const logout = async () => {
 //     try {
 //       // Call backend logout endpoint to clear session
-//       await fetch("http://localhost:8000/api/auth/logout", {
+//       await fetch("https://api.insydz.com/api/auth/logout", {
 
 //         method: "POST",
 //         credentials: "include",
@@ -667,6 +667,232 @@
 
 
 
+// import { Switch, Route, useLocation } from "wouter";
+// import { QueryClientProvider } from "@tanstack/react-query";
+// import { queryClient } from "./lib/queryClient";
+// import { Toaster } from "@/components/ui/toaster";
+// import { TooltipProvider } from "@/components/ui/tooltip";
+// import { useState, useEffect, createContext, useContext } from "react";
+
+// // Pages
+// import Landing from "@/pages/landing";
+// import PrivacyPolicy from "@/pages/privacy-policy";
+// import TermsOfService from "@/pages/terms-service";
+// import Login from "@/pages/login";
+// import Signup from "@/pages/signup";
+// import Dashboard from "@/pages/dashboard";
+// import Subscription from "@/pages/subscription";
+// import About from "@/pages/about";
+// import Settings from "@/pages/settings";
+// import NotFound from "@/pages/not-found";
+
+// // Analytics Pages
+// import Sales from "@/pages/sales";
+// import Overview from "@/pages/overview";
+// import Categories from "@/pages/categories";
+// import CategoryProducts from "@/pages/category-products";
+// import ProductDetails from "@/pages/product-details";
+// import SentimentProducts from "@/pages/sentiment-products";
+// import ProductTracker from "@/pages/product-tracker";
+// import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
+// import ShareOfVoice from "@/pages/ShareOfVoice";
+
+// // ==================
+// // Auth Context
+// // ==================
+// interface User {
+//   id: number;
+//   email: string;
+//   name?: string;
+//   firstName?: string;
+//   lastName?: string;
+//   businessName?: string;
+//   location?: string;
+//   subscriptionTier: string;
+//   aiChatUsed?: number;
+//   aiChatMonth?: string;
+//   businessInterests?: string[];
+//   createdAt?: string;
+// }
+
+// interface AuthContextType {
+//   user: User | null;
+//   login: (user: User) => void;
+//   logout: () => void;
+//   isAuthenticated: boolean;
+//   isLoading: boolean;
+//   refreshUser: () => Promise<void>;
+// }
+
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) throw new Error("useAuth must be used within an AuthProvider");
+//   return context;
+// };
+
+// // ==================
+// // AuthProvider
+// // ==================
+// function AuthProvider({ children }: { children: React.ReactNode }) {
+//   const [user, setUser] = useState<User | null>(null);
+//   const [isLoading, setIsLoading] = useState(true);
+
+//   const fetchCurrentUser = async () => {
+//     try {
+//       const res = await fetch("https://api.insydz.com/api/auth/me", {
+//         credentials: "include",
+//       });
+
+//       if (res.ok) {
+//         const data = await res.json();
+//         setUser({
+//           id: data.id,
+//           email: data.email,
+//           name: `${data.first_name} ${data.last_name}`,
+//           firstName: data.first_name,
+//           lastName: data.last_name,
+//           businessName: data.business_name,
+//           location: data.location,
+//           subscriptionTier: data.subscription_tier || "free",
+//           aiChatUsed: data.ai_chat_used,
+//           aiChatMonth: data.ai_chat_month,
+//           businessInterests: data.business_interests,
+//           createdAt: data.created_at,
+//         });
+//       } else {
+//         setUser(null);
+//       }
+//     } catch (err) {
+//       console.error("Error fetching user session:", err);
+//       setUser(null);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchCurrentUser();
+//   }, []);
+
+//   const login = (userData: User) => {
+//     setUser(userData);
+//   };
+
+//   const logout = async () => {
+//     try {
+//       await fetch("https://api.insydz.com/api/auth/logout", {
+//         method: "POST",
+//         credentials: "include",
+//       });
+//     } catch (err) {
+//       console.error("Logout failed:", err);
+//     } finally {
+//       setUser(null);
+//     }
+//   };
+
+//   const refreshUser = async () => {
+//     await fetchCurrentUser();
+//   };
+
+//   const isAuthenticated = !!user;
+
+//   return (
+//     <AuthContext.Provider
+//       value={{ user, login, logout, isAuthenticated, isLoading, refreshUser }}
+//     >
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// }
+
+// // ==================
+// // ProtectedRoute
+// // ==================
+// function ProtectedRoute({ component: Component, ...rest }: any) {
+//   const { isAuthenticated, isLoading } = useAuth();
+//   const [, setLocation] = useLocation();
+
+//   if (isLoading) {
+//     return (
+//       <div className="flex h-screen items-center justify-center text-lg font-semibold">
+//         Checking session...
+//       </div>
+//     );
+//   }
+
+//   if (!isAuthenticated) {
+//     setLocation("/login");
+//     return null;
+//   }
+
+//   return <Component {...rest} />;
+// }
+
+// // ==================
+// // Router
+// // ==================
+// function Router() {
+//   return (
+//     <Switch>
+//       {/* Public Pages */}
+//       <Route path="/" component={Landing} />
+//       <Route path="/login" component={Login} />
+//       <Route path="/signup" component={Signup} />
+//       <Route path="/about" component={About} />
+//       <Route path="/privacy-policy" component={PrivacyPolicy} />
+//       <Route path="/terms-service" component={TermsOfService} />
+
+//       {/* Protected Pages */}
+//       <ProtectedRoute path="/dashboard" component={Dashboard} />
+//       <ProtectedRoute path="/sales" component={Sales} />
+//       <ProtectedRoute path="/overview" component={Overview} />
+//       <ProtectedRoute path="/categories" component={Categories} />
+//       <ProtectedRoute
+//         path="/category-products/:source/:category"
+//         component={CategoryProducts}
+//       />
+//       <ProtectedRoute path="/product/:productName" component={ProductDetails} />
+//       <ProtectedRoute path="/product-tracker" component={ProductTracker} />
+//       <ProtectedRoute
+//         path="/product-tracker/history"
+//         component={ProductTrackerHistory}
+//       />
+//       <ProtectedRoute
+//         path="/sentiment-products/:source/:sentiment"
+//         component={SentimentProducts}
+//       />
+//       <ProtectedRoute path="/subscription" component={Subscription} />
+//       <ProtectedRoute path="/settings" component={Settings} />
+//       <ProtectedRoute path="/share-of-voice" component={ShareOfVoice} />
+
+//       {/* 404 Fallback */}
+//       <Route component={NotFound} />
+//     </Switch>
+//   );
+// }
+
+// // ==================
+// // App
+// // ==================
+// export default function App() {
+//   return (
+//     <QueryClientProvider client={queryClient}>
+//       <TooltipProvider>
+//         <AuthProvider>
+//           <Toaster />
+//           <Router />
+//         </AuthProvider>
+//       </TooltipProvider>
+//     </QueryClientProvider>
+//   );
+// }
+
+
+
+
 import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -678,6 +904,10 @@ import { useState, useEffect, createContext, useContext } from "react";
 import Landing from "@/pages/landing";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-service";
+import AmazonSellersPage from "@/pages/amazon-sellers";
+import FlipkartSellersPage from "@/pages/flipkart-sellers";
+import BrandManagersPage from "@/pages/brand-managers";
+import EcommerceAgenciesPage from "./pages/ecommerce-agencies";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
@@ -695,6 +925,13 @@ import ProductDetails from "@/pages/product-details";
 import SentimentProducts from "@/pages/sentiment-products";
 import ProductTracker from "@/pages/product-tracker";
 import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
+import ShareOfVoice from "@/pages/ShareOfVoice";
+
+
+// ==================
+// Environment Config
+// ==================
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.insydz.com";
 
 // ==================
 // Auth Context
@@ -716,11 +953,10 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  logout: () => Promise<void>; // ✅ Added logout function
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -740,8 +976,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchCurrentUser = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/auth/me", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
         credentials: "include",
+        headers: {
+          "Accept": "application/json",
+        },
       });
 
       if (res.ok) {
@@ -775,32 +1014,39 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchCurrentUser();
   }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const refreshUser = async () => {
+    setIsLoading(true);
+    await fetchCurrentUser();
   };
 
+  // ✅ NEW: Logout function
   const logout = async () => {
     try {
-      await fetch("http://localhost:8000/api/auth/logout", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
-        credentials: "include",
+        credentials: "include", // Important: sends the session cookie
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-    } catch (err) {
-      console.error("Logout failed:", err);
-    } finally {
-      setUser(null);
-    }
-  };
 
-  const refreshUser = async () => {
-    await fetchCurrentUser();
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
+
+      // Clear user state
+      setUser(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error; // Re-throw so the component can handle it
+    }
   };
 
   const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, isAuthenticated, isLoading, refreshUser }}
+      value={{ user, isAuthenticated, isLoading, refreshUser, logout }}
     >
       {children}
     </AuthContext.Provider>
@@ -814,19 +1060,65 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    // Only redirect after loading is complete and user is not authenticated
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [isLoading, isAuthenticated, setLocation]);
+
+  // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center text-lg font-semibold">
-        Checking session...
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg font-semibold text-muted-foreground">
+            Verifying session...
+          </p>
+        </div>
       </div>
     );
   }
 
+  // Don't render anything while redirecting
   if (!isAuthenticated) {
-    setLocation("/login");
     return null;
   }
 
+  // Render protected component
+  return <Component {...rest} />;
+}
+
+// ==================
+// PublicRoute (redirects to dashboard if already logged in)
+// ==================
+function PublicRoute({ component: Component, ...rest }: any) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    // Redirect to dashboard if already authenticated
+    if (!isLoading && isAuthenticated) {
+      setLocation("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, setLocation]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg font-semibold text-muted-foreground">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render public component if not authenticated
   return <Component {...rest} />;
 }
 
@@ -836,13 +1128,19 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 function Router() {
   return (
     <Switch>
-      {/* Public Pages */}
+      {/* Public Pages (always accessible) */}
       <Route path="/" component={Landing} />
-      <Route path="/login" component={Login} />
-      <Route path="/signup" component={Signup} />
       <Route path="/about" component={About} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/terms-service" component={TermsOfService} />
+      <Route path="/amazon-sellers" component={AmazonSellersPage} />
+      <Route path="/flipkart-sellers" component={FlipkartSellersPage} />
+      <Route path="/brand-managers" component={BrandManagersPage} />
+      <Route path="/ecommerce-agencies" component={EcommerceAgenciesPage} />
+
+      {/* Auth Pages (redirect to dashboard if already logged in) */}
+      <PublicRoute path="/login" component={Login} />
+      <PublicRoute path="/signup" component={Signup} />
 
       {/* Protected Pages */}
       <ProtectedRoute path="/dashboard" component={Dashboard} />
@@ -865,6 +1163,7 @@ function Router() {
       />
       <ProtectedRoute path="/subscription" component={Subscription} />
       <ProtectedRoute path="/settings" component={Settings} />
+      <ProtectedRoute path="/share-of-voice" component={ShareOfVoice} />
 
       {/* 404 Fallback */}
       <Route component={NotFound} />

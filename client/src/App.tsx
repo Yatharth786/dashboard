@@ -496,7 +496,7 @@
 //   // Fetch current user session from backend
 //   const fetchCurrentUser = async () => {
 //     try {
-//       const response = await fetch("https://api.insydz.com/api/auth/me", {
+//       const response = await fetch("http://localhost:8000/api/auth/me", {
 
 //         method: "GET",
 //         credentials: "include", // Include HTTP-only cookies
@@ -534,7 +534,7 @@
 //   const logout = async () => {
 //     try {
 //       // Call backend logout endpoint to clear session
-//       await fetch("https://api.insydz.com/api/auth/logout", {
+//       await fetch("http://localhost:8000/api/auth/logout", {
 
 //         method: "POST",
 //         credentials: "include",
@@ -741,7 +741,7 @@
 
 //   const fetchCurrentUser = async () => {
 //     try {
-//       const res = await fetch("https://api.insydz.com/api/auth/me", {
+//       const res = await fetch("http://localhost:8000/api/auth/me", {
 //         credentials: "include",
 //       });
 
@@ -782,7 +782,7 @@
 
 //   const logout = async () => {
 //     try {
-//       await fetch("https://api.insydz.com/api/auth/logout", {
+//       await fetch("http://localhost:8000/api/auth/logout", {
 //         method: "POST",
 //         credentials: "include",
 //       });
@@ -907,7 +907,20 @@ import TermsOfService from "@/pages/terms-service";
 import AmazonSellersPage from "@/pages/amazon-sellers";
 import FlipkartSellersPage from "@/pages/flipkart-sellers";
 import BrandManagersPage from "@/pages/brand-managers";
-import EcommerceAgenciesPage from "./pages/ecommerce-agencies";
+import EcommerceAgenciesPage from "@/pages/ecommerce-agencies";
+import TrackCompetitorPricesPage from "@/pages/track-competitor-prices";
+import FindProfitableProductsPage from "@/pages/find-profitable-products";
+import AnalyzeCustomerReviewsPage from "@/pages/analyze-customer-reviews";
+import ImproveSEOPage from "@/pages/improve-seo";
+import AvoidStockoutsPage from "@/pages/avoid-stockouts";
+import CompetitorPriceTrackingFeaturePage from "@/pages/competitor-price-tracking-feature";
+import ReviewAnalyticsFeaturePage from "@/pages/review-analytics-feature";
+import PriceOptimizationFeaturePage from "@/pages/price-optimization-feature";
+import KeywordRankTrackingFeaturePage from "@/pages/keyword-rank-tracking-feature";
+import ProductResearchFeaturePage from "@/pages/product-research-feature";
+import AIRecommendationsFeaturePage from "@/pages/ai-recommendations-feature";
+import WhatsAppAlertsFeaturePage from "@/pages/whatsapp-alerts-feature";
+
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
@@ -931,7 +944,7 @@ import ShareOfVoice from "@/pages/ShareOfVoice";
 // ==================
 // Environment Config
 // ==================
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.insydz.com";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // ==================
 // Auth Context
@@ -1137,6 +1150,18 @@ function Router() {
       <Route path="/flipkart-sellers" component={FlipkartSellersPage} />
       <Route path="/brand-managers" component={BrandManagersPage} />
       <Route path="/ecommerce-agencies" component={EcommerceAgenciesPage} />
+      <Route path="/track-competitor-prices" component={TrackCompetitorPricesPage} />
+      <Route path="/find-profitable-products" component={FindProfitableProductsPage} />
+      <Route path="/analyze-customer-reviews" component={AnalyzeCustomerReviewsPage} />
+      <Route path="/improve-seo" component={ImproveSEOPage} />
+      <Route path="/avoid-stockouts" component={AvoidStockoutsPage} />
+      <Route path="/competitor-price-tracking-feature" component={CompetitorPriceTrackingFeaturePage} />
+      <Route path="/review-analytics-feature" component={ReviewAnalyticsFeaturePage} />
+      <Route path="/price-optimization-feature" component={PriceOptimizationFeaturePage} />
+      <Route path="/keyword-rank-tracking-feature" component={KeywordRankTrackingFeaturePage} />
+      <Route path="/product-research-feature" component={ProductResearchFeaturePage} />
+      <Route path="/ai-recommendations-feature" component={AIRecommendationsFeaturePage} />
+      <Route path="/whatsapp-alerts-feature" component={WhatsAppAlertsFeaturePage} />
 
       {/* Auth Pages (redirect to dashboard if already logged in) */}
       <PublicRoute path="/login" component={Login} />

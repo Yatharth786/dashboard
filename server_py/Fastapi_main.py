@@ -20,7 +20,7 @@ from . import crud, schemas, models
 from .database_config import get_db, engine
 import requests, traceback
 models.Base.metadata.create_all(bind=engine)
-from .models import AmazonProductDetails
+from .models import AmazonProductDetails, User
 app = FastAPI(title="API", version="1.0.0")
 
 app.add_middleware(
@@ -8859,916 +8859,946 @@ def admin_get_user_profile(
 
 
 
-class BrandShareData(BaseModel):
-    brand: str
-    share_percentage: float
-    total_reviews: int
-    total_sales: int
-    avg_rating: Optional[float]
-    avg_price: Optional[float]
-    product_count: int
+# class BrandShareData(BaseModel):
+#     brand: str
+#     share_percentage: float
+#     total_reviews: int
+#     total_sales: int
+#     avg_rating: Optional[float]
+#     avg_price: Optional[float]
+#     product_count: int
 
-class CategorySOVResponse(BaseModel):
-    category_name: str
-    total_products: int
-    total_reviews: int
-    total_sales: int
-    brands: List[BrandShareData]
-    your_brand_share: Optional[float]
-    market_leader: Optional[str]
-    marketplace: str
+# class CategorySOVResponse(BaseModel):
+#     category_name: str
+#     total_products: int
+#     total_reviews: int
+#     total_sales: int
+#     brands: List[BrandShareData]
+#     your_brand_share: Optional[float]
+#     market_leader: Optional[str]
+#     marketplace: str
 
-class KeywordSOVResponse(BaseModel):
-    keyword: str
-    total_products: int
-    total_reviews: int
-    brands: List[BrandShareData]
-    price_range: Dict[str, float]
-    marketplace: str
+# class KeywordSOVResponse(BaseModel):
+#     keyword: str
+#     total_products: int
+#     total_reviews: int
+#     brands: List[BrandShareData]
+#     price_range: Dict[str, float]
+#     marketplace: str
 
-class ProgressTrackingData(BaseModel):
-    date: str
-    share_percentage: float
-    reviews: int
-    sales: int
+# class ProgressTrackingData(BaseModel):
+#     date: str
+#     share_percentage: float
+#     reviews: int
+#     sales: int
 
-class ProgressTrackingResponse(BaseModel):
-    category_name: str
-    your_brand: str
-    current_share: float
-    target_share: float
-    start_date: str
-    target_date: str
-    days_elapsed: int
-    days_remaining: int
-    is_on_track: bool
-    required_growth_rate: float
-    actual_growth_rate: float
-    weekly_progress: List[ProgressTrackingData]
+# class ProgressTrackingResponse(BaseModel):
+#     category_name: str
+#     your_brand: str
+#     current_share: float
+#     target_share: float
+#     start_date: str
+#     target_date: str
+#     days_elapsed: int
+#     days_remaining: int
+#     is_on_track: bool
+#     required_growth_rate: float
+#     actual_growth_rate: float
+#     weekly_progress: List[ProgressTrackingData]
 
-class CompetitorAnalysis(BaseModel):
-    competitor_name: str
-    market_share: float
-    avg_price: float
-    total_products: int
-    avg_rating: Optional[float]
-    total_reviews: int
-    total_sales: int
+# class CompetitorAnalysis(BaseModel):
+#     competitor_name: str
+#     market_share: float
+#     avg_price: float
+#     total_products: int
+#     avg_rating: Optional[float]
+#     total_reviews: int
+#     total_sales: int
 
-class CombinedSOVResponse(BaseModel):
-    category_name: str
-    combined_brands: List[BrandShareData]
-    flipkart_data: CategorySOVResponse
-    amazon_data: CategorySOVResponse
-    your_brand_combined_share: Optional[float]
+# class CombinedSOVResponse(BaseModel):
+#     category_name: str
+#     combined_brands: List[BrandShareData]
+#     flipkart_data: CategorySOVResponse
+#     amazon_data: CategorySOVResponse
+#     your_brand_combined_share: Optional[float]
 
-# ==================== Helper Functions ====================
-def safe_float(value, default=0.0) -> float:
-    """Safely convert value to float"""
-    if value is None or value == 'NULL':
-        return default
-    try:
-        from decimal import Decimal
-        if isinstance(value, Decimal):
-            return float(value)
-        return float(value)
-    except:
-        return default
+# SOV_TIER_LIMITS = {
+#     'free': 3,           # Free tier: 3 SOV analyses per month
+#     'basic': 15,         # Basic tier: 15 SOV analyses per month  
+#     'premium': -1,       # Premium tier: unlimited
+#     'enterprise': -1     # Enterprise tier: unlimited
+# }    
 
-def safe_int(value, default=0) -> int:
-    """Safely convert value to int"""
-    if value is None or value == 'NULL':
-        return default
-    try:
-        return int(value)
-    except:
-        return default
+# # ==================== Helper Functions ====================
+# def safe_float(value, default=0.0) -> float:
+#     """Safely convert value to float"""
+#     if value is None or value == 'NULL':
+#         return default
+#     try:
+#         from decimal import Decimal
+#         if isinstance(value, Decimal):
+#             return float(value)
+#         return float(value)
+#     except:
+#         return default
 
-def extract_sales_number(sales_text: str) -> int:
-    """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
-    if not sales_text or sales_text == 'NULL':
-        return 0
+# def safe_int(value, default=0) -> int:
+#     """Safely convert value to int"""
+#     if value is None or value == 'NULL':
+#         return default
+#     try:
+#         return int(value)
+#     except:
+#         return default
+
+# def extract_sales_number(sales_text: str) -> int:
+#     """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
+#     if not sales_text or sales_text == 'NULL':
+#         return 0
     
-    try:
-        sales_text = str(sales_text).upper().strip()
-        multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
+#     try:
+#         sales_text = str(sales_text).upper().strip()
+#         multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
         
-        match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
-        if match:
-            number = float(match.group(1))
-            unit = match.group(2)
+#         match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
+#         if match:
+#             number = float(match.group(1))
+#             unit = match.group(2)
             
-            if unit and unit in multipliers:
-                return int(number * multipliers[unit])
-            return int(number)
-    except:
-        return 0
-    return 0
+#             if unit and unit in multipliers:
+#                 return int(number * multipliers[unit])
+#             return int(number)
+#     except:
+#         return 0
+#     return 0
 
-# ==================== Endpoints (Add to your main app file) ====================
-
-@app.get("/sov/categories")
-def get_sov_categories(
-    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
-    db: Session = Depends(get_db)
-):
-    """Get list of all available categories for SOV analysis"""
-    try:
-        categories = set()
-        
-        if marketplace in ["flipkart", "all"]:
-            flipkart_query = text("""
-                SELECT DISTINCT category_name 
-                FROM rapidapi_flipkart_products 
-                WHERE category_name IS NOT NULL AND category_name != 'NULL'
-                ORDER BY category_name
-            """)
-            result = db.execute(flipkart_query)
-            categories.update([row[0] for row in result if row[0]])
-        
-        if marketplace in ["amazon", "all"]:
-            amazon_query = text("""
-                SELECT DISTINCT category_name 
-                FROM rapidapi_amazon_products 
-                WHERE category_name IS NOT NULL AND category_name != 'NULL'
-                ORDER BY category_name
-            """)
-            result = db.execute(amazon_query)
-            categories.update([row[0] for row in result if row[0]])
-        
-        return {"categories": sorted(list(categories))}
+# @app.get("/users/{user_id}/sov-usage")
+# async def get_sov_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Get Share of Voice analysis usage statistics for a user
     
-    except Exception as e:
-        return {"error": f"Error fetching categories: {str(e)}"}
-
-
-@app.get("/sov/category/{category_name}")
-def get_category_sov(
-    category_name: str,
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    your_brand: Optional[str] = Query(default=None),
-    db: Session = Depends(get_db)
-):
-    """Get Share of Voice analysis for a specific category"""
-    try:
-        if marketplace == "flipkart":
-            query = text("""
-                SELECT 
-                    brand,
-                    COUNT(*) as product_count,
-                    COALESCE(SUM(product_rating_count), 0) as total_reviews,
-                    COALESCE(SUM(estimated_sales), 0) as total_sales,
-                    COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
-                    COALESCE(AVG(product_price), 0) as avg_price
-                FROM rapidapi_flipkart_products
-                WHERE category_name = :category_name
-                    AND brand IS NOT NULL
-                    AND brand != 'NULL'
-                GROUP BY brand
-                ORDER BY total_reviews DESC
-            """)
-        else:  # amazon
-            query = text("""
-                SELECT 
-                    SPLIT_PART(product_title, ' ', 1) as brand,
-                    COUNT(*) as product_count,
-                    COALESCE(SUM(product_num_ratings), 0) as total_reviews,
-                    COALESCE(SUM(avg_sales_volume), 0) as total_sales,
-                    COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
-                    COALESCE(AVG(product_price_numeric), 0) as avg_price
-                FROM rapidapi_amazon_products
-                WHERE category_name = :category_name
-                GROUP BY brand
-                ORDER BY total_reviews DESC
-            """)
+#     Returns:
+#     - count: Number of SOV analyses used this month
+#     - limit: Maximum allowed SOV analyses for user's tier
+#     - remaining: Number of SOV analyses remaining
+#     - subscription_tier: User's current subscription tier
+#     - month: Current tracking month (YYYY-MM format)
+#     """
+#     try:
+#         # Fetch user from database
+#         user = db.query(User).filter(User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
         
-        result = db.execute(query, {"category_name": category_name})
-        rows = result.fetchall()
+#         # Get subscription tier (default to 'free' if not set)
+#         tier = (user.subscription_tier or 'free').lower()
+#         limit = SOV_TIER_LIMITS.get(tier, 3)
         
-        if not rows:
-            return {"error": f"No data found for category: {category_name}"}
+#         # Get current month in YYYY-MM format
+#         current_month = datetime.now().strftime("%Y-%m")
+#         stored_month = user.sov_month
         
-        # Calculate totals
-        total_reviews = sum(safe_int(row[2]) for row in rows)
-        total_sales = sum(safe_int(row[3]) for row in rows)
-        total_products = sum(safe_int(row[1]) for row in rows)
+#         # Reset count if it's a new month
+#         if stored_month != current_month:
+#             user.sov_used = 0
+#             user.sov_month = current_month
+#             db.commit()
+#             db.refresh(user)
         
-        # Build brand data
-        brands = []
-        your_brand_share = None
-        market_leader = None
-        max_share = 0
+#         # Calculate usage stats
+#         count = user.sov_used or 0
+#         remaining = limit - count if limit != -1 else -1
         
-        for row in rows:
-            brand_name = row[0] or "Unknown"
-            review_count = safe_int(row[2])
-            sales_count = safe_int(row[3])
-            
-            share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
-            
-            brand_data = {
-                "brand": brand_name,
-                "share_percentage": round(share_pct, 2),
-                "total_reviews": review_count,
-                "total_sales": sales_count,
-                "avg_rating": round(safe_float(row[4]), 2),
-                "avg_price": round(safe_float(row[5]), 2),
-                "product_count": safe_int(row[1])
-            }
-            brands.append(brand_data)
-            
-            # Track market leader
-            if share_pct > max_share:
-                max_share = share_pct
-                market_leader = brand_name
-            
-            # Check if this is your brand
-            if your_brand and brand_name.lower() == your_brand.lower():
-                your_brand_share = share_pct
-        
-        return {
-            "category_name": category_name,
-            "total_products": total_products,
-            "total_reviews": total_reviews,
-            "total_sales": total_sales,
-            "brands": brands,
-            "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
-            "market_leader": market_leader,
-            "marketplace": marketplace
-        }
+#         return {
+#             "count": count,
+#             "limit": limit,
+#             "remaining": remaining,
+#             "subscription_tier": tier,
+#             "month": current_month
+#         }
     
-    except Exception as e:
-        return {"error": f"Error analyzing category: {str(e)}"}
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error fetching SOV usage: {str(e)}")
 
 
-
-@app.get("/sov/keyword/{keyword}")
-def get_keyword_sov(
-    keyword: str,
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    price_min: Optional[float] = Query(default=None),
-    price_max: Optional[float] = Query(default=None),
-    db: Session = Depends(get_db)
-):
-    """Get Share of Voice analysis for products matching a keyword"""
-    try:
-        price_filter = ""
-        if marketplace == "flipkart":
-            if price_min is not None:
-                price_filter += f" AND product_price >= {price_min}"
-            if price_max is not None:
-                price_filter += f" AND product_price <= {price_max}"
-            
-            query = text(f"""
-                SELECT 
-                    brand,
-                    COUNT(*) as product_count,
-                    COALESCE(SUM(product_rating_count), 0) as total_reviews,
-                    COALESCE(SUM(estimated_sales), 0) as total_sales,
-                    COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
-                    COALESCE(AVG(product_price), 0) as avg_price,
-                    MIN(product_price) as min_price,
-                    MAX(product_price) as max_price
-                FROM rapidapi_flipkart_products
-                WHERE (LOWER(product_title) LIKE LOWER(:keyword) 
-                    OR LOWER(category_name) LIKE LOWER(:keyword))
-                    AND brand IS NOT NULL
-                    AND brand != 'NULL'
-                    {price_filter}
-                GROUP BY brand
-                ORDER BY total_reviews DESC
-            """)
-        else:  # amazon
-            if price_min is not None:
-                price_filter += f" AND product_price_numeric >= {price_min}"
-            if price_max is not None:
-                price_filter += f" AND product_price_numeric <= {price_max}"
-            
-            query = text(f"""
-                SELECT 
-                    SPLIT_PART(product_title, ' ', 1) as brand,
-                    COUNT(*) as product_count,
-                    COALESCE(SUM(product_num_ratings), 0) as total_reviews,
-                    COALESCE(SUM(avg_sales_volume), 0) as total_sales,
-                    COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
-                    COALESCE(AVG(product_price_numeric), 0) as avg_price,
-                    MIN(product_price_numeric) as min_price,
-                    MAX(product_price_numeric) as max_price
-                FROM rapidapi_amazon_products
-                WHERE (LOWER(product_title) LIKE LOWER(:keyword)
-                    OR LOWER(category_name) LIKE LOWER(:keyword))
-                    {price_filter}
-                GROUP BY brand
-                ORDER BY total_reviews DESC
-            """)
-        
-        result = db.execute(query, {"keyword": f"%{keyword}%"})
-        rows = result.fetchall()
-        
-        if not rows:
-            return {"error": f"No products found matching keyword: {keyword}"}
-        
-        total_reviews = sum(safe_int(row[2]) for row in rows)
-        total_products = sum(safe_int(row[1]) for row in rows)
-        
-        brands = []
-        min_price = float('inf')
-        max_price = 0
-        
-        for row in rows:
-            review_count = safe_int(row[2])
-            share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
-            
-            brands.append({
-                "brand": row[0] or "Unknown",
-                "share_percentage": round(share_pct, 2),
-                "total_reviews": review_count,
-                "total_sales": safe_int(row[3]),
-                "avg_rating": round(safe_float(row[4]), 2),
-                "avg_price": round(safe_float(row[5]), 2),
-                "product_count": safe_int(row[1])
-            })
-            
-            min_price = min(min_price, safe_float(row[6], float('inf')))
-            max_price = max(max_price, safe_float(row[7], 0))
-        
-        return {
-            "keyword": keyword,
-            "total_products": total_products,
-            "total_reviews": total_reviews,
-            "brands": brands,
-            "price_range": {
-                "min": round(min_price if min_price != float('inf') else 0, 2),
-                "max": round(max_price, 2)
-            },
-            "marketplace": marketplace
-        }
+# @app.post("/users/{user_id}/increment-sov-usage")
+# async def increment_sov_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Increment SOV analysis usage count for a user
     
-    except Exception as e:
-        return {"error": f"Error analyzing keyword: {str(e)}"}
+#     This should be called AFTER a successful SOV analysis
+#     Checks if user has remaining analyses before incrementing
+#     """
+#     try:
+#         user = db.query(User).filter(User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         # Get tier and limit
+#         tier = (user.subscription_tier or 'free').lower()
+#         limit = SOV_TIER_LIMITS.get(tier, 3)
+        
+#         # Get current month
+#         current_month = datetime.now().strftime("%Y-%m")
+#         stored_month = user.sov_month
+        
+#         # Reset if new month
+#         if stored_month != current_month:
+#             user.sov_used = 0
+#             user.sov_month = current_month
+        
+#         # Check if user has reached limit (only if not unlimited)
+#         if limit != -1 and (user.sov_used or 0) >= limit:
+#             raise HTTPException(
+#                 status_code=403,
+#                 detail=f"SOV analysis limit reached for {tier} tier. You've used all {limit} analyses this month. Upgrade to get more!"
+#             )
+        
+#         # Increment usage count
+#         user.sov_used = (user.sov_used or 0) + 1
+#         db.commit()
+#         db.refresh(user)
+        
+#         remaining = limit - user.sov_used if limit != -1 else -1
+        
+#         return {
+#             "success": True,
+#             "count": user.sov_used,
+#             "limit": limit,
+#             "remaining": remaining,
+#             "subscription_tier": tier
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error incrementing SOV usage: {str(e)}")
 
 
-@app.get("/sov/progress/{category_name}")
-def track_sov_progress(
-    category_name: str,
-    your_brand: str,
-    target_share: float = Query(default=20.0, ge=0, le=100),
-    target_days: int = Query(default=90, ge=1),
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    db: Session = Depends(get_db)
-):
-    """Track progress towards target market share"""
-    try:
-        from datetime import datetime, timedelta
+# # ==================== Endpoints (Add to your main app file) ====================
+
+# @app.get("/sov/categories")
+# def get_sov_categories(
+#     marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get list of all available categories for SOV analysis"""
+#     try:
+#         categories = set()
         
-        # Get current SOV
-        current_sov = get_category_sov(category_name, marketplace, your_brand, db)
+#         if marketplace in ["flipkart", "all"]:
+#             flipkart_query = text("""
+#                 SELECT DISTINCT category_name 
+#                 FROM rapidapi_flipkart_products 
+#                 WHERE category_name IS NOT NULL AND category_name != 'NULL'
+#                 ORDER BY category_name
+#             """)
+#             result = db.execute(flipkart_query)
+#             categories.update([row[0] for row in result if row[0]])
         
-        if "error" in current_sov:
-            return current_sov
+#         if marketplace in ["amazon", "all"]:
+#             amazon_query = text("""
+#                 SELECT DISTINCT category_name 
+#                 FROM rapidapi_amazon_products 
+#                 WHERE category_name IS NOT NULL AND category_name != 'NULL'
+#                 ORDER BY category_name
+#             """)
+#             result = db.execute(amazon_query)
+#             categories.update([row[0] for row in result if row[0]])
         
-        current_share = current_sov.get("your_brand_share") or 0
+#         return {"categories": sorted(list(categories))}
+    
+#     except Exception as e:
+#         return {"error": f"Error fetching categories: {str(e)}"}
+
+
+# # @app.get("/sov/category/{category_name}")
+# # def get_category_sov(
+# #     category_name: str,
+# #     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+# #     your_brand: Optional[str] = Query(default=None),
+# #     db: Session = Depends(get_db)
+# # ):
+# #     """Get Share of Voice analysis for a specific category"""
+# #     try:
+# #         if marketplace == "flipkart":
+# #             query = text("""
+# #                 SELECT 
+# #                     brand,
+# #                     COUNT(*) as product_count,
+# #                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+# #                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+# #                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+# #                     COALESCE(AVG(product_price), 0) as avg_price
+# #                 FROM rapidapi_flipkart_products
+# #                 WHERE category_name = :category_name
+# #                     AND brand IS NOT NULL
+# #                     AND brand != 'NULL'
+# #                 GROUP BY brand
+# #                 ORDER BY total_reviews DESC
+# #             """)
+# #         else:  # amazon
+# #             query = text("""
+# #                 SELECT 
+# #                     SPLIT_PART(product_title, ' ', 1) as brand,
+# #                     COUNT(*) as product_count,
+# #                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+# #                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+# #                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+# #                     COALESCE(AVG(product_price_numeric), 0) as avg_price
+# #                 FROM rapidapi_amazon_products
+# #                 WHERE category_name = :category_name
+# #                 GROUP BY brand
+# #                 ORDER BY total_reviews DESC
+# #             """)
         
-        # Calculate dates
-        start_date = datetime.now() - timedelta(days=30)
-        target_date = datetime.now() + timedelta(days=target_days)
-        days_elapsed = 30
-        days_remaining = target_days
+# #         result = db.execute(query, {"category_name": category_name})
+# #         rows = result.fetchall()
         
-        # Calculate growth rates
-        required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
-        actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
+# #         if not rows:
+# #             return {"error": f"No data found for category: {category_name}"}
         
-        is_on_track = actual_growth_rate >= required_growth_rate
+# #         # Calculate totals
+# #         total_reviews = sum(safe_int(row[2]) for row in rows)
+# #         total_sales = sum(safe_int(row[3]) for row in rows)
+# #         total_products = sum(safe_int(row[1]) for row in rows)
         
-        # Generate weekly progress
-        weekly_progress = []
-        weeks = min(12, (days_elapsed + days_remaining) // 7)
+# #         # Build brand data
+# #         brands = []
+# #         your_brand_share = None
+# #         market_leader = None
+# #         max_share = 0
         
-        for week in range(weeks):
-            week_date = start_date + timedelta(weeks=week)
-            projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
+# #         for row in rows:
+# #             brand_name = row[0] or "Unknown"
+# #             review_count = safe_int(row[2])
+# #             sales_count = safe_int(row[3])
             
-            weekly_progress.append({
-                "date": week_date.strftime("%Y-%m-%d"),
-                "share_percentage": round(projected_share, 2),
-                "reviews": int(current_sov["total_reviews"] * projected_share / 100),
-                "sales": int(current_sov["total_sales"] * projected_share / 100)
-            })
-        
-        return {
-            "category_name": category_name,
-            "your_brand": your_brand,
-            "current_share": round(current_share, 2),
-            "target_share": target_share,
-            "start_date": start_date.strftime("%Y-%m-%d"),
-            "target_date": target_date.strftime("%Y-%m-%d"),
-            "days_elapsed": days_elapsed,
-            "days_remaining": days_remaining,
-            "is_on_track": is_on_track,
-            "required_growth_rate": round(required_growth_rate, 4),
-            "actual_growth_rate": round(actual_growth_rate, 4),
-            "weekly_progress": weekly_progress
-        }
-    
-    except Exception as e:
-        return {"error": f"Error tracking progress: {str(e)}"}
-
-
-@app.get("/sov/competitors/{category_name}")
-def analyze_sov_competitors(
-    category_name: str,
-    your_brand: str,
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    limit: int = Query(default=10, ge=1, le=50),
-    db: Session = Depends(get_db)
-):
-    """Get detailed competitor analysis"""
-    try:
-        sov_data = get_category_sov(category_name, marketplace, your_brand, db)
-        
-        if "error" in sov_data:
-            return sov_data
-        
-        competitors = []
-        for brand in sov_data["brands"]:
-            if brand["brand"].lower() != your_brand.lower():
-                competitors.append({
-                    "competitor_name": brand["brand"],
-                    "market_share": brand["share_percentage"],
-                    "avg_price": brand["avg_price"],
-                    "total_products": brand["product_count"],
-                    "avg_rating": brand["avg_rating"],
-                    "total_reviews": brand["total_reviews"],
-                    "total_sales": brand["total_sales"]
-                })
-        
-        # Sort by market share and limit
-        competitors.sort(key=lambda x: x["market_share"], reverse=True)
-        return {"competitors": competitors[:limit]}
-    
-    except Exception as e:
-        return {"error": f"Error analyzing competitors: {str(e)}"}
-
-
-@app.get("/sov/combined/{category_name}")
-def get_combined_sov(
-    category_name: str,
-    your_brand: Optional[str] = Query(default=None),
-    db: Session = Depends(get_db)
-):
-    """Get combined Share of Voice from both Flipkart and Amazon"""
-    try:
-        flipkart_data = get_category_sov(category_name, "flipkart", your_brand, db)
-        amazon_data = get_category_sov(category_name, "amazon", your_brand, db)
-        
-        # Handle errors
-        if "error" in flipkart_data and "error" in amazon_data:
-            return {"error": "No data found in either marketplace"}
-        
-        # Combine brand data
-        brand_map = {}
-        
-        for data in [flipkart_data, amazon_data]:
-            if "error" not in data:
-                for brand in data["brands"]:
-                    brand_name = brand["brand"]
-                    if brand_name not in brand_map:
-                        brand_map[brand_name] = {
-                            "reviews": 0,
-                            "sales": 0,
-                            "products": 0,
-                            "ratings": [],
-                            "prices": []
-                        }
-                    
-                    brand_map[brand_name]["reviews"] += brand["total_reviews"]
-                    brand_map[brand_name]["sales"] += brand["total_sales"]
-                    brand_map[brand_name]["products"] += brand["product_count"]
-                    if brand["avg_rating"]:
-                        brand_map[brand_name]["ratings"].append(brand["avg_rating"])
-                    if brand["avg_price"]:
-                        brand_map[brand_name]["prices"].append(brand["avg_price"])
-        
-        total_reviews = sum(b["reviews"] for b in brand_map.values())
-        
-        combined_brands = []
-        your_brand_combined_share = None
-        
-        for brand_name, data in brand_map.items():
-            share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
+# #             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
             
-            combined_brand = {
-                "brand": brand_name,
-                "share_percentage": round(share_pct, 2),
-                "total_reviews": data["reviews"],
-                "total_sales": data["sales"],
-                "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
-                "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
-                "product_count": data["products"]
-            }
-            combined_brands.append(combined_brand)
+# #             brand_data = {
+# #                 "brand": brand_name,
+# #                 "share_percentage": round(share_pct, 2),
+# #                 "total_reviews": review_count,
+# #                 "total_sales": sales_count,
+# #                 "avg_rating": round(safe_float(row[4]), 2),
+# #                 "avg_price": round(safe_float(row[5]), 2),
+# #                 "product_count": safe_int(row[1])
+# #             }
+# #             brands.append(brand_data)
             
-            if your_brand and brand_name.lower() == your_brand.lower():
-                your_brand_combined_share = share_pct
+# #             # Track market leader
+# #             if share_pct > max_share:
+# #                 max_share = share_pct
+# #                 market_leader = brand_name
+            
+# #             # Check if this is your brand
+# #             if your_brand and brand_name.lower() == your_brand.lower():
+# #                 your_brand_share = share_pct
         
-        combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
-        
-        return {
-            "category_name": category_name,
-            "combined_brands": combined_brands,
-            "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
-            "amazon_data": amazon_data if "error" not in amazon_data else None,
-            "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
-        }
+# #         return {
+# #             "category_name": category_name,
+# #             "total_products": total_products,
+# #             "total_reviews": total_reviews,
+# #             "total_sales": total_sales,
+# #             "brands": brands,
+# #             "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
+# #             "market_leader": market_leader,
+# #             "marketplace": marketplace
+# #         }
     
-    except Exception as e:
-        return {"error": f"Error getting combined SOV: {str(e)}"}
+# #     except Exception as e:
+# #         return {"error": f"Error analyzing category: {str(e)}"}
+
+# @app.get("/sov/category/{category_name}")
+# async def get_category_sov(
+#     category_name: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     your_brand: Optional[str] = Query(default=None),
+#     user_id: Optional[int] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get Share of Voice analysis for a specific category
+#     Now includes usage tracking for authenticated users
+#     """
+#     try:
+#         # ✅ Check and increment usage if user is logged in
+#         if user_id:
+#             user = db.query(User).filter(User.id == user_id).first()
+#             if user:
+#                 tier = (user.subscription_tier or 'free').lower()
+#                 limit = SOV_TIER_LIMITS.get(tier, 3)
+                
+#                 # Get current month
+#                 current_month = datetime.now().strftime("%Y-%m")
+#                 if user.sov_month != current_month:
+#                     user.sov_used = 0
+#                     user.sov_month = current_month
+                
+#                 # Check limit before processing
+#                 if limit != -1 and (user.sov_used or 0) >= limit:
+#                     raise HTTPException(
+#                         status_code=403,
+#                         detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
+#                     )
+                
+#                 # Increment usage
+#                 user.sov_used = (user.sov_used or 0) + 1
+#                 db.commit()
+        
+#         # Your existing SOV analysis logic here
+#         if marketplace == "flipkart":
+#             query = text("""
+#                 SELECT 
+#                     brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+#                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+#                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+#                     COALESCE(AVG(product_price), 0) as avg_price
+#                 FROM rapidapi_flipkart_products
+#                 WHERE category_name = :category_name
+#                     AND brand IS NOT NULL
+#                     AND brand != 'NULL'
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+#         else:  # amazon
+#             query = text("""
+#                 SELECT 
+#                     SPLIT_PART(product_title, ' ', 1) as brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+#                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+#                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+#                     COALESCE(AVG(product_price_numeric), 0) as avg_price
+#                 FROM rapidapi_amazon_products
+#                 WHERE category_name = :category_name
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+        
+#         result = db.execute(query, {"category_name": category_name})
+#         rows = result.fetchall()
+        
+#         if not rows:
+#             return {"error": f"No data found for category: {category_name}"}
+        
+#         # Calculate totals
+#         total_reviews = sum(int(row[2] or 0) for row in rows)
+#         total_sales = sum(int(row[3] or 0) for row in rows)
+#         total_products = sum(int(row[1] or 0) for row in rows)
+        
+#         # Build brand data
+#         brands = []
+#         your_brand_share = None
+#         market_leader = None
+#         max_share = 0
+        
+#         for row in rows:
+#             brand_name = row[0] or "Unknown"
+#             review_count = int(row[2] or 0)
+#             sales_count = int(row[3] or 0)
+            
+#             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+#             brand_data = {
+#                 "brand": brand_name,
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": review_count,
+#                 "total_sales": sales_count,
+#                 "avg_rating": round(float(row[4] or 0), 2),
+#                 "avg_price": round(float(row[5] or 0), 2),
+#                 "product_count": int(row[1] or 0)
+#             }
+#             brands.append(brand_data)
+            
+#             # Track market leader
+#             if share_pct > max_share:
+#                 max_share = share_pct
+#                 market_leader = brand_name
+            
+#             # Check if this is your brand
+#             if your_brand and brand_name.lower() == your_brand.lower():
+#                 your_brand_share = share_pct
+        
+#         return {
+#             "category_name": category_name,
+#             "total_products": total_products,
+#             "total_reviews": total_reviews,
+#             "total_sales": total_sales,
+#             "brands": brands,
+#             "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
+#             "market_leader": market_leader,
+#             "marketplace": marketplace
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error analyzing category: {str(e)}")
 
 
-@app.get("/sov/brands")
-def get_all_brands(
-    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
-    db: Session = Depends(get_db)
-):
-    """Get list of all available brands"""
-    try:
-        brands = set()
+# # @app.get("/sov/keyword/{keyword}")
+# # def get_keyword_sov(
+# #     keyword: str,
+# #     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+# #     price_min: Optional[float] = Query(default=None),
+# #     price_max: Optional[float] = Query(default=None),
+# #     db: Session = Depends(get_db)
+# # ):
+# #     """Get Share of Voice analysis for products matching a keyword"""
+# #     try:
+# #         price_filter = ""
+# #         if marketplace == "flipkart":
+# #             if price_min is not None:
+# #                 price_filter += f" AND product_price >= {price_min}"
+# #             if price_max is not None:
+# #                 price_filter += f" AND product_price <= {price_max}"
+            
+# #             query = text(f"""
+# #                 SELECT 
+# #                     brand,
+# #                     COUNT(*) as product_count,
+# #                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+# #                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+# #                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+# #                     COALESCE(AVG(product_price), 0) as avg_price,
+# #                     MIN(product_price) as min_price,
+# #                     MAX(product_price) as max_price
+# #                 FROM rapidapi_flipkart_products
+# #                 WHERE (LOWER(product_title) LIKE LOWER(:keyword) 
+# #                     OR LOWER(category_name) LIKE LOWER(:keyword))
+# #                     AND brand IS NOT NULL
+# #                     AND brand != 'NULL'
+# #                     {price_filter}
+# #                 GROUP BY brand
+# #                 ORDER BY total_reviews DESC
+# #             """)
+# #         else:  # amazon
+# #             if price_min is not None:
+# #                 price_filter += f" AND product_price_numeric >= {price_min}"
+# #             if price_max is not None:
+# #                 price_filter += f" AND product_price_numeric <= {price_max}"
+            
+# #             query = text(f"""
+# #                 SELECT 
+# #                     SPLIT_PART(product_title, ' ', 1) as brand,
+# #                     COUNT(*) as product_count,
+# #                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+# #                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+# #                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+# #                     COALESCE(AVG(product_price_numeric), 0) as avg_price,
+# #                     MIN(product_price_numeric) as min_price,
+# #                     MAX(product_price_numeric) as max_price
+# #                 FROM rapidapi_amazon_products
+# #                 WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+# #                     OR LOWER(category_name) LIKE LOWER(:keyword))
+# #                     {price_filter}
+# #                 GROUP BY brand
+# #                 ORDER BY total_reviews DESC
+# #             """)
         
-        if marketplace in ["flipkart", "all"]:
-            flipkart_query = text("""
-                SELECT DISTINCT brand 
-                FROM rapidapi_flipkart_products 
-                WHERE brand IS NOT NULL AND brand != 'NULL'
-                ORDER BY brand
-            """)
-            result = db.execute(flipkart_query)
-            brands.update([row[0] for row in result if row[0]])
+# #         result = db.execute(query, {"keyword": f"%{keyword}%"})
+# #         rows = result.fetchall()
         
-        if marketplace in ["amazon", "all"]:
-            amazon_query = text("""
-                SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
-                FROM rapidapi_amazon_products 
-                WHERE product_title IS NOT NULL
-                ORDER BY brand
-            """)
-            result = db.execute(amazon_query)
-            brands.update([row[0] for row in result if row[0]])
+# #         if not rows:
+# #             return {"error": f"No products found matching keyword: {keyword}"}
         
-        return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
+# #         total_reviews = sum(safe_int(row[2]) for row in rows)
+# #         total_products = sum(safe_int(row[1]) for row in rows)
+        
+# #         brands = []
+# #         min_price = float('inf')
+# #         max_price = 0
+        
+# #         for row in rows:
+# #             review_count = safe_int(row[2])
+# #             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+# #             brands.append({
+# #                 "brand": row[0] or "Unknown",
+# #                 "share_percentage": round(share_pct, 2),
+# #                 "total_reviews": review_count,
+# #                 "total_sales": safe_int(row[3]),
+# #                 "avg_rating": round(safe_float(row[4]), 2),
+# #                 "avg_price": round(safe_float(row[5]), 2),
+# #                 "product_count": safe_int(row[1])
+# #             })
+            
+# #             min_price = min(min_price, safe_float(row[6], float('inf')))
+# #             max_price = max(max_price, safe_float(row[7], 0))
+        
+# #         return {
+# #             "keyword": keyword,
+# #             "total_products": total_products,
+# #             "total_reviews": total_reviews,
+# #             "brands": brands,
+# #             "price_range": {
+# #                 "min": round(min_price if min_price != float('inf') else 0, 2),
+# #                 "max": round(max_price, 2)
+# #             },
+# #             "marketplace": marketplace
+# #         }
     
-    except Exception as e:
-        return {"error": f"Error fetching brands: {str(e)}"}
+# #     except Exception as e:
+# #         return {"error": f"Error analyzing keyword: {str(e)}"}
+
+# @app.get("/sov/keyword/{keyword}")
+# async def get_keyword_sov(
+#     keyword: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     price_min: Optional[float] = Query(default=None),
+#     price_max: Optional[float] = Query(default=None),
+#     user_id: Optional[int] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get Share of Voice analysis for products matching a keyword
+#     Now includes usage tracking for authenticated users
+#     """
+#     try:
+#         # ✅ Check and increment usage if user is logged in
+#         if user_id:
+#             user = db.query(User).filter(User.id == user_id).first()
+#             if user:
+#                 tier = (user.subscription_tier or 'free').lower()
+#                 limit = SOV_TIER_LIMITS.get(tier, 3)
+                
+#                 # Get current month
+#                 current_month = datetime.now().strftime("%Y-%m")
+#                 if user.sov_month != current_month:
+#                     user.sov_used = 0
+#                     user.sov_month = current_month
+                
+#                 # Check limit
+#                 if limit != -1 and (user.sov_used or 0) >= limit:
+#                     raise HTTPException(
+#                         status_code=403,
+#                         detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
+#                     )
+                
+#                 # Increment usage
+#                 user.sov_used = (user.sov_used or 0) + 1
+#                 db.commit()
+        
+#         # Your existing keyword SOV analysis logic here
+#         price_filter = ""
+#         if marketplace == "flipkart":
+#             if price_min is not None:
+#                 price_filter += f" AND product_price >= {price_min}"
+#             if price_max is not None:
+#                 price_filter += f" AND product_price <= {price_max}"
+            
+#             query = text(f"""
+#                 SELECT 
+#                     brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+#                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+#                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+#                     COALESCE(AVG(product_price), 0) as avg_price,
+#                     MIN(product_price) as min_price,
+#                     MAX(product_price) as max_price
+#                 FROM rapidapi_flipkart_products
+#                 WHERE (LOWER(product_title) LIKE LOWER(:keyword) 
+#                     OR LOWER(category_name) LIKE LOWER(:keyword))
+#                     AND brand IS NOT NULL
+#                     AND brand != 'NULL'
+#                     {price_filter}
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+#         else:  # amazon
+#             if price_min is not None:
+#                 price_filter += f" AND product_price_numeric >= {price_min}"
+#             if price_max is not None:
+#                 price_filter += f" AND product_price_numeric <= {price_max}"
+            
+#             query = text(f"""
+#                 SELECT 
+#                     SPLIT_PART(product_title, ' ', 1) as brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+#                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+#                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+#                     COALESCE(AVG(product_price_numeric), 0) as avg_price,
+#                     MIN(product_price_numeric) as min_price,
+#                     MAX(product_price_numeric) as max_price
+#                 FROM rapidapi_amazon_products
+#                 WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+#                     OR LOWER(category_name) LIKE LOWER(:keyword))
+#                     {price_filter}
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+        
+#         result = db.execute(query, {"keyword": f"%{keyword}%"})
+#         rows = result.fetchall()
+        
+#         if not rows:
+#             return {"error": f"No products found matching keyword: {keyword}"}
+        
+#         total_reviews = sum(int(row[2] or 0) for row in rows)
+#         total_products = sum(int(row[1] or 0) for row in rows)
+        
+#         brands = []
+#         min_price = float('inf')
+#         max_price = 0
+        
+#         for row in rows:
+#             review_count = int(row[2] or 0)
+#             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+            
+#             brands.append({
+#                 "brand": row[0] or "Unknown",
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": review_count,
+#                 "total_sales": int(row[3] or 0),
+#                 "avg_rating": round(float(row[4] or 0), 2),
+#                 "avg_price": round(float(row[5] or 0), 2),
+#                 "product_count": int(row[1] or 0)
+#             })
+            
+#             min_price = min(min_price, float(row[6] or float('inf')))
+#             max_price = max(max_price, float(row[7] or 0))
+        
+#         return {
+#             "keyword": keyword,
+#             "total_products": total_products,
+#             "total_reviews": total_reviews,
+#             "brands": brands,
+#             "price_range": {
+#                 "min": round(min_price if min_price != float('inf') else 0, 2),
+#                 "max": round(max_price, 2)
+#             },
+#             "marketplace": marketplace
+#         }
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error analyzing keyword: {str(e)}")
 
 
-# @app.post("/sov/ai-insights")
-# def get_ai_insights(
-#     category_name: str = Query(...),
-#     your_brand: str = Query(...),
-#     target_share: float = Query(default=25.0),
-#     target_days: int = Query(default=60),
+# @app.get("/sov/progress/{category_name}")
+# def track_sov_progress(
+#     category_name: str,
+#     your_brand: str,
+#     target_share: float = Query(default=20.0, ge=0, le=100),
+#     target_days: int = Query(default=90, ge=1),
 #     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
 #     db: Session = Depends(get_db)
 # ):
-#     """Get AI-powered insights and recommendations using Ollama Mistral"""
+#     """Track progress towards target market share"""
 #     try:
-#         import subprocess
-#         import json
+#         from datetime import datetime, timedelta
         
-#         # Get current SOV data
+#         # Get current SOV
+#         current_sov = get_category_sov(category_name, marketplace, your_brand, db)
+        
+#         if "error" in current_sov:
+#             return current_sov
+        
+#         current_share = current_sov.get("your_brand_share") or 0
+        
+#         # Calculate dates
+#         start_date = datetime.now() - timedelta(days=30)
+#         target_date = datetime.now() + timedelta(days=target_days)
+#         days_elapsed = 30
+#         days_remaining = target_days
+        
+#         # Calculate growth rates
+#         required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
+#         actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
+        
+#         is_on_track = actual_growth_rate >= required_growth_rate
+        
+#         # Generate weekly progress
+#         weekly_progress = []
+#         weeks = min(12, (days_elapsed + days_remaining) // 7)
+        
+#         for week in range(weeks):
+#             week_date = start_date + timedelta(weeks=week)
+#             projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
+            
+#             weekly_progress.append({
+#                 "date": week_date.strftime("%Y-%m-%d"),
+#                 "share_percentage": round(projected_share, 2),
+#                 "reviews": int(current_sov["total_reviews"] * projected_share / 100),
+#                 "sales": int(current_sov["total_sales"] * projected_share / 100)
+#             })
+        
+#         return {
+#             "category_name": category_name,
+#             "your_brand": your_brand,
+#             "current_share": round(current_share, 2),
+#             "target_share": target_share,
+#             "start_date": start_date.strftime("%Y-%m-%d"),
+#             "target_date": target_date.strftime("%Y-%m-%d"),
+#             "days_elapsed": days_elapsed,
+#             "days_remaining": days_remaining,
+#             "is_on_track": is_on_track,
+#             "required_growth_rate": round(required_growth_rate, 4),
+#             "actual_growth_rate": round(actual_growth_rate, 4),
+#             "weekly_progress": weekly_progress
+#         }
+    
+#     except Exception as e:
+#         return {"error": f"Error tracking progress: {str(e)}"}
+
+
+# @app.get("/sov/competitors/{category_name}")
+# def analyze_sov_competitors(
+#     category_name: str,
+#     your_brand: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     limit: int = Query(default=10, ge=1, le=50),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get detailed competitor analysis"""
+#     try:
 #         sov_data = get_category_sov(category_name, marketplace, your_brand, db)
         
 #         if "error" in sov_data:
 #             return sov_data
         
-#         current_share = sov_data.get("your_brand_share") or 0
-#         market_leader = sov_data.get("market_leader")
-#         brands = sov_data.get("brands", [])
-        
-#         # Find your brand data
-#         your_brand_data = next((b for b in brands if b["brand"].lower() == your_brand.lower()), None)
-        
-#         # Find market leader data
-#         leader_data = next((b for b in brands if b["brand"] == market_leader), None)
-        
-#         # Calculate gaps and opportunities
-#         insights = {
-#             "current_analysis": {
-#                 "current_share": current_share,
-#                 "target_share": target_share,
-#                 "gap": round(target_share - current_share, 2),
-#                 "days_to_target": target_days,
-#                 "required_daily_growth": round((target_share - current_share) / target_days, 4) if target_days > 0 else 0
-#             },
-#             "market_position": {
-#                 "rank": next((i + 1 for i, b in enumerate(brands) if b["brand"].lower() == your_brand.lower()), None),
-#                 "total_brands": len(brands),
-#                 "distance_from_leader": round((leader_data["share_percentage"] if leader_data else 0) - current_share, 2),
-#                 "market_leader": market_leader
-#             },
-#             "competitive_analysis": [],
-#             "actionable_recommendations": [],
-#             "growth_strategy": [],
-#             "product_gaps": [],
-#             "pricing_insights": {},
-#             "ai_generated_insights": ""
-#         }
-        
-#         # Competitive Analysis - Compare with top 5
-#         top_5_brands = brands[:5]
-#         for idx, competitor in enumerate(top_5_brands):
-#             if competitor["brand"].lower() != your_brand.lower():
-#                 insights["competitive_analysis"].append({
-#                     "brand": competitor["brand"],
-#                     "share": competitor["share_percentage"],
-#                     "products": competitor["product_count"],
-#                     "avg_price": competitor["avg_price"],
-#                     "avg_rating": competitor["avg_rating"],
-#                     "reviews": competitor["total_reviews"],
-#                     "advantage": "Higher" if competitor["share_percentage"] > current_share else "Lower",
-#                     "price_comparison": "Cheaper" if competitor["avg_price"] < (your_brand_data["avg_price"] if your_brand_data else 0) else "More Expensive"
+#         competitors = []
+#         for brand in sov_data["brands"]:
+#             if brand["brand"].lower() != your_brand.lower():
+#                 competitors.append({
+#                     "competitor_name": brand["brand"],
+#                     "market_share": brand["share_percentage"],
+#                     "avg_price": brand["avg_price"],
+#                     "total_products": brand["product_count"],
+#                     "avg_rating": brand["avg_rating"],
+#                     "total_reviews": brand["total_reviews"],
+#                     "total_sales": brand["total_sales"]
 #                 })
         
-#         # Prepare data for AI analysis
-#         ai_context = {
-#             "brand": your_brand,
-#             "category": category_name,
-#             "current_share": current_share,
-#             "target_share": target_share,
-#             "target_days": target_days,
-#             "rank": insights["market_position"]["rank"],
-#             "total_brands": insights["market_position"]["total_brands"],
-#             "market_leader": market_leader,
-#             "leader_share": leader_data["share_percentage"] if leader_data else 0,
-#             "your_data": {
-#                 "products": your_brand_data["product_count"] if your_brand_data else 0,
-#                 "avg_price": your_brand_data["avg_price"] if your_brand_data else 0,
-#                 "avg_rating": your_brand_data["avg_rating"] if your_brand_data else 0,
-#                 "reviews": your_brand_data["total_reviews"] if your_brand_data else 0
-#             },
-#             "top_competitors": [
-#                 {
-#                     "brand": c["brand"],
-#                     "share": c["share"],
-#                     "products": c["products"],
-#                     "price": c["avg_price"],
-#                     "rating": c["avg_rating"]
-#                 } for c in insights["competitive_analysis"][:3]
-#             ]
-#         }
-        
-#         # Create AI prompt for Ollama Mistral
-#         ai_prompt = f"""You are an expert market analyst. Analyze this e-commerce market data and provide strategic insights.
-
-# MARKET DATA:
-# - Brand: {ai_context['brand']}
-# - Category: {ai_context['category']}
-# - Current Market Share: {ai_context['current_share']}%
-# - Target Market Share: {ai_context['target_share']}%
-# - Timeline: {ai_context['target_days']} days
-# - Current Rank: #{ai_context['rank']} out of {ai_context['total_brands']} brands
-# - Market Leader: {ai_context['market_leader']} ({ai_context['leader_share']}% share)
-
-# YOUR BRAND METRICS:
-# - Products: {ai_context['your_data']['products']}
-# - Average Price: ₹{ai_context['your_data']['avg_price']}
-# - Average Rating: {ai_context['your_data']['avg_rating']}
-# - Total Reviews: {ai_context['your_data']['reviews']}
-
-# TOP 3 COMPETITORS:
-# {chr(10).join([f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} avg price, {c['rating']} rating" for c in ai_context['top_competitors']])}
-
-# TASK: Provide a strategic analysis in exactly this format:
-
-# 1. KEY INSIGHTS (3 bullet points):
-# - [Critical observation about market position]
-# - [Major opportunity identified]
-# - [Biggest challenge to address]
-
-# 2. PRIORITY ACTIONS (Top 3, numbered):
-# 1. [Specific action with expected impact]
-# 2. [Specific action with expected impact]
-# 3. [Specific action with expected impact]
-
-# 3. COMPETITIVE ADVANTAGE:
-# [One sentence on how to differentiate from competitors]
-
-# 4. RISK FACTORS:
-# [One sentence on main risks to achieving target]
-
-# Keep response concise and actionable. No preamble or conclusion."""
-
-#         # Call Ollama Mistral
-#         try:
-#             result = subprocess.run(
-#                 ["ollama", "run", "mistral"],
-#                 input=ai_prompt,
-#                 capture_output=True,
-#                 text=True,
-#                 encoding="utf-8",
-#                 errors="ignore",
-#                 timeout=60
-#             )
-            
-#             ai_output = (result.stdout or result.stderr or "").strip()
-            
-#             # Clean the output
-#             ai_output = (
-#                 ai_output.replace("<|MODEL_RESPONSE|>", "")
-#                 .replace("</s>", "")
-#                 .replace("```", "")
-#                 .strip()
-#             )
-            
-#             insights["ai_generated_insights"] = ai_output if ai_output else "AI analysis temporarily unavailable."
-            
-#         except subprocess.TimeoutExpired:
-#             insights["ai_generated_insights"] = "AI analysis timed out. Using rule-based recommendations."
-#         except FileNotFoundError:
-#             insights["ai_generated_insights"] = "Ollama not available. Using rule-based recommendations."
-#         except Exception as e:
-#             insights["ai_generated_insights"] = f"AI service error: {str(e)}"
-        
-#         # Generate rule-based Actionable Recommendations
-#         if your_brand_data:
-#             # Product Count Recommendation
-#             avg_products = sum(b["product_count"] for b in top_5_brands) / len(top_5_brands)
-#             if your_brand_data["product_count"] < avg_products:
-#                 insights["actionable_recommendations"].append({
-#                     "type": "Product Expansion",
-#                     "priority": "High",
-#                     "current": your_brand_data["product_count"],
-#                     "benchmark": int(avg_products),
-#                     "action": f"Expand product line by {int(avg_products - your_brand_data['product_count'])} products to match competitors",
-#                     "impact": "Could increase market share by 2-5%"
-#                 })
-            
-#             # Rating Recommendation
-#             avg_rating = sum(b["avg_rating"] for b in top_5_brands if b["avg_rating"]) / len([b for b in top_5_brands if b["avg_rating"]])
-#             if your_brand_data["avg_rating"] and your_brand_data["avg_rating"] < avg_rating:
-#                 insights["actionable_recommendations"].append({
-#                     "type": "Quality Improvement",
-#                     "priority": "High",
-#                     "current": your_brand_data["avg_rating"],
-#                     "benchmark": round(avg_rating, 2),
-#                     "action": f"Improve product rating by {round(avg_rating - your_brand_data['avg_rating'], 2)} points through quality enhancements",
-#                     "impact": "Better ratings can increase conversions by 15-20%"
-#                 })
-            
-#             # Review Generation
-#             avg_reviews = sum(b["total_reviews"] for b in top_5_brands) / len(top_5_brands)
-#             if your_brand_data["total_reviews"] < avg_reviews:
-#                 insights["actionable_recommendations"].append({
-#                     "type": "Review Generation",
-#                     "priority": "Medium",
-#                     "current": your_brand_data["total_reviews"],
-#                     "benchmark": int(avg_reviews),
-#                     "action": f"Increase reviews by {int(avg_reviews - your_brand_data['total_reviews'])} through customer engagement campaigns",
-#                     "impact": "More reviews increase trust and visibility"
-#                 })
-            
-#             # Pricing Strategy
-#             avg_price = sum(b["avg_price"] for b in top_5_brands if b["avg_price"]) / len([b for b in top_5_brands if b["avg_price"]])
-#             price_diff = your_brand_data["avg_price"] - avg_price if your_brand_data["avg_price"] else 0
-            
-#             if abs(price_diff) > avg_price * 0.15:  # More than 15% difference
-#                 if price_diff > 0:
-#                     insights["actionable_recommendations"].append({
-#                         "type": "Pricing Optimization",
-#                         "priority": "Medium",
-#                         "current": your_brand_data["avg_price"],
-#                         "benchmark": round(avg_price, 2),
-#                         "action": f"Consider reducing price by ₹{round(price_diff, 2)} to be more competitive",
-#                         "impact": "Price optimization can increase sales by 10-15%"
-#                     })
-#                 else:
-#                     insights["actionable_recommendations"].append({
-#                         "type": "Premium Positioning",
-#                         "priority": "Low",
-#                         "current": your_brand_data["avg_price"],
-#                         "benchmark": round(avg_price, 2),
-#                         "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
-#                         "impact": "Could justify price increase with improved marketing"
-#                     })
-        
-#         # Growth Strategy based on gap
-#         gap = target_share - current_share
-        
-#         if gap > 10:
-#             insights["growth_strategy"] = [
-#                 {
-#                     "phase": "Phase 1 (Days 1-20)",
-#                     "focus": "Quick Wins",
-#                     "actions": [
-#                         "Launch aggressive review generation campaign",
-#                         "Optimize product listings with better keywords",
-#                         "Run promotional pricing on top 3 products"
-#                     ],
-#                     "target": f"{round(current_share + gap * 0.3, 2)}% market share"
-#                 },
-#                 {
-#                     "phase": "Phase 2 (Days 21-40)",
-#                     "focus": "Product Expansion",
-#                     "actions": [
-#                         "Add 3-5 new product variants",
-#                         "Improve product images and descriptions",
-#                         "Launch influencer marketing campaign"
-#                     ],
-#                     "target": f"{round(current_share + gap * 0.6, 2)}% market share"
-#                 },
-#                 {
-#                     "phase": "Phase 3 (Days 41-60)",
-#                     "focus": "Market Dominance",
-#                     "actions": [
-#                         "Scale successful products",
-#                         "Target competitor weak points",
-#                         "Implement loyalty program"
-#                     ],
-#                     "target": f"{target_share}% market share"
-#                 }
-#             ]
-#         else:
-#             insights["growth_strategy"] = [
-#                 {
-#                     "phase": "Continuous Improvement",
-#                     "focus": "Incremental Growth",
-#                     "actions": [
-#                         "Maintain consistent review generation",
-#                         "Monitor competitor pricing",
-#                         "Optimize existing product listings"
-#                     ],
-#                     "target": f"{target_share}% market share in {target_days} days"
-#                 }
-#             ]
-        
-#         # Product Gaps Analysis
-#         if marketplace == "flipkart":
-#             gaps_query = text(f"""
-#                 SELECT 
-#                     product_title,
-#                     COUNT(*) as competitor_products,
-#                     AVG(product_price) as avg_price,
-#                     AVG(CAST(product_star_rating AS FLOAT)) as avg_rating,
-#                     SUM(product_rating_count) as total_reviews
-#                 FROM rapidapi_flipkart_products
-#                 WHERE category_name = :category_name
-#                     AND brand != :your_brand
-#                 GROUP BY product_title
-#                 HAVING COUNT(*) >= 2
-#                 ORDER BY total_reviews DESC
-#                 LIMIT 10
-#             """)
-#         else:
-#             gaps_query = text(f"""
-#                 SELECT 
-#                     product_title,
-#                     COUNT(*) as competitor_products,
-#                     AVG(product_price_numeric) as avg_price,
-#                     AVG(product_star_rating_numeric) as avg_rating,
-#                     SUM(product_num_ratings) as total_reviews
-#                 FROM rapidapi_amazon_products
-#                 WHERE category_name = :category_name
-#                 GROUP BY product_title
-#                 HAVING COUNT(*) >= 2
-#                 ORDER BY total_reviews DESC
-#                 LIMIT 10
-#             """)
-        
-#         result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
-#         gaps = result.fetchall()
-        
-#         for gap in gaps[:5]:
-#             insights["product_gaps"].append({
-#                 "product_type": gap[0][:100],  # Truncate long titles
-#                 "competitors_offering": safe_int(gap[1]),
-#                 "avg_price": round(safe_float(gap[2]), 2),
-#                 "avg_rating": round(safe_float(gap[3]), 2),
-#                 "total_demand": safe_int(gap[4]),
-#                 "opportunity": "High" if safe_int(gap[4]) > 1000 else "Medium" if safe_int(gap[4]) > 500 else "Low"
-#             })
-        
-#         # Pricing Insights
-#         if your_brand_data and your_brand_data["avg_price"]:
-#             price_ranges = {
-#                 "budget": [b for b in brands if b["avg_price"] and b["avg_price"] < your_brand_data["avg_price"] * 0.8],
-#                 "similar": [b for b in brands if b["avg_price"] and your_brand_data["avg_price"] * 0.8 <= b["avg_price"] <= your_brand_data["avg_price"] * 1.2],
-#                 "premium": [b for b in brands if b["avg_price"] and b["avg_price"] > your_brand_data["avg_price"] * 1.2]
-#             }
-            
-#             insights["pricing_insights"] = {
-#                 "your_price": your_brand_data["avg_price"],
-#                 "market_average": round(sum(b["avg_price"] for b in brands if b["avg_price"]) / len([b for b in brands if b["avg_price"]]), 2),
-#                 "budget_competitors": len(price_ranges["budget"]),
-#                 "similar_price_competitors": len(price_ranges["similar"]),
-#                 "premium_competitors": len(price_ranges["premium"]),
-#                 "price_positioning": "Budget" if your_brand_data["avg_price"] < avg_price * 0.8 else "Premium" if your_brand_data["avg_price"] > avg_price * 1.2 else "Mid-Range",
-#                 "recommendation": "Your pricing is competitive" if len(price_ranges["similar"]) > len(price_ranges["budget"]) else "Consider price adjustment to be more competitive"
-#             }
-        
-#         return insights
+#         # Sort by market share and limit
+#         competitors.sort(key=lambda x: x["market_share"], reverse=True)
+#         return {"competitors": competitors[:limit]}
     
 #     except Exception as e:
-#         return {"error": f"Error generating AI insights: {str(e)}"}
+#         return {"error": f"Error analyzing competitors: {str(e)}"}
+
+
+# @app.get("/sov/combined/{category_name}")
+# def get_combined_sov(
+#     category_name: str,
+#     your_brand: Optional[str] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get combined Share of Voice from both Flipkart and Amazon"""
+#     try:
+#         flipkart_data = get_category_sov(category_name, "flipkart", your_brand, db)
+#         amazon_data = get_category_sov(category_name, "amazon", your_brand, db)
+        
+#         # Handle errors
+#         if "error" in flipkart_data and "error" in amazon_data:
+#             return {"error": "No data found in either marketplace"}
+        
+#         # Combine brand data
+#         brand_map = {}
+        
+#         for data in [flipkart_data, amazon_data]:
+#             if "error" not in data:
+#                 for brand in data["brands"]:
+#                     brand_name = brand["brand"]
+#                     if brand_name not in brand_map:
+#                         brand_map[brand_name] = {
+#                             "reviews": 0,
+#                             "sales": 0,
+#                             "products": 0,
+#                             "ratings": [],
+#                             "prices": []
+#                         }
+                    
+#                     brand_map[brand_name]["reviews"] += brand["total_reviews"]
+#                     brand_map[brand_name]["sales"] += brand["total_sales"]
+#                     brand_map[brand_name]["products"] += brand["product_count"]
+#                     if brand["avg_rating"]:
+#                         brand_map[brand_name]["ratings"].append(brand["avg_rating"])
+#                     if brand["avg_price"]:
+#                         brand_map[brand_name]["prices"].append(brand["avg_price"])
+        
+#         total_reviews = sum(b["reviews"] for b in brand_map.values())
+        
+#         combined_brands = []
+#         your_brand_combined_share = None
+        
+#         for brand_name, data in brand_map.items():
+#             share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
+            
+#             combined_brand = {
+#                 "brand": brand_name,
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": data["reviews"],
+#                 "total_sales": data["sales"],
+#                 "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
+#                 "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
+#                 "product_count": data["products"]
+#             }
+#             combined_brands.append(combined_brand)
+            
+#             if your_brand and brand_name.lower() == your_brand.lower():
+#                 your_brand_combined_share = share_pct
+        
+#         combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
+        
+#         return {
+#             "category_name": category_name,
+#             "combined_brands": combined_brands,
+#             "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
+#             "amazon_data": amazon_data if "error" not in amazon_data else None,
+#             "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
+#         }
+    
+#     except Exception as e:
+#         return {"error": f"Error getting combined SOV: {str(e)}"}
+
+
+# @app.get("/sov/brands")
+# def get_all_brands(
+#     marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get list of all available brands"""
+#     try:
+#         brands = set()
+        
+#         if marketplace in ["flipkart", "all"]:
+#             flipkart_query = text("""
+#                 SELECT DISTINCT brand 
+#                 FROM rapidapi_flipkart_products 
+#                 WHERE brand IS NOT NULL AND brand != 'NULL'
+#                 ORDER BY brand
+#             """)
+#             result = db.execute(flipkart_query)
+#             brands.update([row[0] for row in result if row[0]])
+        
+#         if marketplace in ["amazon", "all"]:
+#             amazon_query = text("""
+#                 SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
+#                 FROM rapidapi_amazon_products 
+#                 WHERE product_title IS NOT NULL
+#                 ORDER BY brand
+#             """)
+#             result = db.execute(amazon_query)
+#             brands.update([row[0] for row in result if row[0]])
+        
+#         return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
+    
+#     except Exception as e:
+#         return {"error": f"Error fetching brands: {str(e)}"}
 
 
 
@@ -9905,7 +9935,7 @@ def get_all_brands(
 #             ]
 #         }
         
-#         # Create AI prompt for Ollama Mistral
+#         # Create AI prompt for Ollama Mistral - Main Insights
 #         ai_prompt = f"""You are an expert market analyst. Analyze this e-commerce market data and provide strategic insights.
 
 # MARKET DATA:
@@ -9935,9 +9965,9 @@ def get_all_brands(
 # - [Biggest challenge to address]
 
 # 2. PRIORITY ACTIONS (Top 3, numbered):
-# 1. [Specific action with expected impact]
-# 2. [Specific action with expected impact]
-# 3. [Specific action with expected impact]
+# -  [Specific action with expected impact]
+# -  [Specific action with expected impact]
+# -  [Specific action with expected impact]
 
 # 3. COMPETITIVE ADVANTAGE:
 # [One sentence on how to differentiate from competitors]
@@ -9947,7 +9977,7 @@ def get_all_brands(
 
 # Keep response concise and actionable. No preamble or conclusion."""
 
-#         # Call Ollama Mistral with better error handling
+#         # Call Ollama Mistral for main insights
 #         try:
 #             result = subprocess.run(
 #                 ["ollama", "run", "mistral"],
@@ -9956,12 +9986,10 @@ def get_all_brands(
 #                 text=True,
 #                 encoding="utf-8",
 #                 errors="ignore",
-#                 timeout=30  # Reduced timeout to 30 seconds
+#                 timeout=30
 #             )
             
 #             ai_output = (result.stdout or result.stderr or "").strip()
-            
-#             # Clean the output
 #             ai_output = (
 #                 ai_output.replace("<|MODEL_RESPONSE|>", "")
 #                 .replace("</s>", "")
@@ -9969,7 +9997,7 @@ def get_all_brands(
 #                 .strip()
 #             )
             
-#             if ai_output and len(ai_output) > 20:  # Valid response
+#             if ai_output and len(ai_output) > 20:
 #                 insights["ai_generated_insights"] = ai_output
 #             else:
 #                 insights["ai_generated_insights"] = "AI analysis temporarily unavailable. Using rule-based recommendations below."
@@ -9979,7 +10007,7 @@ def get_all_brands(
 #         except FileNotFoundError:
 #             insights["ai_generated_insights"] = "Ollama service not found. Using rule-based recommendations below."
 #         except Exception as e:
-#             print(f"AI service error: {str(e)}")  # Log the error
+#             print(f"AI service error: {str(e)}")
 #             insights["ai_generated_insights"] = f"AI service under maintenance. Using rule-based recommendations below."
         
 #         # Generate rule-based Actionable Recommendations
@@ -10038,7 +10066,7 @@ def get_all_brands(
 #             if avg_price > 0 and brand_price > 0:
 #                 price_diff = brand_price - avg_price
                 
-#                 if abs(price_diff) > avg_price * 0.15:  # More than 15% difference
+#                 if abs(price_diff) > avg_price * 0.15:
 #                     if price_diff > 0:
 #                         insights["actionable_recommendations"].append({
 #                             "type": "Pricing Optimization",
@@ -10058,57 +10086,108 @@ def get_all_brands(
 #                             "impact": "Could justify price increase with improved marketing"
 #                         })
         
-#         # Growth Strategy based on gap
+#         # AI-Generated Dynamic Growth Strategy
 #         gap = target_share - current_share
         
-#         if gap > 10:
-#             insights["growth_strategy"] = [
-#                 {
-#                     "phase": "Phase 1 (Days 1-20)",
-#                     "focus": "Quick Wins",
-#                     "actions": [
-#                         "Launch aggressive review generation campaign",
-#                         "Optimize product listings with better keywords",
-#                         "Run promotional pricing on top 3 products"
-#                     ],
-#                     "target": f"{round(current_share + gap * 0.3, 2)}% market share"
-#                 },
-#                 {
-#                     "phase": "Phase 2 (Days 21-40)",
-#                     "focus": "Product Expansion",
-#                     "actions": [
-#                         "Add 3-5 new product variants",
-#                         "Improve product images and descriptions",
-#                         "Launch influencer marketing campaign"
-#                     ],
-#                     "target": f"{round(current_share + gap * 0.6, 2)}% market share"
-#                 },
-#                 {
-#                     "phase": "Phase 3 (Days 41-60)",
-#                     "focus": "Market Dominance",
-#                     "actions": [
-#                         "Scale successful products",
-#                         "Target competitor weak points",
-#                         "Implement loyalty program"
-#                     ],
-#                     "target": f"{target_share}% market share"
-#                 }
-#             ]
+#         # Determine number of phases based on timeline and gap
+#         if target_days <= 30:
+#             num_phases = 2
+#         elif target_days <= 60:
+#             num_phases = 3
 #         else:
-#             insights["growth_strategy"] = [
-#                 {
-#                     "phase": "Continuous Improvement",
-#                     "focus": "Incremental Growth",
-#                     "actions": [
-#                         "Maintain consistent review generation",
-#                         "Monitor competitor pricing",
-#                         "Optimize existing product listings"
-#                     ],
-#                     "target": f"{target_share}% market share in {target_days} days"
-#                 }
-#             ]
+#             num_phases = 4
         
-#         # Product Gaps Analysis - with proper marketplace handling
+#         # Create AI prompt for growth strategy
+#         growth_prompt = f"""You are a strategic growth consultant for e-commerce brands. Create a {num_phases}-phase growth roadmap.
+
+# CONTEXT:
+# - Brand: {your_brand}
+# - Marketplace: {marketplace.upper()}
+# - Category: {category_name}
+# - Current Share: {current_share}%
+# - Target Share: {target_share}%
+# - Gap to Close: {gap}%
+# - Timeline: {target_days} days
+# - Current Rank: #{insights['market_position']['rank']}
+# - Products: {ai_context['your_data']['products']}
+# - Avg Price: ₹{ai_context['your_data']['avg_price']}
+# - Avg Rating: {ai_context['your_data']['avg_rating']}
+# - Reviews: {ai_context['your_data']['reviews']}
+
+# COMPETITORS ANALYSIS:
+# {chr(10).join([f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} price, {c['rating']} rating" for c in ai_context['top_competitors'][:3]])}
+
+# TASK: Create {num_phases} growth phases. For each phase, provide ONLY a JSON object with this exact structure:
+# {{
+#   "phases": [
+#     {{
+#       "phase": "Phase 1 (Days X-Y)",
+#       "focus": "[Strategic Focus Area]",
+#       "actions": [
+#         "[Specific action 1]",
+#         "[Specific action 2]",
+#         "[Specific action 3]"
+#       ],
+#       "target": "X.X% market share"
+#     }}
+#   ]
+# }}
+
+# Requirements:
+# - Phase 1 should focus on quick wins (pricing, listings, reviews)
+# - Middle phases on product expansion and marketing
+# - Final phase on scaling and market dominance
+# - Each phase should have 3-4 specific, actionable items
+# - Target percentages should progressively reach {target_share}%
+# - Actions must be specific to {marketplace} platform
+# - Consider the current weaknesses vs competitors
+
+# Return ONLY the JSON, no explanation or markdown."""
+
+#         # Generate dynamic growth strategy with AI
+#         try:
+#             growth_result = subprocess.run(
+#                 ["ollama", "run", "mistral"],
+#                 input=growth_prompt,
+#                 capture_output=True,
+#                 text=True,
+#                 encoding="utf-8",
+#                 errors="ignore",
+#                 timeout=40
+#             )
+            
+#             growth_output = (growth_result.stdout or growth_result.stderr or "").strip()
+            
+#             # Clean the output
+#             growth_output = growth_output.replace("```json", "").replace("```", "").strip()
+            
+#             # Try to parse JSON
+#             try:
+#                 growth_data = json.loads(growth_output)
+#                 if "phases" in growth_data and isinstance(growth_data["phases"], list) and len(growth_data["phases"]) > 0:
+#                     insights["growth_strategy"] = growth_data["phases"]
+#                     print("✓ AI-generated growth strategy successfully created")
+#                 else:
+#                     raise ValueError("Invalid growth strategy format")
+#             except (json.JSONDecodeError, ValueError) as e:
+#                 print(f"Failed to parse AI growth strategy: {str(e)}")
+#                 # Fallback to rule-based strategy
+#                 insights["growth_strategy"] = generate_fallback_strategy(
+#                     gap, target_days, current_share, target_share, num_phases
+#                 )
+        
+#         except subprocess.TimeoutExpired:
+#             print("Growth strategy generation timed out - using fallback")
+#             insights["growth_strategy"] = generate_fallback_strategy(
+#                 gap, target_days, current_share, target_share, num_phases
+#             )
+#         except Exception as e:
+#             print(f"Growth strategy error: {str(e)} - using fallback")
+#             insights["growth_strategy"] = generate_fallback_strategy(
+#                 gap, target_days, current_share, target_share, num_phases
+#             )
+        
+#         # Product Gaps Analysis
 #         try:
 #             if marketplace == "flipkart":
 #                 gaps_query = text("""
@@ -10126,7 +10205,7 @@ def get_all_brands(
 #                     ORDER BY total_reviews DESC
 #                     LIMIT 10
 #                 """)
-#             else:  # amazon
+#             else:
 #                 gaps_query = text("""
 #                     SELECT 
 #                         product_title,
@@ -10146,18 +10225,17 @@ def get_all_brands(
 #             result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
 #             gaps = result.fetchall()
             
-#             for gap in gaps[:5]:
+#             for gap_item in gaps[:5]:
 #                 insights["product_gaps"].append({
-#                     "product_type": gap[0][:100] if gap[0] else "Unknown",
-#                     "competitors_offering": int(gap[1]) if gap[1] else 0,
-#                     "avg_price": round(float(gap[2]), 2) if gap[2] else 0,
-#                     "avg_rating": round(float(gap[3]), 2) if gap[3] else 0,
-#                     "total_demand": int(gap[4]) if gap[4] else 0,
-#                     "opportunity": "High" if (gap[4] and int(gap[4]) > 1000) else "Medium" if (gap[4] and int(gap[4]) > 500) else "Low"
+#                     "product_type": gap_item[0][:100] if gap_item[0] else "Unknown",
+#                     "competitors_offering": int(gap_item[1]) if gap_item[1] else 0,
+#                     "avg_price": round(float(gap_item[2]), 2) if gap_item[2] else 0,
+#                     "avg_rating": round(float(gap_item[3]), 2) if gap_item[3] else 0,
+#                     "total_demand": int(gap_item[4]) if gap_item[4] else 0,
+#                     "opportunity": "High" if (gap_item[4] and int(gap_item[4]) > 1000) else "Medium" if (gap_item[4] and int(gap_item[4]) > 500) else "Low"
 #                 })
 #         except Exception as e:
 #             print(f"Product gaps error: {str(e)}")
-#             # Continue without product gaps
         
 #         # Pricing Insights
 #         brand_avg_price = your_brand_data.get("avg_price", 0) or 0
@@ -10191,6 +10269,863 @@ def get_all_brands(
 #         }
 
 
+# # Helper function for fallback growth strategy
+# def generate_fallback_strategy(gap, target_days, current_share, target_share, num_phases):
+#     """Generate rule-based growth strategy when AI is unavailable"""
+    
+#     days_per_phase = target_days // num_phases
+#     strategies = []
+    
+#     for i in range(num_phases):
+#         start_day = i * days_per_phase + 1
+#         end_day = (i + 1) * days_per_phase if i < num_phases - 1 else target_days
+        
+#         # Calculate progressive target
+#         progress_ratio = (i + 1) / num_phases
+#         phase_target = round(current_share + (gap * progress_ratio), 2)
+        
+#         if i == 0:
+#             # Phase 1: Quick Wins
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Quick Wins & Foundation",
+#                 "actions": [
+#                     "Launch aggressive review generation campaign with post-purchase emails",
+#                     "Optimize top 5 product listings with better keywords and images",
+#                     "Run limited-time promotional pricing on bestsellers",
+#                     "Set up automated customer feedback system"
+#                 ],
+#                 "target": f"{phase_target}% market share"
+#             }
+#         elif i == num_phases - 1:
+#             # Final Phase: Scaling
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Market Dominance & Scaling",
+#                 "actions": [
+#                     "Scale successful products with increased inventory",
+#                     "Launch premium product line to capture higher margins",
+#                     "Implement customer loyalty and referral program",
+#                     "Expand to adjacent categories with proven success formula"
+#                 ],
+#                 "target": f"{target_share}% market share"
+#             }
+#         elif i == 1:
+#             # Phase 2: Product & Marketing
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Product Expansion & Marketing",
+#                 "actions": [
+#                     "Add 5-7 new product variants based on competitor gaps",
+#                     "Launch influencer marketing campaign with micro-influencers",
+#                     "Improve product photography and video content",
+#                     "Implement A/B testing on product descriptions and pricing"
+#                 ],
+#                 "target": f"{phase_target}% market share"
+#             }
+#         else:
+#             # Middle phases: Growth & Optimization
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Growth Acceleration",
+#                 "actions": [
+#                     "Expand product catalog with data-driven selections",
+#                     "Launch seasonal promotions and bundle offers",
+#                     "Optimize pricing strategy based on competitor monitoring",
+#                     "Increase advertising spend on top-performing products"
+#                 ],
+#                 "target": f"{phase_target}% market share"
+#             }
+        
+#         strategies.append(phase)
+    
+#     return strategies
+
+
+
+
+
+
+
+class BrandShareData(BaseModel):
+    brand: str
+    share_percentage: float
+    total_reviews: int
+    total_sales: int
+    avg_rating: Optional[float]
+    avg_price: Optional[float]
+    product_count: int
+
+class CategorySOVResponse(BaseModel):
+    category_name: str
+    total_products: int
+    total_reviews: int
+    total_sales: int
+    brands: List[BrandShareData]
+    your_brand_share: Optional[float]
+    market_leader: Optional[str]
+    marketplace: str
+
+class KeywordSOVResponse(BaseModel):
+    keyword: str
+    total_products: int
+    total_reviews: int
+    brands: List[BrandShareData]
+    price_range: Dict[str, float]
+    marketplace: str
+
+class ProgressTrackingData(BaseModel):
+    date: str
+    share_percentage: float
+    reviews: int
+    sales: int
+
+class ProgressTrackingResponse(BaseModel):
+    category_name: str
+    your_brand: str
+    current_share: float
+    target_share: float
+    start_date: str
+    target_date: str
+    days_elapsed: int
+    days_remaining: int
+    is_on_track: bool
+    required_growth_rate: float
+    actual_growth_rate: float
+    weekly_progress: List[ProgressTrackingData]
+
+class CompetitorAnalysis(BaseModel):
+    competitor_name: str
+    market_share: float
+    avg_price: float
+    total_products: int
+    avg_rating: Optional[float]
+    total_reviews: int
+    total_sales: int
+
+class CombinedSOVResponse(BaseModel):
+    category_name: str
+    combined_brands: List[BrandShareData]
+    flipkart_data: CategorySOVResponse
+    amazon_data: CategorySOVResponse
+    your_brand_combined_share: Optional[float]
+
+
+# ==================== Tier Limits ====================
+
+SOV_TIER_LIMITS = {
+    'free': 3,           # Free tier: 3 SOV analyses per month
+    'basic': 15,         # Basic tier: 15 SOV analyses per month
+    'premium': -1,       # Premium tier: unlimited
+    'enterprise': -1     # Enterprise tier: unlimited
+}
+
+
+# ==================== Helper Functions ====================
+
+def safe_float(value, default=0.0) -> float:
+    """Safely convert value to float"""
+    if value is None or value == 'NULL':
+        return default
+    try:
+        from decimal import Decimal
+        if isinstance(value, Decimal):
+            return float(value)
+        return float(value)
+    except:
+        return default
+
+
+def safe_int(value, default=0) -> int:
+    """Safely convert value to int"""
+    if value is None or value == 'NULL':
+        return default
+    try:
+        return int(value)
+    except:
+        return default
+
+
+def extract_sales_number(sales_text: str) -> int:
+    """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
+    if not sales_text or sales_text == 'NULL':
+        return 0
+
+    try:
+        sales_text = str(sales_text).upper().strip()
+        multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
+
+        match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
+        if match:
+            number = float(match.group(1))
+            unit = match.group(2)
+
+            if unit and unit in multipliers:
+                return int(number * multipliers[unit])
+            return int(number)
+    except:
+        return 0
+    return 0
+
+
+# ==================== Internal SOV Data Helper ====================
+# This is the PURE query function. No async. No user_id. No usage tracking.
+# All internal endpoints (progress, competitors, combined, ai-insights) call this.
+# The HTTP endpoint get_category_sov does usage tracking FIRST, then calls this.
+
+def _get_category_sov_data(
+    category_name: str,
+    marketplace: str,
+    your_brand: Optional[str],
+    db: Session
+) -> dict:
+    """
+    Core SOV query logic — shared by all internal callers.
+    Does NOT touch usage counters. Does NOT require user_id.
+    Returns a plain dict (either data or {"error": "..."}).
+    """
+    if marketplace == "flipkart":
+        query = text("""
+            SELECT
+                brand,
+                COUNT(*) as product_count,
+                COALESCE(SUM(product_rating_count), 0) as total_reviews,
+                COALESCE(SUM(estimated_sales), 0) as total_sales,
+                COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+                COALESCE(AVG(product_price), 0) as avg_price
+            FROM rapidapi_flipkart_products
+            WHERE category_name = :category_name
+                AND brand IS NOT NULL
+                AND brand != 'NULL'
+            GROUP BY brand
+            ORDER BY total_reviews DESC
+        """)
+    else:  # amazon
+        query = text("""
+            SELECT
+                SPLIT_PART(product_title, ' ', 1) as brand,
+                COUNT(*) as product_count,
+                COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+                COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+                COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+                COALESCE(AVG(product_price_numeric), 0) as avg_price
+            FROM rapidapi_amazon_products
+            WHERE category_name = :category_name
+            GROUP BY brand
+            ORDER BY total_reviews DESC
+        """)
+
+    result = db.execute(query, {"category_name": category_name})
+    rows = result.fetchall()
+
+    if not rows:
+        return {"error": f"No data found for category: {category_name}"}
+
+    # Calculate totals
+    total_reviews = sum(int(row[2] or 0) for row in rows)
+    total_sales = sum(int(row[3] or 0) for row in rows)
+    total_products = sum(int(row[1] or 0) for row in rows)
+
+    # Build brand data
+    brands = []
+    your_brand_share = None
+    market_leader = None
+    max_share = 0
+
+    for row in rows:
+        brand_name = row[0] or "Unknown"
+        review_count = int(row[2] or 0)
+        sales_count = int(row[3] or 0)
+
+        share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+
+        brand_data = {
+            "brand": brand_name,
+            "share_percentage": round(share_pct, 2),
+            "total_reviews": review_count,
+            "total_sales": sales_count,
+            "avg_rating": round(float(row[4] or 0), 2),
+            "avg_price": round(float(row[5] or 0), 2),
+            "product_count": int(row[1] or 0)
+        }
+        brands.append(brand_data)
+
+        # Track market leader
+        if share_pct > max_share:
+            max_share = share_pct
+            market_leader = brand_name
+
+        # Check if this is your brand
+        if your_brand and brand_name.lower() == your_brand.lower():
+            your_brand_share = share_pct
+
+    return {
+        "category_name": category_name,
+        "total_products": total_products,
+        "total_reviews": total_reviews,
+        "total_sales": total_sales,
+        "brands": brands,
+        "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
+        "market_leader": market_leader,
+        "marketplace": marketplace
+    }
+
+
+# ==================== Usage Tracking Endpoints ====================
+
+@app.get("/users/{user_id}/sov-usage")
+async def get_sov_usage(user_id: int, db: Session = Depends(get_db)):
+    """
+    Get Share of Voice analysis usage statistics for a user
+
+    Returns:
+    - count: Number of SOV analyses used this month
+    - limit: Maximum allowed SOV analyses for user's tier
+    - remaining: Number of SOV analyses remaining
+    - subscription_tier: User's current subscription tier
+    - month: Current tracking month (YYYY-MM format)
+    """
+    try:
+        # Fetch user from database
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get subscription tier (default to 'free' if not set)
+        tier = (user.subscription_tier or 'free').lower()
+        limit = SOV_TIER_LIMITS.get(tier, 3)
+
+        # Get current month in YYYY-MM format
+        current_month = datetime.now().strftime("%Y-%m")
+        stored_month = user.sov_month
+
+        # Reset count if it's a new month
+        if stored_month != current_month:
+            user.sov_used = 0
+            user.sov_month = current_month
+            db.commit()
+            db.refresh(user)
+
+        # Calculate usage stats
+        count = user.sov_used or 0
+        remaining = limit - count if limit != -1 else -1
+
+        return {
+            "count": count,
+            "limit": limit,
+            "remaining": remaining,
+            "subscription_tier": tier,
+            "month": current_month
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error fetching SOV usage: {str(e)}")
+
+
+@app.post("/users/{user_id}/increment-sov-usage")
+async def increment_sov_usage(user_id: int, db: Session = Depends(get_db)):
+    """
+    Increment SOV analysis usage count for a user
+
+    This should be called AFTER a successful SOV analysis
+    Checks if user has remaining analyses before incrementing
+    """
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get tier and limit
+        tier = (user.subscription_tier or 'free').lower()
+        limit = SOV_TIER_LIMITS.get(tier, 3)
+
+        # Get current month
+        current_month = datetime.now().strftime("%Y-%m")
+        stored_month = user.sov_month
+
+        # Reset if new month
+        if stored_month != current_month:
+            user.sov_used = 0
+            user.sov_month = current_month
+
+        # Check if user has reached limit (only if not unlimited)
+        if limit != -1 and (user.sov_used or 0) >= limit:
+            raise HTTPException(
+                status_code=403,
+                detail=f"SOV analysis limit reached for {tier} tier. You've used all {limit} analyses this month. Upgrade to get more!"
+            )
+
+        # Increment usage count
+        user.sov_used = (user.sov_used or 0) + 1
+        db.commit()
+        db.refresh(user)
+
+        remaining = limit - user.sov_used if limit != -1 else -1
+
+        return {
+            "success": True,
+            "count": user.sov_used,
+            "limit": limit,
+            "remaining": remaining,
+            "subscription_tier": tier
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error incrementing SOV usage: {str(e)}")
+
+
+# ==================== Category & Keyword Endpoints ====================
+
+@app.get("/sov/categories")
+def get_sov_categories(
+    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+    db: Session = Depends(get_db)
+):
+    """Get list of all available categories for SOV analysis"""
+    try:
+        categories = set()
+
+        if marketplace in ["flipkart", "all"]:
+            flipkart_query = text("""
+                SELECT DISTINCT category_name
+                FROM rapidapi_flipkart_products
+                WHERE category_name IS NOT NULL AND category_name != 'NULL'
+                ORDER BY category_name
+            """)
+            result = db.execute(flipkart_query)
+            categories.update([row[0] for row in result if row[0]])
+
+        if marketplace in ["amazon", "all"]:
+            amazon_query = text("""
+                SELECT DISTINCT category_name
+                FROM rapidapi_amazon_products
+                WHERE category_name IS NOT NULL AND category_name != 'NULL'
+                ORDER BY category_name
+            """)
+            result = db.execute(amazon_query)
+            categories.update([row[0] for row in result if row[0]])
+
+        return {"categories": sorted(list(categories))}
+
+    except Exception as e:
+        return {"error": f"Error fetching categories: {str(e)}"}
+
+
+@app.get("/sov/category/{category_name}")
+async def get_category_sov(
+    category_name: str,
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    your_brand: Optional[str] = Query(default=None),
+    user_id: Optional[int] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get Share of Voice analysis for a specific category.
+    Usage is incremented ONCE here at the HTTP entry point only.
+    Internal helpers (progress, competitors, ai-insights) do NOT increment.
+    """
+    try:
+        # ✅ Usage check + increment — ONLY place this happens for category SOV
+        if user_id:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                tier = (user.subscription_tier or 'free').lower()
+                limit = SOV_TIER_LIMITS.get(tier, 3)
+
+                # Get current month
+                current_month = datetime.now().strftime("%Y-%m")
+                if user.sov_month != current_month:
+                    user.sov_used = 0
+                    user.sov_month = current_month
+
+                # Check limit before processing
+                if limit != -1 and (user.sov_used or 0) >= limit:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
+                    )
+
+                # Increment usage
+                user.sov_used = (user.sov_used or 0) + 1
+                db.commit()
+
+        # Delegate all query logic to the shared helper
+        return _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error analyzing category: {str(e)}")
+
+
+@app.get("/sov/keyword/{keyword}")
+async def get_keyword_sov(
+    keyword: str,
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    price_min: Optional[float] = Query(default=None),
+    price_max: Optional[float] = Query(default=None),
+    user_id: Optional[int] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    """
+    Get Share of Voice analysis for products matching a keyword.
+    Includes usage tracking for authenticated users.
+    """
+    try:
+        # ✅ Check and increment usage if user is logged in
+        if user_id:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                tier = (user.subscription_tier or 'free').lower()
+                limit = SOV_TIER_LIMITS.get(tier, 3)
+
+                # Get current month
+                current_month = datetime.now().strftime("%Y-%m")
+                if user.sov_month != current_month:
+                    user.sov_used = 0
+                    user.sov_month = current_month
+
+                # Check limit
+                if limit != -1 and (user.sov_used or 0) >= limit:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
+                    )
+
+                # Increment usage
+                user.sov_used = (user.sov_used or 0) + 1
+                db.commit()
+
+        # Keyword SOV query logic
+        price_filter = ""
+        if marketplace == "flipkart":
+            if price_min is not None:
+                price_filter += f" AND product_price >= {price_min}"
+            if price_max is not None:
+                price_filter += f" AND product_price <= {price_max}"
+
+            query = text(f"""
+                SELECT
+                    brand,
+                    COUNT(*) as product_count,
+                    COALESCE(SUM(product_rating_count), 0) as total_reviews,
+                    COALESCE(SUM(estimated_sales), 0) as total_sales,
+                    COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+                    COALESCE(AVG(product_price), 0) as avg_price,
+                    MIN(product_price) as min_price,
+                    MAX(product_price) as max_price
+                FROM rapidapi_flipkart_products
+                WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+                    OR LOWER(category_name) LIKE LOWER(:keyword))
+                    AND brand IS NOT NULL
+                    AND brand != 'NULL'
+                    {price_filter}
+                GROUP BY brand
+                ORDER BY total_reviews DESC
+            """)
+        else:  # amazon
+            if price_min is not None:
+                price_filter += f" AND product_price_numeric >= {price_min}"
+            if price_max is not None:
+                price_filter += f" AND product_price_numeric <= {price_max}"
+
+            query = text(f"""
+                SELECT
+                    SPLIT_PART(product_title, ' ', 1) as brand,
+                    COUNT(*) as product_count,
+                    COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+                    COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+                    COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+                    COALESCE(AVG(product_price_numeric), 0) as avg_price,
+                    MIN(product_price_numeric) as min_price,
+                    MAX(product_price_numeric) as max_price
+                FROM rapidapi_amazon_products
+                WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+                    OR LOWER(category_name) LIKE LOWER(:keyword))
+                    {price_filter}
+                GROUP BY brand
+                ORDER BY total_reviews DESC
+            """)
+
+        result = db.execute(query, {"keyword": f"%{keyword}%"})
+        rows = result.fetchall()
+
+        if not rows:
+            return {"error": f"No products found matching keyword: {keyword}"}
+
+        total_reviews = sum(int(row[2] or 0) for row in rows)
+        total_products = sum(int(row[1] or 0) for row in rows)
+
+        brands = []
+        min_price = float('inf')
+        max_price = 0
+
+        for row in rows:
+            review_count = int(row[2] or 0)
+            share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+
+            brands.append({
+                "brand": row[0] or "Unknown",
+                "share_percentage": round(share_pct, 2),
+                "total_reviews": review_count,
+                "total_sales": int(row[3] or 0),
+                "avg_rating": round(float(row[4] or 0), 2),
+                "avg_price": round(float(row[5] or 0), 2),
+                "product_count": int(row[1] or 0)
+            })
+
+            min_price = min(min_price, float(row[6] or float('inf')))
+            max_price = max(max_price, float(row[7] or 0))
+
+        return {
+            "keyword": keyword,
+            "total_products": total_products,
+            "total_reviews": total_reviews,
+            "brands": brands,
+            "price_range": {
+                "min": round(min_price if min_price != float('inf') else 0, 2),
+                "max": round(max_price, 2)
+            },
+            "marketplace": marketplace
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error analyzing keyword: {str(e)}")
+
+
+# ==================== Progress Tracking ====================
+
+@app.get("/sov/progress/{category_name}")
+def track_sov_progress(
+    category_name: str,
+    your_brand: str,
+    target_share: float = Query(default=20.0, ge=0, le=100),
+    target_days: int = Query(default=90, ge=1),
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    db: Session = Depends(get_db)
+):
+    """Track progress towards target market share"""
+    try:
+        # ✅ Uses the internal helper — no usage increment, no async mismatch
+        current_sov = _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+        if "error" in current_sov:
+            return current_sov
+
+        current_share = current_sov.get("your_brand_share") or 0
+
+        # Calculate dates
+        start_date = datetime.now() - timedelta(days=30)
+        target_date = datetime.now() + timedelta(days=target_days)
+        days_elapsed = 30
+        days_remaining = target_days
+
+        # Calculate growth rates
+        required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
+        actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
+
+        is_on_track = actual_growth_rate >= required_growth_rate
+
+        # Generate weekly progress
+        weekly_progress = []
+        weeks = min(12, (days_elapsed + days_remaining) // 7)
+
+        for week in range(weeks):
+            week_date = start_date + timedelta(weeks=week)
+            projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
+
+            weekly_progress.append({
+                "date": week_date.strftime("%Y-%m-%d"),
+                "share_percentage": round(projected_share, 2),
+                "reviews": int(current_sov["total_reviews"] * projected_share / 100),
+                "sales": int(current_sov["total_sales"] * projected_share / 100)
+            })
+
+        return {
+            "category_name": category_name,
+            "your_brand": your_brand,
+            "current_share": round(current_share, 2),
+            "target_share": target_share,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "target_date": target_date.strftime("%Y-%m-%d"),
+            "days_elapsed": days_elapsed,
+            "days_remaining": days_remaining,
+            "is_on_track": is_on_track,
+            "required_growth_rate": round(required_growth_rate, 4),
+            "actual_growth_rate": round(actual_growth_rate, 4),
+            "weekly_progress": weekly_progress
+        }
+
+    except Exception as e:
+        return {"error": f"Error tracking progress: {str(e)}"}
+
+
+# ==================== Competitor Analysis ====================
+
+@app.get("/sov/competitors/{category_name}")
+def analyze_sov_competitors(
+    category_name: str,
+    your_brand: str,
+    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+    limit: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """Get detailed competitor analysis"""
+    try:
+        # ✅ Uses the internal helper — no usage increment, no async mismatch
+        sov_data = _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+        if "error" in sov_data:
+            return sov_data
+
+        competitors = []
+        for brand in sov_data["brands"]:
+            if brand["brand"].lower() != your_brand.lower():
+                competitors.append({
+                    "competitor_name": brand["brand"],
+                    "market_share": brand["share_percentage"],
+                    "avg_price": brand["avg_price"],
+                    "total_products": brand["product_count"],
+                    "avg_rating": brand["avg_rating"],
+                    "total_reviews": brand["total_reviews"],
+                    "total_sales": brand["total_sales"]
+                })
+
+        # Sort by market share and limit
+        competitors.sort(key=lambda x: x["market_share"], reverse=True)
+        return {"competitors": competitors[:limit]}
+
+    except Exception as e:
+        return {"error": f"Error analyzing competitors: {str(e)}"}
+
+
+# ==================== Combined SOV (Flipkart + Amazon) ====================
+
+@app.get("/sov/combined/{category_name}")
+def get_combined_sov(
+    category_name: str,
+    your_brand: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    """Get combined Share of Voice from both Flipkart and Amazon"""
+    try:
+        # ✅ Both calls use the internal helper — no usage increment, no async mismatch
+        flipkart_data = _get_category_sov_data(category_name, "flipkart", your_brand, db)
+        amazon_data = _get_category_sov_data(category_name, "amazon", your_brand, db)
+
+        # Handle errors
+        if "error" in flipkart_data and "error" in amazon_data:
+            return {"error": "No data found in either marketplace"}
+
+        # Combine brand data
+        brand_map = {}
+
+        for data in [flipkart_data, amazon_data]:
+            if "error" not in data:
+                for brand in data["brands"]:
+                    brand_name = brand["brand"]
+                    if brand_name not in brand_map:
+                        brand_map[brand_name] = {
+                            "reviews": 0,
+                            "sales": 0,
+                            "products": 0,
+                            "ratings": [],
+                            "prices": []
+                        }
+
+                    brand_map[brand_name]["reviews"] += brand["total_reviews"]
+                    brand_map[brand_name]["sales"] += brand["total_sales"]
+                    brand_map[brand_name]["products"] += brand["product_count"]
+                    if brand["avg_rating"]:
+                        brand_map[brand_name]["ratings"].append(brand["avg_rating"])
+                    if brand["avg_price"]:
+                        brand_map[brand_name]["prices"].append(brand["avg_price"])
+
+        total_reviews = sum(b["reviews"] for b in brand_map.values())
+
+        combined_brands = []
+        your_brand_combined_share = None
+
+        for brand_name, data in brand_map.items():
+            share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
+
+            combined_brand = {
+                "brand": brand_name,
+                "share_percentage": round(share_pct, 2),
+                "total_reviews": data["reviews"],
+                "total_sales": data["sales"],
+                "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
+                "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
+                "product_count": data["products"]
+            }
+            combined_brands.append(combined_brand)
+
+            if your_brand and brand_name.lower() == your_brand.lower():
+                your_brand_combined_share = share_pct
+
+        combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
+
+        return {
+            "category_name": category_name,
+            "combined_brands": combined_brands,
+            "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
+            "amazon_data": amazon_data if "error" not in amazon_data else None,
+            "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
+        }
+
+    except Exception as e:
+        return {"error": f"Error getting combined SOV: {str(e)}"}
+
+
+# ==================== Brands ====================
+
+@app.get("/sov/brands")
+def get_all_brands(
+    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+    db: Session = Depends(get_db)
+):
+    """Get list of all available brands"""
+    try:
+        brands = set()
+
+        if marketplace in ["flipkart", "all"]:
+            flipkart_query = text("""
+                SELECT DISTINCT brand
+                FROM rapidapi_flipkart_products
+                WHERE brand IS NOT NULL AND brand != 'NULL'
+                ORDER BY brand
+            """)
+            result = db.execute(flipkart_query)
+            brands.update([row[0] for row in result if row[0]])
+
+        if marketplace in ["amazon", "all"]:
+            amazon_query = text("""
+                SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
+                FROM rapidapi_amazon_products
+                WHERE product_title IS NOT NULL
+                ORDER BY brand
+            """)
+            result = db.execute(amazon_query)
+            brands.update([row[0] for row in result if row[0]])
+
+        return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
+
+    except Exception as e:
+        return {"error": f"Error fetching brands: {str(e)}"}
+
+
+# ==================== AI Insights ====================
+
 @app.post("/sov/ai-insights")
 def get_ai_insights(
     category_name: str = Query(...),
@@ -10202,34 +11137,31 @@ def get_ai_insights(
 ):
     """Get AI-powered insights and recommendations using Ollama Mistral"""
     try:
-        import subprocess
-        import json
-        
-        # Get current SOV data
-        sov_data = get_category_sov(category_name, marketplace, your_brand, db)
-        
+        # ✅ Uses the internal helper — no usage increment, no async mismatch
+        sov_data = _get_category_sov_data(category_name, marketplace, your_brand, db)
+
         if "error" in sov_data:
             return {"error": sov_data["error"], "ai_generated_insights": "Cannot generate insights without valid SOV data"}
-        
+
         current_share = sov_data.get("your_brand_share") or 0
         market_leader = sov_data.get("market_leader")
         brands = sov_data.get("brands", [])
-        
+
         # Validate that we have data
         if not brands or len(brands) == 0:
             return {
                 "error": "No brand data found",
                 "ai_generated_insights": "No brands found in this category for the selected marketplace"
             }
-        
+
         # Find your brand data - case insensitive search
         your_brand_data = None
         for b in brands:
             if b["brand"].lower() == your_brand.lower():
                 your_brand_data = b
                 break
-        
-        # If brand not found, return error
+
+        # If brand not found, return error with available brands so the user knows
         if not your_brand_data:
             available_brands = [b["brand"] for b in brands[:10]]
             return {
@@ -10237,14 +11169,14 @@ def get_ai_insights(
                 "ai_generated_insights": f"Brand not found. Available brands include: {', '.join(available_brands)}",
                 "available_brands": available_brands
             }
-        
+
         # Find market leader data
         leader_data = None
         for b in brands:
             if b["brand"] == market_leader:
                 leader_data = b
                 break
-        
+
         # Initialize insights structure
         insights = {
             "current_analysis": {
@@ -10267,19 +11199,19 @@ def get_ai_insights(
             "pricing_insights": {},
             "ai_generated_insights": ""
         }
-        
-        # Calculate market position
+
+        # Calculate market position (rank)
         for i, b in enumerate(brands):
             if b["brand"].lower() == your_brand.lower():
                 insights["market_position"]["rank"] = i + 1
                 break
-        
+
         if leader_data:
             insights["market_position"]["distance_from_leader"] = round(
                 (leader_data.get("share_percentage", 0) or 0) - current_share, 2
             )
-        
-        # Competitive Analysis - Compare with top 5
+
+        # ── Competitive Analysis — Compare with top 5 ──
         top_5_brands = brands[:5]
         for competitor in top_5_brands:
             if competitor["brand"].lower() != your_brand.lower():
@@ -10293,8 +11225,8 @@ def get_ai_insights(
                     "advantage": "Higher" if (competitor.get("share_percentage", 0) or 0) > current_share else "Lower",
                     "price_comparison": "Cheaper" if (competitor.get("avg_price", 0) or 0) < (your_brand_data.get("avg_price", 0) or 0) else "More Expensive"
                 })
-        
-        # Prepare data for AI analysis
+
+        # ── Prepare context dict for AI prompts ──
         ai_context = {
             "brand": your_brand,
             "category": category_name,
@@ -10322,8 +11254,8 @@ def get_ai_insights(
                 } for c in insights["competitive_analysis"][:3]
             ]
         }
-        
-        # Create AI prompt for Ollama Mistral - Main Insights
+
+        # ── AI Prompt 1: Main Strategic Insights ──
         ai_prompt = f"""You are an expert market analyst. Analyze this e-commerce market data and provide strategic insights.
 
 MARKET DATA:
@@ -10376,7 +11308,7 @@ Keep response concise and actionable. No preamble or conclusion."""
                 errors="ignore",
                 timeout=30
             )
-            
+
             ai_output = (result.stdout or result.stderr or "").strip()
             ai_output = (
                 ai_output.replace("<|MODEL_RESPONSE|>", "")
@@ -10384,35 +11316,35 @@ Keep response concise and actionable. No preamble or conclusion."""
                 .replace("```", "")
                 .strip()
             )
-            
+
             if ai_output and len(ai_output) > 20:
                 insights["ai_generated_insights"] = ai_output
             else:
                 insights["ai_generated_insights"] = "AI analysis temporarily unavailable. Using rule-based recommendations below."
-            
+
         except subprocess.TimeoutExpired:
             insights["ai_generated_insights"] = "AI analysis timed out. Using rule-based recommendations below."
         except FileNotFoundError:
             insights["ai_generated_insights"] = "Ollama service not found. Using rule-based recommendations below."
         except Exception as e:
             print(f"AI service error: {str(e)}")
-            insights["ai_generated_insights"] = f"AI service under maintenance. Using rule-based recommendations below."
-        
-        # Generate rule-based Actionable Recommendations
+            insights["ai_generated_insights"] = "AI service under maintenance. Using rule-based recommendations below."
+
+        # ── Rule-Based Actionable Recommendations ──
         if your_brand_data:
-            # Calculate averages safely
+            # Calculate averages safely from top 5
             valid_products = [b.get("product_count", 0) for b in top_5_brands if b.get("product_count")]
             avg_products = sum(valid_products) / len(valid_products) if valid_products else 0
-            
+
             valid_ratings = [b.get("avg_rating", 0) for b in top_5_brands if b.get("avg_rating")]
             avg_rating = sum(valid_ratings) / len(valid_ratings) if valid_ratings else 0
-            
+
             valid_reviews = [b.get("total_reviews", 0) for b in top_5_brands if b.get("total_reviews")]
             avg_reviews = sum(valid_reviews) / len(valid_reviews) if valid_reviews else 0
-            
+
             valid_prices = [b.get("avg_price", 0) for b in top_5_brands if b.get("avg_price")]
             avg_price = sum(valid_prices) / len(valid_prices) if valid_prices else 0
-            
+
             # Product Count Recommendation
             brand_products = your_brand_data.get("product_count", 0) or 0
             if avg_products > 0 and brand_products < avg_products:
@@ -10424,7 +11356,7 @@ Keep response concise and actionable. No preamble or conclusion."""
                     "action": f"Expand product line by {int(avg_products - brand_products)} products to match competitors",
                     "impact": "Could increase market share by 2-5%"
                 })
-            
+
             # Rating Recommendation
             brand_rating = your_brand_data.get("avg_rating", 0) or 0
             if avg_rating > 0 and brand_rating > 0 and brand_rating < avg_rating:
@@ -10436,7 +11368,7 @@ Keep response concise and actionable. No preamble or conclusion."""
                     "action": f"Improve product rating by {round(avg_rating - brand_rating, 2)} points through quality enhancements",
                     "impact": "Better ratings can increase conversions by 15-20%"
                 })
-            
+
             # Review Generation
             brand_reviews = your_brand_data.get("total_reviews", 0) or 0
             if avg_reviews > 0 and brand_reviews < avg_reviews:
@@ -10448,12 +11380,12 @@ Keep response concise and actionable. No preamble or conclusion."""
                     "action": f"Increase reviews by {int(avg_reviews - brand_reviews)} through customer engagement campaigns",
                     "impact": "More reviews increase trust and visibility"
                 })
-            
+
             # Pricing Strategy
             brand_price = your_brand_data.get("avg_price", 0) or 0
             if avg_price > 0 and brand_price > 0:
                 price_diff = brand_price - avg_price
-                
+
                 if abs(price_diff) > avg_price * 0.15:
                     if price_diff > 0:
                         insights["actionable_recommendations"].append({
@@ -10473,19 +11405,18 @@ Keep response concise and actionable. No preamble or conclusion."""
                             "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
                             "impact": "Could justify price increase with improved marketing"
                         })
-        
-        # AI-Generated Dynamic Growth Strategy
+
+        # ── AI Prompt 2: Growth Strategy Roadmap ──
         gap = target_share - current_share
-        
-        # Determine number of phases based on timeline and gap
+
+        # Determine number of phases based on timeline
         if target_days <= 30:
             num_phases = 2
         elif target_days <= 60:
             num_phases = 3
         else:
             num_phases = 4
-        
-        # Create AI prompt for growth strategy
+
         growth_prompt = f"""You are a strategic growth consultant for e-commerce brands. Create a {num_phases}-phase growth roadmap.
 
 CONTEXT:
@@ -10543,12 +11474,12 @@ Return ONLY the JSON, no explanation or markdown."""
                 errors="ignore",
                 timeout=40
             )
-            
+
             growth_output = (growth_result.stdout or growth_result.stderr or "").strip()
-            
+
             # Clean the output
             growth_output = growth_output.replace("```json", "").replace("```", "").strip()
-            
+
             # Try to parse JSON
             try:
                 growth_data = json.loads(growth_output)
@@ -10563,7 +11494,7 @@ Return ONLY the JSON, no explanation or markdown."""
                 insights["growth_strategy"] = generate_fallback_strategy(
                     gap, target_days, current_share, target_share, num_phases
                 )
-        
+
         except subprocess.TimeoutExpired:
             print("Growth strategy generation timed out - using fallback")
             insights["growth_strategy"] = generate_fallback_strategy(
@@ -10574,12 +11505,12 @@ Return ONLY the JSON, no explanation or markdown."""
             insights["growth_strategy"] = generate_fallback_strategy(
                 gap, target_days, current_share, target_share, num_phases
             )
-        
-        # Product Gaps Analysis
+
+        # ── Product Gaps Analysis ──
         try:
             if marketplace == "flipkart":
                 gaps_query = text("""
-                    SELECT 
+                    SELECT
                         product_title,
                         COUNT(*) as competitor_products,
                         AVG(product_price) as avg_price,
@@ -10595,7 +11526,7 @@ Return ONLY the JSON, no explanation or markdown."""
                 """)
             else:
                 gaps_query = text("""
-                    SELECT 
+                    SELECT
                         product_title,
                         COUNT(*) as competitor_products,
                         AVG(product_price_numeric) as avg_price,
@@ -10609,10 +11540,10 @@ Return ONLY the JSON, no explanation or markdown."""
                     ORDER BY total_reviews DESC
                     LIMIT 10
                 """)
-            
+
             result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
             gaps = result.fetchall()
-            
+
             for gap_item in gaps[:5]:
                 insights["product_gaps"].append({
                     "product_type": gap_item[0][:100] if gap_item[0] else "Unknown",
@@ -10624,8 +11555,8 @@ Return ONLY the JSON, no explanation or markdown."""
                 })
         except Exception as e:
             print(f"Product gaps error: {str(e)}")
-        
-        # Pricing Insights
+
+        # ── Pricing Insights ──
         brand_avg_price = your_brand_data.get("avg_price", 0) or 0
         if brand_avg_price and avg_price > 0:
             price_ranges = {
@@ -10633,7 +11564,7 @@ Return ONLY the JSON, no explanation or markdown."""
                 "similar": [b for b in brands if b.get("avg_price") and brand_avg_price * 0.8 <= b["avg_price"] <= brand_avg_price * 1.2],
                 "premium": [b for b in brands if b.get("avg_price") and b["avg_price"] > brand_avg_price * 1.2]
             }
-            
+
             insights["pricing_insights"] = {
                 "your_price": brand_avg_price,
                 "market_average": round(avg_price, 2),
@@ -10643,11 +11574,10 @@ Return ONLY the JSON, no explanation or markdown."""
                 "price_positioning": "Budget" if brand_avg_price < avg_price * 0.8 else "Premium" if brand_avg_price > avg_price * 1.2 else "Mid-Range",
                 "recommendation": "Your pricing is competitive" if len(price_ranges["similar"]) > len(price_ranges["budget"]) else "Consider price adjustment to be more competitive"
             }
-        
+
         return insights
-    
+
     except Exception as e:
-        import traceback
         error_details = traceback.format_exc()
         print(f"Error in AI insights: {error_details}")
         return {
@@ -10657,21 +11587,22 @@ Return ONLY the JSON, no explanation or markdown."""
         }
 
 
-# Helper function for fallback growth strategy
+# ==================== Fallback Growth Strategy ====================
+
 def generate_fallback_strategy(gap, target_days, current_share, target_share, num_phases):
     """Generate rule-based growth strategy when AI is unavailable"""
-    
+
     days_per_phase = target_days // num_phases
     strategies = []
-    
+
     for i in range(num_phases):
         start_day = i * days_per_phase + 1
         end_day = (i + 1) * days_per_phase if i < num_phases - 1 else target_days
-        
+
         # Calculate progressive target
         progress_ratio = (i + 1) / num_phases
         phase_target = round(current_share + (gap * progress_ratio), 2)
-        
+
         if i == 0:
             # Phase 1: Quick Wins
             phase = {
@@ -10724,9 +11655,9 @@ def generate_fallback_strategy(gap, target_days, current_share, target_share, nu
                 ],
                 "target": f"{phase_target}% market share"
             }
-        
+
         strategies.append(phase)
-    
+
     return strategies
 
 
@@ -10735,1382 +11666,3 @@ def generate_fallback_strategy(gap, target_days, current_share, target_share, nu
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import { useState } from "react";
-# import { Link, useLocation } from "wouter";
-# import { useToast } from "@/hooks/use-toast";
-# import { useAuth } from "@/App";
-# import { Button } from "@/components/ui/button";
-# import { Input } from "@/components/ui/input";
-# import { Label } from "@/components/ui/label";
-# import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-# import { Checkbox } from "@/components/ui/checkbox";
-# import { AlertCircle, Mail, Lock, RefreshCw } from "lucide-react";
-# import { Alert } from "@/components/ui/alert";
-# import {
-#   Dialog,
-#   DialogContent,
-#   DialogDescription,
-#   DialogHeader,
-#   DialogTitle,
-#   DialogFooter,
-# } from "@/components/ui/dialog";
-
-# // Environment config
-# const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.insydz.com";
- 
-# export default function Login() {
-#   const [, setLocation] = useLocation();
-#   const { toast } = useToast();
-#   const { refreshUser } = useAuth(); // ✅ Changed from login to refreshUser
-#   const [formData, setFormData] = useState({
-#     email: "",
-#     password: ""
-#   });
-#   const [isLoading, setIsLoading] = useState(false);
-#   const [rememberMe, setRememberMe] = useState(false);
-#   const [errorMessage, setErrorMessage] = useState("");
- 
-#   // Forgot Password Flow States
-#   const [showForgotDialog, setShowForgotDialog] = useState(false);
-#   const [forgotEmail, setForgotEmail] = useState("");
-#   const [resetStep, setResetStep] = useState<'email' | 'otp' | 'password'>('email');
-#   const [otp, setOtp] = useState("");
-#   const [newPassword, setNewPassword] = useState("");
-#   const [confirmPassword, setConfirmPassword] = useState("");
-#   const [isProcessing, setIsProcessing] = useState(false);
-#   const [otpTimer, setOtpTimer] = useState(0);
- 
-#   // Login Handler
-#   const handleSubmit = async (e: React.FormEvent) => {
-#     e.preventDefault();
-#     setErrorMessage("");
- 
-#     if (!formData.email || !formData.password) {
-#       setErrorMessage("Please fill in all required fields.");
-#       return;
-#     }
- 
-#     setIsLoading(true);
- 
-#     try {
-#       console.log("🔍 Attempting login for:", formData.email);
- 
-#       const response = await fetch(`${API_BASE_URL}/users/login`, {
-#         method: "POST",
-#         credentials: "include", // ✅ Important: sends cookies
-#         headers: {
-#           "Content-Type": "application/json",
-#           "Accept": "application/json"
-#         },
-#         body: JSON.stringify({
-#           email: formData.email,
-#           password: formData.password,
-#           remember_me: rememberMe
-#         }),
-#       });
- 
-#       console.log("📥 Response status:", response.status);
- 
-#       if (!response.ok) {
-#         const errorData = await response.json();
-#         console.error("❌ Login error:", errorData);
- 
-#         if (response.status === 404) {
-#           setErrorMessage("No account found with this email. Please sign up first.");
-#         } else if (response.status === 401) {
-#           setErrorMessage("Incorrect password. Click 'Forgot Password' to reset.");
-#         } else if (response.status === 403) {
-#           setErrorMessage("Account is deactivated. Please contact support.");
-#         } else {
-#           setErrorMessage(errorData.detail || "Login failed. Please try again.");
-#         }
- 
-#         setIsLoading(false);
-#         return;
-#       }
- 
-#       // Login successful - backend has set the session cookie
-#       const data = await response.json();
-#       console.log("✅ Login successful");
- 
-#       toast({
-#         title: "Welcome back!",
-#         description: "Successfully logged in. Redirecting...",
-#       });
-
-#       // ✅ Refresh user data from session cookie, then redirect
-#       await refreshUser();
-#       setLocation("/dashboard");
- 
-#     } catch (error: any) {
-#       console.error("❌ Network error:", error);
-#       setErrorMessage("Network error. Please check your connection and try again.");
-#       setIsLoading(false);
-#     }
-#   };
- 
-#   // Step 1: Request OTP
-#   const handleRequestOTP = async () => {
-#     if (!forgotEmail) {
-#       toast({
-#         title: "Email required",
-#         description: "Please enter your email address",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     setIsProcessing(true);
- 
-#     try {
-#       const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
-#         method: "POST",
-#         headers: {
-#           "Content-Type": "application/json",
-#         },
-#         body: JSON.stringify({ email: forgotEmail }),
-#       });
- 
-#       const data = await response.json();
- 
-#       if (!response.ok) {
-#         throw new Error(data.detail || "Failed to send OTP");
-#       }
- 
-#       toast({
-#         title: "OTP Sent! 📧",
-#         description: "Please check your email for the 6-digit OTP code",
-#       });
- 
-#       setResetStep('otp');
-#       startOtpTimer();
- 
-#     } catch (error: any) {
-#       toast({
-#         title: "Error",
-#         description: error.message,
-#         variant: "destructive"
-#       });
-#     } finally {
-#       setIsProcessing(false);
-#     }
-#   };
- 
-#   // Step 2: Verify OTP
-#   const handleVerifyOTP = async () => {
-#     if (!otp || otp.length !== 6) {
-#       toast({
-#         title: "Invalid OTP",
-#         description: "Please enter the 6-digit OTP code",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     setIsProcessing(true);
- 
-#     try {
-#       const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
-#         method: "POST",
-#         headers: {
-#           "Content-Type": "application/json",
-#         },
-#         body: JSON.stringify({
-#           email: forgotEmail,
-#           otp: otp
-#         }),
-#       });
- 
-#       const data = await response.json();
- 
-#       if (!response.ok) {
-#         throw new Error(data.detail || "Invalid OTP");
-#       }
- 
-#       toast({
-#         title: "OTP Verified! ✅",
-#         description: "Now set your new password",
-#       });
- 
-#       setResetStep('password');
- 
-#     } catch (error: any) {
-#       toast({
-#         title: "Verification Failed",
-#         description: error.message,
-#         variant: "destructive"
-#       });
-#     } finally {
-#       setIsProcessing(false);
-#     }
-#   };
- 
-#   // Step 3: Reset Password
-#   const handleResetPassword = async () => {
-#     if (!newPassword || !confirmPassword) {
-#       toast({
-#         title: "Password required",
-#         description: "Please enter and confirm your new password",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     if (newPassword !== confirmPassword) {
-#       toast({
-#         title: "Passwords don't match",
-#         description: "Please make sure both passwords match",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     if (newPassword.length < 6) {
-#       toast({
-#         title: "Password too short",
-#         description: "Password must be at least 6 characters",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     setIsProcessing(true);
- 
-#     try {
-#       const response = await fetch(`${API_BASE_URL}/api/auth/reset-password-with-otp`, {
-#         method: "POST",
-#         headers: {
-#           "Content-Type": "application/json",
-#         },
-#         body: JSON.stringify({
-#           email: forgotEmail,
-#           otp: otp,
-#           new_password: newPassword
-#         }),
-#       });
- 
-#       const data = await response.json();
- 
-#       if (!response.ok) {
-#         throw new Error(data.detail || "Password reset failed");
-#       }
- 
-#       toast({
-#         title: "Password Reset Successful! 🎉",
-#         description: "You can now login with your new password",
-#       });
- 
-#       // Reset all states
-#       setShowForgotDialog(false);
-#       setResetStep('email');
-#       setForgotEmail("");
-#       setOtp("");
-#       setNewPassword("");
-#       setConfirmPassword("");
- 
-#     } catch (error: any) {
-#       toast({
-#         title: "Reset Failed",
-#         description: error.message,
-#         variant: "destructive"
-#       });
-#     } finally {
-#       setIsProcessing(false);
-#     }
-#   };
- 
-#   // Resend OTP
-#   const handleResendOTP = async () => {
-#     setIsProcessing(true);
- 
-#     try {
-#       const response = await fetch(`${API_BASE_URL}/api/auth/resend-otp`, {
-#         method: "POST",
-#         headers: {
-#           "Content-Type": "application/json",
-#         },
-#         body: JSON.stringify({ email: forgotEmail }),
-#       });
- 
-#       const data = await response.json();
- 
-#       if (!response.ok) {
-#         throw new Error(data.detail || "Failed to resend OTP");
-#       }
- 
-#       toast({
-#         title: "OTP Resent! 📧",
-#         description: "A new OTP has been sent to your email",
-#       });
- 
-#       setOtp("");
-#       startOtpTimer();
- 
-#     } catch (error: any) {
-#       toast({
-#         title: "Error",
-#         description: error.message,
-#         variant: "destructive"
-#       });
-#     } finally {
-#       setIsProcessing(false);
-#     }
-#   };
- 
-#   // OTP Timer
-#   const startOtpTimer = () => {
-#     setOtpTimer(60);
-#     const interval = setInterval(() => {
-#       setOtpTimer((prev) => {
-#         if (prev <= 1) {
-#           clearInterval(interval);
-#           return 0;
-#         }
-#         return prev - 1;
-#       });
-#     }, 1000);
-#   };
- 
-#   const handleInputChange = (field: string) => (
-#     e: React.ChangeEvent<HTMLInputElement>
-#   ) => {
-#     setFormData(prev => ({ ...prev, [field]: e.target.value }));
-#     setErrorMessage("");
-#   };
- 
-#   const handleForgotPasswordClick = () => {
-#     setForgotEmail(formData.email);
-#     setResetStep('email');
-#     setOtp("");
-#     setNewPassword("");
-#     setConfirmPassword("");
-#     setShowForgotDialog(true);
-#   };
- 
-#   return (
-#     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
-#       <div className="w-full max-w-md">
-#         {/* Logo and Header */}
-#         <div className="text-center mb-8">
-#           <Link href="/">
-#             <a className="inline-flex flex-col items-center group">
-#               <img
-#                 src="/logo.png"
-#                 alt="Insydz Logo"
-#                 className="w-20 h-20 object-contain mb-3 transition-transform group-hover:scale-110"
-#               />
-#               <h1 className="text-3xl font-bold text-foreground mb-1">Insydz</h1>
-#             </a>
-#           </Link>
- 
-#           <p className="text-muted-foreground">
-#             Real-time insights from your review data
-#           </p>
-#         </div>
- 
-#         <Card className="border shadow-xl">
-#           <CardHeader className="text-center">
-#             <CardTitle className="text-2xl">Welcome Back</CardTitle>
-#             <CardDescription>
-#               Sign in to access your analytics dashboard
-#             </CardDescription>
-#           </CardHeader>
- 
-#           <CardContent className="space-y-6">
-#             {/* Error Alert */}
-#             {errorMessage && (
-#               <Alert
-#                 variant="destructive"
-#                 icon={<AlertCircle className="h-4 w-4" />}
-#                 description={errorMessage}
-#               />
-#             )}
- 
-#             {/* Login Form */}
-#             <form onSubmit={handleSubmit} className="space-y-4">
-#               <div className="space-y-2">
-#                 <Label htmlFor="email">Email Address</Label>
-#                 <Input
-#                   id="email"
-#                   type="email"
-#                   placeholder="your@email.com"
-#                   value={formData.email}
-#                   onChange={handleInputChange("email")}
-#                   disabled={isLoading}
-#                   required
-#                 />
-#               </div>
- 
-#               <div className="space-y-2">
-#                 <Label htmlFor="password">Password</Label>
-#                 <Input
-#                   id="password"
-#                   type="password"
-#                   placeholder="••••••••"
-#                   value={formData.password}
-#                   onChange={handleInputChange("password")}
-#                   disabled={isLoading}
-#                   required
-#                 />
-#               </div>
- 
-#               <div className="flex items-center justify-between text-sm">
-#                 <div className="flex items-center space-x-2">
-#                   <Checkbox
-#                     id="remember"
-#                     checked={rememberMe}
-#                     onCheckedChange={(checked) => setRememberMe(checked === true)}
-#                     disabled={isLoading}
-#                   />
-#                   <Label htmlFor="remember" className="cursor-pointer">
-#                     Remember me
-#                   </Label>
-#                 </div>
-#                 <Button
-#                   type="button"
-#                   variant="link"
-#                   className="p-0 h-auto text-sm text-blue-700 hover:text-blue-800 font-medium"
-#                   onClick={handleForgotPasswordClick}
-#                   disabled={isLoading}
-#                 >
-#                   Forgot password?
-#                 </Button>
-#               </div>
- 
-#               <Button
-#                 type="submit"
-#                 className="w-full"
-#                 disabled={isLoading}
-#                 size="lg"
-#               >
-#                 {isLoading ? (
-#                   <span className="flex items-center gap-2">
-#                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-#                     Signing in...
-#                   </span>
-#                 ) : (
-#                   "Sign In"
-#                 )}
-#               </Button>
-#             </form>
- 
-#             {/* Signup Link */}
-#             <div className="text-center">
-#               <p className="text-sm text-muted-foreground">
-#                 Don't have an account?{" "}
-#                 <Link href="/signup">
-#                   <Button variant="link" className="p-0 h-auto text-blue-700 hover:text-blue-800 font-semibold">
-#                     Create account
-#                   </Button>
-#                 </Link>
-#               </p>
-#             </div>
- 
-#             {/* Info Note */}
-#             <div className="text-center pt-4 border-t">
-#               <p className="text-xs text-muted-foreground">
-#                 Secure authentication with session management
-#               </p>
-#             </div>
-#           </CardContent>
-#         </Card>
- 
-#         {/* Footer Links */}
-#         <div className="text-center mt-6 text-sm text-muted-foreground">
-#           <p>Powered by Insydz</p>
-#         </div>
-#       </div>
- 
-#       {/* Forgot Password Dialog with OTP Flow */}
-#       <Dialog open={showForgotDialog} onOpenChange={setShowForgotDialog}>
-#         <DialogContent className="sm:max-w-md">
-#           <DialogHeader>
-#             <DialogTitle>
-#               {resetStep === 'email' && '🔐 Forgot Password'}
-#               {resetStep === 'otp' && '📧 Verify OTP'}
-#               {resetStep === 'password' && '🔑 Set New Password'}
-#             </DialogTitle>
-#             <DialogDescription>
-#               {resetStep === 'email' && 'Enter your email to receive an OTP code'}
-#               {resetStep === 'otp' && 'Enter the 6-digit code sent to your email'}
-#               {resetStep === 'password' && 'Create a strong new password for your account'}
-#             </DialogDescription>
-#           </DialogHeader>
- 
-#           <div className="space-y-4 py-4">
-#             {/* Step 1: Email Input */}
-#             {resetStep === 'email' && (
-#               <div className="space-y-2">
-#                 <Label htmlFor="forgot-email">Email Address</Label>
-#                 <div className="relative">
-#                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-#                   <Input
-#                     id="forgot-email"
-#                     type="email"
-#                     placeholder="your@email.com"
-#                     value={forgotEmail}
-#                     onChange={(e) => setForgotEmail(e.target.value)}
-#                     className="pl-10"
-#                     disabled={isProcessing}
-#                   />
-#                 </div>
-#               </div>
-#             )}
- 
-#             {/* Step 2: OTP Input */}
-#             {resetStep === 'otp' && (
-#               <>
-#                 <div className="space-y-2">
-#                   <Label htmlFor="otp-input">OTP Code</Label>
-#                   <Input
-#                     id="otp-input"
-#                     type="text"
-#                     placeholder="123456"
-#                     value={otp}
-#                     onChange={(e) => {
-#                       const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-#                       setOtp(value);
-#                     }}
-#                     maxLength={6}
-#                     className="text-center text-2xl tracking-widest font-bold"
-#                     disabled={isProcessing}
-#                   />
-#                   <p className="text-xs text-muted-foreground text-center">
-#                     OTP sent to {forgotEmail}
-#                   </p>
-#                 </div>
- 
-#                 <div className="flex justify-center">
-#                   {otpTimer > 0 ? (
-#                     <p className="text-sm text-muted-foreground">
-#                       Resend OTP in {otpTimer}s
-#                     </p>
-#                   ) : (
-#                     <Button
-#                       variant="link"
-#                       onClick={handleResendOTP}
-#                       disabled={isProcessing}
-#                       className="text-sm"
-#                     >
-#                       <RefreshCw className="w-3 h-3 mr-1" />
-#                       Resend OTP
-#                     </Button>
-#                   )}
-#                 </div>
-#               </>
-#             )}
- 
-#             {/* Step 3: New Password */}
-#             {resetStep === 'password' && (
-#               <>
-#                 <div className="space-y-2">
-#                   <Label htmlFor="new-password">New Password</Label>
-#                   <div className="relative">
-#                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-#                     <Input
-#                       id="new-password"
-#                       type="password"
-#                       placeholder="Enter new password"
-#                       value={newPassword}
-#                       onChange={(e) => setNewPassword(e.target.value)}
-#                       minLength={6}
-#                       className="pl-10"
-#                       disabled={isProcessing}
-#                     />
-#                   </div>
-#                 </div>
- 
-#                 <div className="space-y-2">
-#                   <Label htmlFor="confirm-password">Confirm Password</Label>
-#                   <div className="relative">
-#                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-#                     <Input
-#                       id="confirm-password"
-#                       type="password"
-#                       placeholder="Confirm new password"
-#                       value={confirmPassword}
-#                       onChange={(e) => setConfirmPassword(e.target.value)}
-#                       minLength={6}
-#                       className="pl-10"
-#                       disabled={isProcessing}
-#                     />
-#                   </div>
-#                 </div>
-#               </>
-#             )}
-#           </div>
- 
-#           <DialogFooter>
-#             <Button
-#               variant="outline"
-#               onClick={() => {
-#                 setShowForgotDialog(false);
-#                 setResetStep('email');
-#               }}
-#               disabled={isProcessing}
-#             >
-#               Cancel
-#             </Button>
-            
-#             {resetStep === 'email' && (
-#               <Button
-#                 onClick={handleRequestOTP}
-#                 disabled={isProcessing}
-#               >
-#                 {isProcessing ? "Sending..." : "Send OTP"}
-#               </Button>
-#             )}
- 
-#             {resetStep === 'otp' && (
-#               <Button
-#                 onClick={handleVerifyOTP}
-#                 disabled={isProcessing || otp.length !== 6}
-#               >
-#                 {isProcessing ? "Verifying..." : "Verify OTP"}
-#               </Button>
-#             )}
- 
-#             {resetStep === 'password' && (
-#               <Button
-#                 onClick={handleResetPassword}
-#                 disabled={isProcessing}
-#               >
-#                 {isProcessing ? "Resetting..." : "Reset Password"}
-#               </Button>
-#             )}
-#           </DialogFooter>
-#         </DialogContent>
-#       </Dialog>
-#     </div>
-#   );
-# }
-
-
-
-
-
-
-
-# import { useState } from "react";
-# import { Link, useLocation } from "wouter";
-# import { useToast } from "@/hooks/use-toast";
-# import { useAuth } from "@/App";
-# import { Button } from "@/components/ui/button";
-# import { Input } from "@/components/ui/input";
-# import { Label } from "@/components/ui/label";
-# import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-# import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-# import { Checkbox } from "@/components/ui/checkbox";
- 
-# interface SignupFormData {
-#   firstName: string;
-#   lastName: string;
-#   email: string;
-#   password: string;
-#   businessName: string;
-#   location: string;
-#   businessInterests: string[];
-# }
- 
-# const LOCATIONS = [
-#   { value: "mumbai", label: "Mumbai, India" },
-#   { value: "delhi", label: "Delhi, India" },
-#   { value: "bangalore", label: "Bangalore, India" },
-#   { value: "chennai", label: "Chennai, India" },
-#   { value: "kolkata", label: "Kolkata, India" },
-#   { value: "pune", label: "Pune, India" },
-#   { value: "hyderabad", label: "Hyderabad, India" },
-#   { value: "other", label: "Other" },
-# ];
- 
-# const BUSINESS_INTERESTS = [
-#   { id: "electronics", label: "Electronics & Technology" },
-#   { id: "fashion", label: "Fashion & Apparel" },
-#   { id: "home", label: "Home & Kitchen" },
-#   { id: "beauty", label: "Beauty & Personal Care" },
-#   { id: "sports", label: "Sports & Fitness" },
-#   { id: "books", label: "Books & Media" },
-#   { id: "automotive", label: "Automotive" },
-#   { id: "health", label: "Health & Wellness" },
-#   { id: "toys", label: "Toys & Games" },
-#   { id: "grocery", label: "Grocery & Food" },
-#   { id: "office", label: "Office Supplies" },
-#   { id: "pet", label: "Pet Supplies" },
-# ];
-
-# // ✅ Use environment variable
-# const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.insydz.com";
- 
-# export default function Signup() {
-#   const [, setLocation] = useLocation();
-#   const { toast } = useToast();
-#   const { refreshUser } = useAuth(); // ✅ Changed from login to refreshUser
-#   const [isLoading, setIsLoading] = useState(false);
-#   const [formData, setFormData] = useState<SignupFormData>({
-#     firstName: "",
-#     lastName: "",
-#     email: "",
-#     password: "",
-#     businessName: "",
-#     location: "",
-#     businessInterests: []
-#   });
-#   const [agreedToTerms, setAgreedToTerms] = useState(false);
- 
-#   const handleInputChange = (field: keyof SignupFormData) => (
-#     e: React.ChangeEvent<HTMLInputElement>
-#   ) => {
-#     setFormData(prev => ({ ...prev, [field]: e.target.value }));
-#   };
- 
-#   const handleLocationChange = (value: string) => {
-#     setFormData(prev => ({ ...prev, location: value }));
-#   };
- 
-#   const handleInterestToggle = (interestId: string) => {
-#     setFormData(prev => {
-#       const interests = prev.businessInterests.includes(interestId)
-#         ? prev.businessInterests.filter(id => id !== interestId)
-#         : [...prev.businessInterests, interestId];
-#       return { ...prev, businessInterests: interests };
-#     });
-#   };
- 
-#   const handleSubmit = async (e: React.FormEvent) => {
-#     e.preventDefault();
- 
-#     if (!agreedToTerms) {
-#       toast({
-#         title: "Terms required",
-#         description: "Please agree to the Terms.",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-#       toast({
-#         title: "Missing fields",
-#         description: "Fill all required fields.",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     if (!formData.location) {
-#       toast({
-#         title: "Location required",
-#         description: "Select your location.",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     if (formData.businessInterests.length === 0) {
-#       toast({
-#         title: "Select interests",
-#         description: "Select at least one.",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-#     if (!emailRegex.test(formData.email)) {
-#       toast({
-#         title: "Invalid Email",
-#         description: "Enter valid email.",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     if (formData.password.length < 6) {
-#       toast({
-#         title: "Password too short",
-#         description: "Min 6 characters.",
-#         variant: "destructive"
-#       });
-#       return;
-#     }
- 
-#     setIsLoading(true);
- 
-#     try {
-#       console.log("📤 Sending signup request to:", `${API_BASE_URL}/users/signup`);
-     
-#       const response = await fetch(`${API_BASE_URL}/users/signup`, {
-#         method: "POST",
-#         credentials: "include", // ✅ Include cookies for session management
-#         headers: {
-#           "Content-Type": "application/json",
-#           "Accept": "application/json"
-#         },
-#         body: JSON.stringify({
-#           first_name: formData.firstName,
-#           last_name: formData.lastName,
-#           email: formData.email,
-#           password: formData.password,
-#           business_name: formData.businessName || null,
-#           location: formData.location,
-#           business_interests: formData.businessInterests
-#         }),
-#       });
- 
-#       console.log("📥 Response status:", response.status);
- 
-#       if (!response.ok) {
-#         const errorData = await response.json();
-#         console.error("❌ Signup error:", errorData);
-        
-#         if (response.status === 400 && errorData.detail?.includes("already registered")) {
-#           toast({
-#             title: "Email already exists",
-#             description: "This email is already registered. Please login instead.",
-#             variant: "destructive"
-#           });
-#         } else {
-#           throw new Error(errorData.detail || "Signup failed");
-#         }
-        
-#         setIsLoading(false);
-#         return;
-#       }
- 
-#       const userData = await response.json();
-#       console.log("✅ Signup successful:", userData);
- 
-#       toast({
-#         title: "Account created!",
-#         description: `Welcome, ${userData.first_name}! Your account has been created successfully.`,
-#       });
-
-#       // ✅ Refresh user data from session cookie (backend already set it)
-#       await refreshUser();
-      
-#       // ✅ Navigate to dashboard
-#       setLocation("/dashboard");
- 
-#     } catch (err: any) {
-#       console.error("❌ Signup error:", err);
-#       toast({
-#         title: "Signup failed",
-#         description: err.message || "An error occurred during signup. Please try again.",
-#         variant: "destructive"
-#       });
-#       setIsLoading(false);
-#     }
-#   };
- 
-#   return (
-#     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50 dark:from-gray-900 dark:via-background dark:to-gray-900 flex items-center justify-center p-4">
-#       <div className="w-full max-w-2xl">
-#         <div className="text-center mb-8">
-#           <Link href="/">
-#             <a className="inline-flex flex-col items-center group">
-#               <img
-#                 src="/logo.png"
-#                 alt="Insydz Logo"
-#                 className="w-20 h-20 object-contain mb-3 transition-transform group-hover:scale-110"
-#               />
-#               <h1 className="text-3xl font-bold mb-1">Insydz</h1>
-#             </a>
-#           </Link>
- 
-#           <p className="text-muted-foreground">
-#             Start your analytics journey
-#           </p>
-#         </div>
- 
-#         <Card className="border shadow-xl">
-#           <CardHeader className="text-center">
-#             <CardTitle className="text-2xl">Create Account</CardTitle>
-#             <CardDescription>Join and get personalized insights</CardDescription>
-#           </CardHeader>
- 
-#           <CardContent>
-#             <form onSubmit={handleSubmit} className="space-y-6">
-#               <div className="grid grid-cols-2 gap-4">
-#                 <div className="space-y-2">
-#                   <Label htmlFor="firstName">First Name *</Label>
-#                   <Input
-#                     id="firstName"
-#                     placeholder="John"
-#                     value={formData.firstName}
-#                     onChange={handleInputChange("firstName")}
-#                     required
-#                     disabled={isLoading}
-#                   />
-#                 </div>
-#                 <div className="space-y-2">
-#                   <Label htmlFor="lastName">Last Name *</Label>
-#                   <Input
-#                     id="lastName"
-#                     placeholder="Doe"
-#                     value={formData.lastName}
-#                     onChange={handleInputChange("lastName")}
-#                     required
-#                     disabled={isLoading}
-#                   />
-#                 </div>
-#               </div>
- 
-#               <div className="space-y-2">
-#                 <Label htmlFor="email">Email *</Label>
-#                 <Input
-#                   id="email"
-#                   type="email"
-#                   placeholder="your@email.com"
-#                   value={formData.email}
-#                   onChange={handleInputChange("email")}
-#                   required
-#                   disabled={isLoading}
-#                 />
-#               </div>
- 
-#               <div className="space-y-2">
-#                 <Label htmlFor="password">Password *</Label>
-#                 <Input
-#                   id="password"
-#                   type="password"
-#                   placeholder="••••••••"
-#                   value={formData.password}
-#                   onChange={handleInputChange("password")}
-#                   required
-#                   minLength={6}
-#                   disabled={isLoading}
-#                 />
-#                 <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
-#               </div>
- 
-#               <div className="space-y-2">
-#                 <Label htmlFor="businessName">Business Name (Optional)</Label>
-#                 <Input
-#                   id="businessName"
-#                   placeholder="Your Business"
-#                   value={formData.businessName}
-#                   onChange={handleInputChange("businessName")}
-#                   disabled={isLoading}
-#                 />
-#               </div>
- 
-#               <div className="space-y-2">
-#                 <Label htmlFor="location">Location *</Label>
-#                 <Select 
-#                   value={formData.location} 
-#                   onValueChange={handleLocationChange} 
-#                   required
-#                   disabled={isLoading}
-#                 >
-#                   <SelectTrigger>
-#                     <SelectValue placeholder="Select location" />
-#                   </SelectTrigger>
-#                   <SelectContent>
-#                     {LOCATIONS.map((loc) => (
-#                       <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
-#                     ))}
-#                   </SelectContent>
-#                 </Select>
-#               </div>
- 
-#               <div className="space-y-3">
-#                 <Label className="text-base">Business Interests *</Label>
-#                 <p className="text-sm text-muted-foreground">Select at least one</p>
-#                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto p-4 border rounded-lg bg-muted/30">
-#                   {BUSINESS_INTERESTS.map((interest) => (
-#                     <div key={interest.id} className="flex items-center space-x-2">
-#                       <Checkbox
-#                         id={interest.id}
-#                         checked={formData.businessInterests.includes(interest.id)}
-#                         onCheckedChange={() => handleInterestToggle(interest.id)}
-#                         disabled={isLoading}
-#                       />
-#                       <Label
-#                         htmlFor={interest.id}
-#                         className="text-sm font-normal cursor-pointer"
-#                       >
-#                         {interest.label}
-#                       </Label>
-#                     </div>
-#                   ))}
-#                 </div>
-#                 {formData.businessInterests.length > 0 && (
-#                   <p className="text-sm text-primary font-medium">
-#                     ✓ {formData.businessInterests.length} selected
-#                   </p>
-#                 )}
-#               </div>
- 
-#               <div className="flex items-start space-x-2">
-#                 <Checkbox
-#                   id="terms"
-#                   checked={agreedToTerms}
-#                   onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-#                   disabled={isLoading}
-#                 />
-#                 <Label htmlFor="terms" className="text-sm cursor-pointer">
-#                   I agree to{" "}
-#                   <a
-#                     href="/terms-service"
-#                     target="_blank"
-#                     rel="noopener noreferrer"
-#                     className="text-primary underline hover:text-primary/80"
-#                   >
-#                     Terms
-#                   </a>{" "}
-#                   and{" "}
-#                   <a
-#                     href="/privacy-policy"
-#                     target="_blank"
-#                     rel="noopener noreferrer"
-#                     className="text-primary underline hover:text-primary/80"
-#                   >
-#                     Privacy Policy
-#                   </a>
-#                 </Label>
-#               </div>
- 
-#               <Button
-#                 type="submit"
-#                 className="w-full"
-#                 disabled={isLoading}
-#                 size="lg"
-#               >
-#                 {isLoading ? (
-#                   <span className="flex items-center gap-2">
-#                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-#                     Creating account...
-#                   </span>
-#                 ) : (
-#                   "Create Account"
-#                 )}
-#               </Button>
-#             </form>
- 
-#             <div className="text-center pt-4 border-t mt-6">
-#               <p className="text-xs text-muted-foreground mb-4">
-#                 Secure authentication with session management
-#               </p>
-#               <p className="text-sm text-muted-foreground">
-#                 Have an account?{" "}
-#                 <Link href="/login">
-#                   <Button variant="link" className="p-0 h-auto text-primary font-semibold">
-#                     Sign in
-#                   </Button>
-#                 </Link>
-#               </p>
-#             </div>
-#           </CardContent>
-#         </Card>
-#       </div>
-#     </div>
-#   );
-# }
-
-
-
-
-
-
-# import { Switch, Route, useLocation } from "wouter";
-# import { QueryClientProvider } from "@tanstack/react-query";
-# import { queryClient } from "./lib/queryClient";
-# import { Toaster } from "@/components/ui/toaster";
-# import { TooltipProvider } from "@/components/ui/tooltip";
-# import { useState, useEffect, createContext, useContext } from "react";
- 
-# // Pages
-# import Landing from "@/pages/landing";
-# import PrivacyPolicy from "@/pages/privacy-policy";
-# import TermsOfService from "@/pages/terms-service";
-# import Login from "@/pages/login";
-# import Signup from "@/pages/signup";
-# import Dashboard from "@/pages/dashboard";
-# import Subscription from "@/pages/subscription";
-# import About from "@/pages/about";
-# import Settings from "@/pages/settings";
-# import NotFound from "@/pages/not-found";
- 
-# // Analytics Pages
-# import Sales from "@/pages/sales";
-# import Overview from "@/pages/overview";
-# import Categories from "@/pages/categories";
-# import CategoryProducts from "@/pages/category-products";
-# import ProductDetails from "@/pages/product-details";
-# import SentimentProducts from "@/pages/sentiment-products";
-# import ProductTracker from "@/pages/product-tracker";
-# import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
-# import ShareOfVoice from "@/pages/ShareOfVoice";
-
-# // ==================
-# // Environment Config
-# // ==================
-# const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.insydz.com";
- 
-# // ==================
-# // Auth Context
-# // ==================
-# interface User {
-#   id: number;
-#   email: string;
-#   name?: string;
-#   firstName?: string;
-#   lastName?: string;
-#   businessName?: string;
-#   location?: string;
-#   subscriptionTier: string;
-#   aiChatUsed?: number;
-#   aiChatMonth?: string;
-#   businessInterests?: string[];
-#   createdAt?: string;
-# }
- 
-# interface AuthContextType {
-#   user: User | null;
-#   isAuthenticated: boolean;
-#   isLoading: boolean;
-#   refreshUser: () => Promise<void>;
-#   logout: () => Promise<void>;
-# }
- 
-# const AuthContext = createContext<AuthContextType | undefined>(undefined);
- 
-# export const useAuth = () => {
-#   const context = useContext(AuthContext);
-#   if (!context) throw new Error("useAuth must be used within an AuthProvider");
-#   return context;
-# };
- 
-# // ==================
-# // AuthProvider
-# // ==================
-# function AuthProvider({ children }: { children: React.ReactNode }) {
-#   const [user, setUser] = useState<User | null>(null);
-#   const [isLoading, setIsLoading] = useState(true);
- 
-#   const fetchCurrentUser = async () => {
-#     try {
-#       const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-#         credentials: "include",
-#         headers: {
-#           "Accept": "application/json",
-#         },
-#       });
- 
-#       if (res.ok) {
-#         const data = await res.json();
-#         setUser({
-#           id: data.id,
-#           email: data.email,
-#           name: `${data.first_name} ${data.last_name}`,
-#           firstName: data.first_name,
-#           lastName: data.last_name,
-#           businessName: data.business_name,
-#           location: data.location,
-#           subscriptionTier: data.subscription_tier || "free",
-#           aiChatUsed: data.ai_chat_used,
-#           aiChatMonth: data.ai_chat_month,
-#           businessInterests: data.business_interests,
-#           createdAt: data.created_at,
-#         });
-#       } else {
-#         setUser(null);
-#       }
-#     } catch (err) {
-#       console.error("Error fetching user session:", err);
-#       setUser(null);
-#     } finally {
-#       setIsLoading(false);
-#     }
-#   };
- 
-#   useEffect(() => {
-#     fetchCurrentUser();
-#   }, []);
- 
-#   const refreshUser = async () => {
-#     setIsLoading(true);
-#     await fetchCurrentUser();
-#   };
- 
-#   // ✅ Improved logout function
-#   const logout = async () => {
-#     try {
-#       const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-#         method: "POST",
-#         credentials: "include",
-#         headers: {
-#           "Content-Type": "application/json",
-#         },
-#       });
-
-#       if (!response.ok) {
-#         throw new Error("Logout failed");
-#       }
-
-#       // Clear user state
-#       setUser(null);
-#     } catch (error) {
-#       console.error("Logout error:", error);
-#       // Still clear user state even if backend call fails
-#       setUser(null);
-#       throw error;
-#     }
-#   };
- 
-#   const isAuthenticated = !!user;
- 
-#   return (
-#     <AuthContext.Provider
-#       value={{ user, isAuthenticated, isLoading, refreshUser, logout }}
-#     >
-#       {children}
-#     </AuthContext.Provider>
-#   );
-# }
- 
-# // ==================
-# // ProtectedRoute
-# // ==================
-# function ProtectedRoute({ component: Component, ...rest }: any) {
-#   const { isAuthenticated, isLoading } = useAuth();
-#   const [, setLocation] = useLocation();
- 
-#   useEffect(() => {
-#     // Only redirect after loading is complete and user is not authenticated
-#     if (!isLoading && !isAuthenticated) {
-#       setLocation("/login");
-#     }
-#   }, [isLoading, isAuthenticated, setLocation]);
-
-#   // Show loading state while checking authentication
-#   if (isLoading) {
-#     return (
-#       <div className="flex h-screen items-center justify-center">
-#         <div className="text-center">
-#           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-#           <p className="text-lg font-semibold text-muted-foreground">
-#             Verifying session...
-#           </p>
-#         </div>
-#       </div>
-#     );
-#   }
-
-#   // Don't render anything while redirecting
-#   if (!isAuthenticated) {
-#     return null;
-#   }
-
-#   // Render protected component
-#   return <Component {...rest} />;
-# }
-
-# // ==================
-# // PublicRoute (redirects to dashboard if already logged in)
-# // ==================
-# function PublicRoute({ component: Component, ...rest }: any) {
-#   const { isAuthenticated, isLoading } = useAuth();
-#   const [, setLocation] = useLocation();
-
-#   useEffect(() => {
-#     // Redirect to dashboard if already authenticated
-#     if (!isLoading && isAuthenticated) {
-#       setLocation("/dashboard");
-#     }
-#   }, [isLoading, isAuthenticated, setLocation]);
-
-#   // Show loading state while checking authentication
-#   if (isLoading) {
-#     return (
-#       <div className="flex h-screen items-center justify-center">
-#         <div className="text-center">
-#           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-#           <p className="text-lg font-semibold text-muted-foreground">
-#             Loading...
-#           </p>
-#         </div>
-#       </div>
-#     );
-#   }
-
-#   // Render public component if not authenticated
-#   return <Component {...rest} />;
-# }
- 
-# // ==================
-# // Router
-# // ==================
-# function Router() {
-#   return (
-#     <Switch>
-#       {/* Public Pages (always accessible) */}
-#       <Route path="/" component={Landing} />
-#       <Route path="/about" component={About} />
-#       <Route path="/privacy-policy" component={PrivacyPolicy} />
-#       <Route path="/terms-service" component={TermsOfService} />
-
-#       {/* Auth Pages (redirect to dashboard if already logged in) */}
-#       <PublicRoute path="/login" component={Login} />
-#       <PublicRoute path="/signup" component={Signup} />
- 
-#       {/* Protected Pages */}
-#       <ProtectedRoute path="/dashboard" component={Dashboard} />
-#       <ProtectedRoute path="/sales" component={Sales} />
-#       <ProtectedRoute path="/overview" component={Overview} />
-#       <ProtectedRoute path="/categories" component={Categories} />
-#       <ProtectedRoute
-#         path="/category-products/:source/:category"
-#         component={CategoryProducts}
-#       />
-#       <ProtectedRoute path="/product/:productName" component={ProductDetails} />
-#       <ProtectedRoute path="/product-tracker" component={ProductTracker} />
-#       <ProtectedRoute
-#         path="/product-tracker/history"
-#         component={ProductTrackerHistory}
-#       />
-#       <ProtectedRoute
-#         path="/sentiment-products/:source/:sentiment"
-#         component={SentimentProducts}
-#       />
-#       <ProtectedRoute path="/subscription" component={Subscription} />
-#       <ProtectedRoute path="/settings" component={Settings} />
-#       <ProtectedRoute path="/share-of-voice" component={ShareOfVoice} />
- 
-#       {/* 404 Fallback */}
-#       <Route component={NotFound} />
-#     </Switch>
-#   );
-# }
- 
-# // ==================
-# // App
-# // ==================
-# export default function App() {
-#   return (
-#     <QueryClientProvider client={queryClient}>
-#       <TooltipProvider>
-#         <AuthProvider>
-#           <Toaster />
-#           <Router />
-#         </AuthProvider>
-#       </TooltipProvider>
-#     </QueryClientProvider>
-#   );
-# }

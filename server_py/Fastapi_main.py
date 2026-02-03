@@ -11666,3 +11666,1363 @@ def generate_fallback_strategy(gap, target_days, current_share, target_share, nu
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# class BrandShareData(BaseModel):
+#     brand: str
+#     share_percentage: float
+#     total_reviews: int
+#     total_sales: int
+#     avg_rating: Optional[float]
+#     avg_price: Optional[float]
+#     product_count: int
+
+# class CategorySOVResponse(BaseModel):
+#     category_name: str
+#     total_products: int
+#     total_reviews: int
+#     total_sales: int
+#     brands: List[BrandShareData]
+#     your_brand_share: Optional[float]
+#     market_leader: Optional[str]
+#     marketplace: str
+
+# class KeywordSOVResponse(BaseModel):
+#     keyword: str
+#     total_products: int
+#     total_reviews: int
+#     brands: List[BrandShareData]
+#     price_range: Dict[str, float]
+#     marketplace: str
+
+# class ProgressTrackingData(BaseModel):
+#     date: str
+#     share_percentage: float
+#     reviews: int
+#     sales: int
+
+# class ProgressTrackingResponse(BaseModel):
+#     category_name: str
+#     your_brand: str
+#     current_share: float
+#     target_share: float
+#     start_date: str
+#     target_date: str
+#     days_elapsed: int
+#     days_remaining: int
+#     is_on_track: bool
+#     required_growth_rate: float
+#     actual_growth_rate: float
+#     weekly_progress: List[ProgressTrackingData]
+
+# class CompetitorAnalysis(BaseModel):
+#     competitor_name: str
+#     market_share: float
+#     avg_price: float
+#     total_products: int
+#     avg_rating: Optional[float]
+#     total_reviews: int
+#     total_sales: int
+
+# class CombinedSOVResponse(BaseModel):
+#     category_name: str
+#     combined_brands: List[BrandShareData]
+#     flipkart_data: CategorySOVResponse
+#     amazon_data: CategorySOVResponse
+#     your_brand_combined_share: Optional[float]
+
+
+# # ==================== Tier Limits ====================
+
+# SOV_TIER_LIMITS = {
+#     'free': 3,           # Free tier: 3 SOV analyses per month
+#     'basic': 15,         # Basic tier: 15 SOV analyses per month
+#     'premium': -1,       # Premium tier: unlimited
+#     'enterprise': -1     # Enterprise tier: unlimited
+# }
+
+
+# # ==================== Helper Functions ====================
+
+# def safe_float(value, default=0.0) -> float:
+#     """Safely convert value to float"""
+#     if value is None or value == 'NULL':
+#         return default
+#     try:
+#         from decimal import Decimal
+#         if isinstance(value, Decimal):
+#             return float(value)
+#         return float(value)
+#     except:
+#         return default
+
+
+# def safe_int(value, default=0) -> int:
+#     """Safely convert value to int"""
+#     if value is None or value == 'NULL':
+#         return default
+#     try:
+#         return int(value)
+#     except:
+#         return default
+
+
+# def extract_sales_number(sales_text: str) -> int:
+#     """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
+#     if not sales_text or sales_text == 'NULL':
+#         return 0
+
+#     try:
+#         sales_text = str(sales_text).upper().strip()
+#         multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
+
+#         match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
+#         if match:
+#             number = float(match.group(1))
+#             unit = match.group(2)
+
+#             if unit and unit in multipliers:
+#                 return int(number * multipliers[unit])
+#             return int(number)
+#     except:
+#         return 0
+#     return 0
+
+
+# # ==================== Internal SOV Data Helper ====================
+# # This is the PURE query function. No async. No user_id. No usage tracking.
+# # All internal endpoints (progress, competitors, combined, ai-insights) call this.
+# # The HTTP endpoint get_category_sov does usage tracking FIRST, then calls this.
+
+# def _get_category_sov_data(
+#     category_name: str,
+#     marketplace: str,
+#     your_brand: Optional[str],
+#     db: Session
+# ) -> dict:
+#     """
+#     Core SOV query logic — shared by all internal callers.
+#     Does NOT touch usage counters. Does NOT require user_id.
+#     Returns a plain dict (either data or {"error": "..."}).
+#     """
+#     if marketplace == "flipkart":
+#         query = text("""
+#             SELECT
+#                 brand,
+#                 COUNT(*) as product_count,
+#                 COALESCE(SUM(product_rating_count), 0) as total_reviews,
+#                 COALESCE(SUM(estimated_sales), 0) as total_sales,
+#                 COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+#                 COALESCE(AVG(product_price), 0) as avg_price
+#             FROM rapidapi_flipkart_products
+#             WHERE category_name = :category_name
+#                 AND brand IS NOT NULL
+#                 AND brand != 'NULL'
+#             GROUP BY brand
+#             ORDER BY total_reviews DESC
+#         """)
+#     else:  # amazon
+#         query = text("""
+#             SELECT
+#                 SPLIT_PART(product_title, ' ', 1) as brand,
+#                 COUNT(*) as product_count,
+#                 COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+#                 COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+#                 COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+#                 COALESCE(AVG(product_price_numeric), 0) as avg_price
+#             FROM rapidapi_amazon_products
+#             WHERE category_name = :category_name
+#             GROUP BY brand
+#             ORDER BY total_reviews DESC
+#         """)
+
+#     result = db.execute(query, {"category_name": category_name})
+#     rows = result.fetchall()
+
+#     if not rows:
+#         return {"error": f"No data found for category: {category_name}"}
+
+#     # Calculate totals
+#     total_reviews = sum(int(row[2] or 0) for row in rows)
+#     total_sales = sum(int(row[3] or 0) for row in rows)
+#     total_products = sum(int(row[1] or 0) for row in rows)
+
+#     # Build brand data
+#     brands = []
+#     your_brand_share = None
+#     market_leader = None
+#     max_share = 0
+
+#     for row in rows:
+#         brand_name = row[0] or "Unknown"
+#         review_count = int(row[2] or 0)
+#         sales_count = int(row[3] or 0)
+
+#         share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+
+#         brand_data = {
+#             "brand": brand_name,
+#             "share_percentage": round(share_pct, 2),
+#             "total_reviews": review_count,
+#             "total_sales": sales_count,
+#             "avg_rating": round(float(row[4] or 0), 2),
+#             "avg_price": round(float(row[5] or 0), 2),
+#             "product_count": int(row[1] or 0)
+#         }
+#         brands.append(brand_data)
+
+#         # Track market leader
+#         if share_pct > max_share:
+#             max_share = share_pct
+#             market_leader = brand_name
+
+#         # Check if this is your brand
+#         if your_brand and brand_name.lower() == your_brand.lower():
+#             your_brand_share = share_pct
+
+#     return {
+#         "category_name": category_name,
+#         "total_products": total_products,
+#         "total_reviews": total_reviews,
+#         "total_sales": total_sales,
+#         "brands": brands,
+#         "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
+#         "market_leader": market_leader,
+#         "marketplace": marketplace
+#     }
+
+
+# # ==================== Usage Tracking Endpoints ====================
+
+# @app.get("/users/{user_id}/sov-usage")
+# async def get_sov_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Get Share of Voice analysis usage statistics for a user
+
+#     Returns:
+#     - count: Number of SOV analyses used this month
+#     - limit: Maximum allowed SOV analyses for user's tier
+#     - remaining: Number of SOV analyses remaining
+#     - subscription_tier: User's current subscription tier
+#     - month: Current tracking month (YYYY-MM format)
+#     """
+#     try:
+#         # Fetch user from database
+#         user = db.query(User).filter(User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+
+#         # Get subscription tier (default to 'free' if not set)
+#         tier = (user.subscription_tier or 'free').lower()
+#         limit = SOV_TIER_LIMITS.get(tier, 3)
+
+#         # Get current month in YYYY-MM format
+#         current_month = datetime.now().strftime("%Y-%m")
+#         stored_month = user.sov_month
+
+#         # Reset count if it's a new month
+#         if stored_month != current_month:
+#             user.sov_used = 0
+#             user.sov_month = current_month
+#             db.commit()
+#             db.refresh(user)
+
+#         # Calculate usage stats
+#         count = user.sov_used or 0
+#         remaining = limit - count if limit != -1 else -1
+
+#         return {
+#             "count": count,
+#             "limit": limit,
+#             "remaining": remaining,
+#             "subscription_tier": tier,
+#             "month": current_month
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error fetching SOV usage: {str(e)}")
+
+
+# @app.post("/users/{user_id}/increment-sov-usage")
+# async def increment_sov_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Increment SOV analysis usage count for a user
+
+#     This should be called AFTER a successful SOV analysis
+#     Checks if user has remaining analyses before incrementing
+#     """
+#     try:
+#         user = db.query(User).filter(User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+
+#         # Get tier and limit
+#         tier = (user.subscription_tier or 'free').lower()
+#         limit = SOV_TIER_LIMITS.get(tier, 3)
+
+#         # Get current month
+#         current_month = datetime.now().strftime("%Y-%m")
+#         stored_month = user.sov_month
+
+#         # Reset if new month
+#         if stored_month != current_month:
+#             user.sov_used = 0
+#             user.sov_month = current_month
+
+#         # Check if user has reached limit (only if not unlimited)
+#         if limit != -1 and (user.sov_used or 0) >= limit:
+#             raise HTTPException(
+#                 status_code=403,
+#                 detail=f"SOV analysis limit reached for {tier} tier. You've used all {limit} analyses this month. Upgrade to get more!"
+#             )
+
+#         # Increment usage count
+#         user.sov_used = (user.sov_used or 0) + 1
+#         db.commit()
+#         db.refresh(user)
+
+#         remaining = limit - user.sov_used if limit != -1 else -1
+
+#         return {
+#             "success": True,
+#             "count": user.sov_used,
+#             "limit": limit,
+#             "remaining": remaining,
+#             "subscription_tier": tier
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error incrementing SOV usage: {str(e)}")
+
+
+# # ==================== Category & Keyword Endpoints ====================
+
+# @app.get("/sov/categories")
+# def get_sov_categories(
+#     marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get list of all available categories for SOV analysis"""
+#     try:
+#         categories = set()
+
+#         if marketplace in ["flipkart", "all"]:
+#             flipkart_query = text("""
+#                 SELECT DISTINCT category_name
+#                 FROM rapidapi_flipkart_products
+#                 WHERE category_name IS NOT NULL AND category_name != 'NULL'
+#                 ORDER BY category_name
+#             """)
+#             result = db.execute(flipkart_query)
+#             categories.update([row[0] for row in result if row[0]])
+
+#         if marketplace in ["amazon", "all"]:
+#             amazon_query = text("""
+#                 SELECT DISTINCT category_name
+#                 FROM rapidapi_amazon_products
+#                 WHERE category_name IS NOT NULL AND category_name != 'NULL'
+#                 ORDER BY category_name
+#             """)
+#             result = db.execute(amazon_query)
+#             categories.update([row[0] for row in result if row[0]])
+
+#         return {"categories": sorted(list(categories))}
+
+#     except Exception as e:
+#         return {"error": f"Error fetching categories: {str(e)}"}
+
+
+# @app.get("/sov/category/{category_name}")
+# async def get_category_sov(
+#     category_name: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     your_brand: Optional[str] = Query(default=None),
+#     user_id: Optional[int] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get Share of Voice analysis for a specific category.
+#     Usage is incremented ONCE here at the HTTP entry point only.
+#     Internal helpers (progress, competitors, ai-insights) do NOT increment.
+#     """
+#     try:
+#         # ✅ Usage check + increment — ONLY place this happens for category SOV
+#         if user_id:
+#             user = db.query(User).filter(User.id == user_id).first()
+#             if user:
+#                 tier = (user.subscription_tier or 'free').lower()
+#                 limit = SOV_TIER_LIMITS.get(tier, 3)
+
+#                 # Get current month
+#                 current_month = datetime.now().strftime("%Y-%m")
+#                 if user.sov_month != current_month:
+#                     user.sov_used = 0
+#                     user.sov_month = current_month
+
+#                 # Check limit before processing
+#                 if limit != -1 and (user.sov_used or 0) >= limit:
+#                     raise HTTPException(
+#                         status_code=403,
+#                         detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
+#                     )
+
+#                 # Increment usage
+#                 user.sov_used = (user.sov_used or 0) + 1
+#                 db.commit()
+
+#         # Delegate all query logic to the shared helper
+#         return _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error analyzing category: {str(e)}")
+
+
+# @app.get("/sov/keyword/{keyword}")
+# async def get_keyword_sov(
+#     keyword: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     price_min: Optional[float] = Query(default=None),
+#     price_max: Optional[float] = Query(default=None),
+#     user_id: Optional[int] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get Share of Voice analysis for products matching a keyword.
+#     Includes usage tracking for authenticated users.
+#     """
+#     try:
+#         # ✅ Check and increment usage if user is logged in
+#         if user_id:
+#             user = db.query(User).filter(User.id == user_id).first()
+#             if user:
+#                 tier = (user.subscription_tier or 'free').lower()
+#                 limit = SOV_TIER_LIMITS.get(tier, 3)
+
+#                 # Get current month
+#                 current_month = datetime.now().strftime("%Y-%m")
+#                 if user.sov_month != current_month:
+#                     user.sov_used = 0
+#                     user.sov_month = current_month
+
+#                 # Check limit
+#                 if limit != -1 and (user.sov_used or 0) >= limit:
+#                     raise HTTPException(
+#                         status_code=403,
+#                         detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
+#                     )
+
+#                 # Increment usage
+#                 user.sov_used = (user.sov_used or 0) + 1
+#                 db.commit()
+
+#         # Keyword SOV query logic
+#         price_filter = ""
+#         if marketplace == "flipkart":
+#             if price_min is not None:
+#                 price_filter += f" AND product_price >= {price_min}"
+#             if price_max is not None:
+#                 price_filter += f" AND product_price <= {price_max}"
+
+#             query = text(f"""
+#                 SELECT
+#                     brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_rating_count), 0) as total_reviews,
+#                     COALESCE(SUM(estimated_sales), 0) as total_sales,
+#                     COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
+#                     COALESCE(AVG(product_price), 0) as avg_price,
+#                     MIN(product_price) as min_price,
+#                     MAX(product_price) as max_price
+#                 FROM rapidapi_flipkart_products
+#                 WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+#                     OR LOWER(category_name) LIKE LOWER(:keyword))
+#                     AND brand IS NOT NULL
+#                     AND brand != 'NULL'
+#                     {price_filter}
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+#         else:  # amazon
+#             if price_min is not None:
+#                 price_filter += f" AND product_price_numeric >= {price_min}"
+#             if price_max is not None:
+#                 price_filter += f" AND product_price_numeric <= {price_max}"
+
+#             query = text(f"""
+#                 SELECT
+#                     SPLIT_PART(product_title, ' ', 1) as brand,
+#                     COUNT(*) as product_count,
+#                     COALESCE(SUM(product_num_ratings), 0) as total_reviews,
+#                     COALESCE(SUM(avg_sales_volume), 0) as total_sales,
+#                     COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
+#                     COALESCE(AVG(product_price_numeric), 0) as avg_price,
+#                     MIN(product_price_numeric) as min_price,
+#                     MAX(product_price_numeric) as max_price
+#                 FROM rapidapi_amazon_products
+#                 WHERE (LOWER(product_title) LIKE LOWER(:keyword)
+#                     OR LOWER(category_name) LIKE LOWER(:keyword))
+#                     {price_filter}
+#                 GROUP BY brand
+#                 ORDER BY total_reviews DESC
+#             """)
+
+#         result = db.execute(query, {"keyword": f"%{keyword}%"})
+#         rows = result.fetchall()
+
+#         if not rows:
+#             return {"error": f"No products found matching keyword: {keyword}"}
+
+#         total_reviews = sum(int(row[2] or 0) for row in rows)
+#         total_products = sum(int(row[1] or 0) for row in rows)
+
+#         brands = []
+#         min_price = float('inf')
+#         max_price = 0
+
+#         for row in rows:
+#             review_count = int(row[2] or 0)
+#             share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
+
+#             brands.append({
+#                 "brand": row[0] or "Unknown",
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": review_count,
+#                 "total_sales": int(row[3] or 0),
+#                 "avg_rating": round(float(row[4] or 0), 2),
+#                 "avg_price": round(float(row[5] or 0), 2),
+#                 "product_count": int(row[1] or 0)
+#             })
+
+#             min_price = min(min_price, float(row[6] or float('inf')))
+#             max_price = max(max_price, float(row[7] or 0))
+
+#         return {
+#             "keyword": keyword,
+#             "total_products": total_products,
+#             "total_reviews": total_reviews,
+#             "brands": brands,
+#             "price_range": {
+#                 "min": round(min_price if min_price != float('inf') else 0, 2),
+#                 "max": round(max_price, 2)
+#             },
+#             "marketplace": marketplace
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=500, detail=f"Error analyzing keyword: {str(e)}")
+
+
+# # ==================== Progress Tracking ====================
+
+# @app.get("/sov/progress/{category_name}")
+# def track_sov_progress(
+#     category_name: str,
+#     your_brand: str,
+#     target_share: float = Query(default=20.0, ge=0, le=100),
+#     target_days: int = Query(default=90, ge=1),
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Track progress towards target market share"""
+#     try:
+#         # ✅ Uses the internal helper — no usage increment, no async mismatch
+#         current_sov = _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+#         if "error" in current_sov:
+#             return current_sov
+
+#         current_share = current_sov.get("your_brand_share") or 0
+
+#         # Calculate dates
+#         start_date = datetime.now() - timedelta(days=30)
+#         target_date = datetime.now() + timedelta(days=target_days)
+#         days_elapsed = 30
+#         days_remaining = target_days
+
+#         # Calculate growth rates
+#         required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
+#         actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
+
+#         is_on_track = actual_growth_rate >= required_growth_rate
+
+#         # Generate weekly progress
+#         weekly_progress = []
+#         weeks = min(12, (days_elapsed + days_remaining) // 7)
+
+#         for week in range(weeks):
+#             week_date = start_date + timedelta(weeks=week)
+#             projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
+
+#             weekly_progress.append({
+#                 "date": week_date.strftime("%Y-%m-%d"),
+#                 "share_percentage": round(projected_share, 2),
+#                 "reviews": int(current_sov["total_reviews"] * projected_share / 100),
+#                 "sales": int(current_sov["total_sales"] * projected_share / 100)
+#             })
+
+#         return {
+#             "category_name": category_name,
+#             "your_brand": your_brand,
+#             "current_share": round(current_share, 2),
+#             "target_share": target_share,
+#             "start_date": start_date.strftime("%Y-%m-%d"),
+#             "target_date": target_date.strftime("%Y-%m-%d"),
+#             "days_elapsed": days_elapsed,
+#             "days_remaining": days_remaining,
+#             "is_on_track": is_on_track,
+#             "required_growth_rate": round(required_growth_rate, 4),
+#             "actual_growth_rate": round(actual_growth_rate, 4),
+#             "weekly_progress": weekly_progress
+#         }
+
+#     except Exception as e:
+#         return {"error": f"Error tracking progress: {str(e)}"}
+
+
+# # ==================== Competitor Analysis ====================
+
+# @app.get("/sov/competitors/{category_name}")
+# def analyze_sov_competitors(
+#     category_name: str,
+#     your_brand: str,
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     limit: int = Query(default=10, ge=1, le=50),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get detailed competitor analysis"""
+#     try:
+#         # ✅ Uses the internal helper — no usage increment, no async mismatch
+#         sov_data = _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+#         if "error" in sov_data:
+#             return sov_data
+
+#         competitors = []
+#         for brand in sov_data["brands"]:
+#             if brand["brand"].lower() != your_brand.lower():
+#                 competitors.append({
+#                     "competitor_name": brand["brand"],
+#                     "market_share": brand["share_percentage"],
+#                     "avg_price": brand["avg_price"],
+#                     "total_products": brand["product_count"],
+#                     "avg_rating": brand["avg_rating"],
+#                     "total_reviews": brand["total_reviews"],
+#                     "total_sales": brand["total_sales"]
+#                 })
+
+#         # Sort by market share and limit
+#         competitors.sort(key=lambda x: x["market_share"], reverse=True)
+#         return {"competitors": competitors[:limit]}
+
+#     except Exception as e:
+#         return {"error": f"Error analyzing competitors: {str(e)}"}
+
+
+# # ==================== Combined SOV (Flipkart + Amazon) ====================
+
+# @app.get("/sov/combined/{category_name}")
+# def get_combined_sov(
+#     category_name: str,
+#     your_brand: Optional[str] = Query(default=None),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get combined Share of Voice from both Flipkart and Amazon"""
+#     try:
+#         # ✅ Both calls use the internal helper — no usage increment, no async mismatch
+#         flipkart_data = _get_category_sov_data(category_name, "flipkart", your_brand, db)
+#         amazon_data = _get_category_sov_data(category_name, "amazon", your_brand, db)
+
+#         # Handle errors
+#         if "error" in flipkart_data and "error" in amazon_data:
+#             return {"error": "No data found in either marketplace"}
+
+#         # Combine brand data
+#         brand_map = {}
+
+#         for data in [flipkart_data, amazon_data]:
+#             if "error" not in data:
+#                 for brand in data["brands"]:
+#                     brand_name = brand["brand"]
+#                     if brand_name not in brand_map:
+#                         brand_map[brand_name] = {
+#                             "reviews": 0,
+#                             "sales": 0,
+#                             "products": 0,
+#                             "ratings": [],
+#                             "prices": []
+#                         }
+
+#                     brand_map[brand_name]["reviews"] += brand["total_reviews"]
+#                     brand_map[brand_name]["sales"] += brand["total_sales"]
+#                     brand_map[brand_name]["products"] += brand["product_count"]
+#                     if brand["avg_rating"]:
+#                         brand_map[brand_name]["ratings"].append(brand["avg_rating"])
+#                     if brand["avg_price"]:
+#                         brand_map[brand_name]["prices"].append(brand["avg_price"])
+
+#         total_reviews = sum(b["reviews"] for b in brand_map.values())
+
+#         combined_brands = []
+#         your_brand_combined_share = None
+
+#         for brand_name, data in brand_map.items():
+#             share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
+
+#             combined_brand = {
+#                 "brand": brand_name,
+#                 "share_percentage": round(share_pct, 2),
+#                 "total_reviews": data["reviews"],
+#                 "total_sales": data["sales"],
+#                 "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
+#                 "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
+#                 "product_count": data["products"]
+#             }
+#             combined_brands.append(combined_brand)
+
+#             if your_brand and brand_name.lower() == your_brand.lower():
+#                 your_brand_combined_share = share_pct
+
+#         combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
+
+#         return {
+#             "category_name": category_name,
+#             "combined_brands": combined_brands,
+#             "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
+#             "amazon_data": amazon_data if "error" not in amazon_data else None,
+#             "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
+#         }
+
+#     except Exception as e:
+#         return {"error": f"Error getting combined SOV: {str(e)}"}
+
+
+# # ==================== Brands ====================
+
+# @app.get("/sov/brands")
+# def get_all_brands(
+#     marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get list of all available brands"""
+#     try:
+#         brands = set()
+
+#         if marketplace in ["flipkart", "all"]:
+#             flipkart_query = text("""
+#                 SELECT DISTINCT brand
+#                 FROM rapidapi_flipkart_products
+#                 WHERE brand IS NOT NULL AND brand != 'NULL'
+#                 ORDER BY brand
+#             """)
+#             result = db.execute(flipkart_query)
+#             brands.update([row[0] for row in result if row[0]])
+
+#         if marketplace in ["amazon", "all"]:
+#             amazon_query = text("""
+#                 SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
+#                 FROM rapidapi_amazon_products
+#                 WHERE product_title IS NOT NULL
+#                 ORDER BY brand
+#             """)
+#             result = db.execute(amazon_query)
+#             brands.update([row[0] for row in result if row[0]])
+
+#         return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
+
+#     except Exception as e:
+#         return {"error": f"Error fetching brands: {str(e)}"}
+
+
+# # ==================== Ollama helper — single source of truth ====================
+# # Change the model here and it changes everywhere.  Nothing else to update.
+
+# _OLLAMA_MODEL = "llama3.2:3b"
+
+
+# def _call_ollama(prompt: str, timeout: int) -> str:
+#     """
+#     Run one prompt through local Ollama.
+#     Returns cleaned output.  Empty string on any failure — callers do fallback.
+#     """
+#     try:
+#         result = subprocess.run(
+#             ["ollama", "run", _OLLAMA_MODEL],
+#             input=prompt,
+#             capture_output=True,
+#             text=True,
+#             encoding="utf-8",
+#             errors="ignore",
+#             timeout=timeout,
+#         )
+#         raw = (result.stdout or result.stderr or "").strip()
+#         # Strip tokens small local models like to emit
+#         raw = raw.replace("<|MODEL_RESPONSE|>", "").replace("</s>", "").strip()
+#         # Strip markdown code-fence wrappers  ```json … ```
+#         raw = re.sub(r"^```(?:json)?\s*", "", raw)
+#         raw = re.sub(r"\s*```$", "", raw)
+#         return raw.strip()
+#     except subprocess.TimeoutExpired:
+#         print(f"[ollama] timeout after {timeout}s")
+#     except FileNotFoundError:
+#         print("[ollama] binary not found — is Ollama running?")
+#     except Exception as e:
+#         print(f"[ollama] {e}")
+#     return ""
+
+
+# def _run_ollama_parallel(tasks: list[tuple[str, int]]) -> list[str]:
+#     """
+#     Fire every (prompt, timeout) pair concurrently in threads.
+#     Returns outputs in the same order as input.
+
+#     Why threads?  subprocess.run blocks on I/O waiting for the Ollama
+#     process.  ThreadPoolExecutor is the lightest correct primitive —
+#     no event-loop plumbing, works fine in sync FastAPI routes.
+#     """
+#     from concurrent.futures import ThreadPoolExecutor, as_completed
+
+#     results       = [""] * len(tasks)
+#     future_to_idx = {}
+
+#     with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
+#         for idx, (prompt, timeout) in enumerate(tasks):
+#             future_to_idx[pool.submit(_call_ollama, prompt, timeout)] = idx
+
+#         for future in as_completed(future_to_idx):
+#             results[future_to_idx[future]] = future.result()
+
+#     return results
+
+
+# # ==================== AI Insights ====================
+
+# @app.post("/sov/ai-insights")
+# def get_ai_insights(
+#     category_name: str = Query(...),
+#     your_brand: str = Query(...),
+#     target_share: float = Query(default=25.0),
+#     target_days: int = Query(default=60),
+#     marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
+#     db: Session = Depends(get_db)
+# ):
+#     """Get AI-powered insights and recommendations using Ollama llama3.2:3b"""
+#     try:
+#         # ✅ Uses the internal helper — no usage increment, no async mismatch
+#         sov_data = _get_category_sov_data(category_name, marketplace, your_brand, db)
+
+#         if "error" in sov_data:
+#             return {"error": sov_data["error"], "ai_generated_insights": "Cannot generate insights without valid SOV data"}
+
+#         current_share = sov_data.get("your_brand_share") or 0
+#         market_leader = sov_data.get("market_leader")
+#         brands        = sov_data.get("brands", [])
+
+#         # ── early exits ──
+#         if not brands:
+#             return {
+#                 "error": "No brand data found",
+#                 "ai_generated_insights": "No brands found in this category for the selected marketplace"
+#             }
+
+#         # Find your brand data — case-insensitive
+#         your_brand_data = next(
+#             (b for b in brands if b["brand"].lower() == your_brand.lower()), None
+#         )
+#         if not your_brand_data:
+#             available_brands = [b["brand"] for b in brands[:10]]
+#             return {
+#                 "error": f"Brand '{your_brand}' not found in {marketplace}",
+#                 "ai_generated_insights": f"Brand not found. Available brands include: {', '.join(available_brands)}",
+#                 "available_brands": available_brands
+#             }
+
+#         # Find market leader data
+#         leader_data = next(
+#             (b for b in brands if b["brand"] == market_leader), None
+#         )
+
+#         # ── pull out your numbers once, reuse everywhere ──
+#         your_products   = your_brand_data.get("product_count", 0)  or 0
+#         your_avg_price  = your_brand_data.get("avg_price", 0)      or 0
+#         your_avg_rating = your_brand_data.get("avg_rating", 0)     or 0
+#         your_reviews    = your_brand_data.get("total_reviews", 0)  or 0
+#         leader_share    = (leader_data.get("share_percentage", 0) or 0) if leader_data else 0
+
+#         # ── rank — single pass ──
+#         rank = next(
+#             (i + 1 for i, b in enumerate(brands) if b["brand"].lower() == your_brand.lower()),
+#             None
+#         )
+
+#         # ── initialize the response shell ──
+#         insights = {
+#             "current_analysis": {
+#                 "current_share": current_share,
+#                 "target_share": target_share,
+#                 "gap": round(target_share - current_share, 2),
+#                 "days_to_target": target_days,
+#                 "required_daily_growth": round((target_share - current_share) / target_days, 4) if target_days > 0 else 0
+#             },
+#             "market_position": {
+#                 "rank": rank,
+#                 "total_brands": len(brands),
+#                 "distance_from_leader": round(leader_share - current_share, 2),
+#                 "market_leader": market_leader
+#             },
+#             "competitive_analysis": [],
+#             "actionable_recommendations": [],
+#             "growth_strategy": [],
+#             "product_gaps": [],
+#             "pricing_insights": {},
+#             "ai_generated_insights": ""
+#         }
+
+#         # ── Competitive Analysis — top 5 vs you ──
+#         top_5_brands = brands[:5]
+#         for competitor in top_5_brands:
+#             if competitor["brand"].lower() != your_brand.lower():
+#                 insights["competitive_analysis"].append({
+#                     "brand":            competitor["brand"],
+#                     "share":            competitor.get("share_percentage", 0) or 0,
+#                     "products":         competitor.get("product_count", 0)    or 0,
+#                     "avg_price":        competitor.get("avg_price", 0)        or 0,
+#                     "avg_rating":       competitor.get("avg_rating", 0)       or 0,
+#                     "reviews":          competitor.get("total_reviews", 0)    or 0,
+#                     "advantage":        "Higher" if (competitor.get("share_percentage", 0) or 0) > current_share else "Lower",
+#                     "price_comparison": "Cheaper" if (competitor.get("avg_price", 0) or 0) < your_avg_price else "More Expensive"
+#                 })
+
+#         # ── shared numbers for prompts ──
+#         top_competitors_for_prompt = [
+#             {
+#                 "brand":   c["brand"],
+#                 "share":   c.get("share", 0)       or 0,
+#                 "products": c.get("products", 0)   or 0,
+#                 "price":   c.get("avg_price", 0)   or 0,
+#                 "rating":  c.get("avg_rating", 0)  or 0,
+#             }
+#             for c in insights["competitive_analysis"][:3]
+#         ]
+
+#         gap        = target_share - current_share
+#         total_brands = len(brands)
+
+#         # phase count — used by prompt AND fallback
+#         num_phases = 2 if target_days <= 30 else (3 if target_days <= 60 else 4)
+
+#         # competitor text block — built once, used in both prompts
+#         competitor_lines = "\n".join(
+#             f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} avg price, {c['rating']} rating"
+#             for c in top_competitors_for_prompt
+#         ) or "- No competitor data available"
+
+#         # ──────────────────────────────────────────────────────
+#         # PROMPT 1 — Strategic Insights
+#         # Tighter than the Mistral version: llama3.2:3b is 3 B params,
+#         # so less context + clearer structure = better output.
+#         # ──────────────────────────────────────────────────────
+#         ai_prompt = (
+#             "You are an expert market analyst. Analyze this e-commerce data.\n\n"
+#             "MARKET DATA:\n"
+#             f"- Marketplace: {marketplace.upper()}\n"
+#             f"- Brand: {your_brand} | Category: {category_name}\n"
+#             f"- Current Share: {current_share}% | Target: {target_share}% | Timeline: {target_days} days\n"
+#             f"- Rank: #{rank} of {total_brands} | Market Leader: {market_leader} ({leader_share}% share)\n\n"
+#             "YOUR BRAND:\n"
+#             f"- Products: {your_products} | Avg Price: ₹{your_avg_price} | Rating: {your_avg_rating} | Reviews: {your_reviews}\n\n"
+#             "TOP COMPETITORS:\n"
+#             f"{competitor_lines}\n\n"
+#             "Respond in EXACTLY this format, nothing else:\n\n"
+#             "1. KEY INSIGHTS:\n"
+#             "- [Critical observation]\n"
+#             "- [Major opportunity]\n"
+#             "- [Biggest challenge]\n\n"
+#             "2. PRIORITY ACTIONS:\n"
+#             "- [Action with impact]\n"
+#             "- [Action with impact]\n"
+#             "- [Action with impact]\n\n"
+#             "3. COMPETITIVE ADVANTAGE:\n"
+#             "[One sentence on differentiation]\n\n"
+#             "4. RISK FACTORS:\n"
+#             "[One sentence on main risks]"
+#         )
+
+#         # ──────────────────────────────────────────────────────
+#         # PROMPT 2 — Growth Strategy (must return pure JSON)
+#         # Explicit JSON example keeps llama3.2:3b on-format.
+#         # ──────────────────────────────────────────────────────
+#         growth_prompt = (
+#             f"Create a {num_phases}-phase e-commerce growth roadmap.\n"
+#             "Return ONLY valid JSON — no text before or after, no markdown.\n\n"
+#             "DATA:\n"
+#             f"- Brand: {your_brand} | Marketplace: {marketplace.upper()} | Category: {category_name}\n"
+#             f"- Current Share: {current_share}% | Target: {target_share}% | Gap: {gap}% | Days: {target_days}\n"
+#             f"- Rank: #{rank} | Products: {your_products} | Avg Price: ₹{your_avg_price} | Rating: {your_avg_rating} | Reviews: {your_reviews}\n\n"
+#             "COMPETITORS:\n"
+#             f"{competitor_lines}\n\n"
+#             "Rules:\n"
+#             "- Phase 1 = quick wins (pricing, listings, reviews)\n"
+#             "- Middle phases = product expansion + marketing\n"
+#             "- Last phase = scaling + dominance\n"
+#             "- 3-4 actions per phase, specific to {marketplace}\n"
+#             f"- Targets progress linearly to {target_share}%\n\n"
+#             "Output ONLY this JSON shape:\n"
+#             '{"phases":[{"phase":"Phase 1 (Days 1-X)","focus":"…","actions":["…","…","…"],"target":"X.X% market share"}]}'
+#         )
+
+#         # ── FIRE BOTH PROMPTS IN PARALLEL ──
+#         # Original: two sequential subprocess.run calls → ~55-70 s total
+#         # Now:      both run concurrently            → ~max(30, 40) = 40 s worst-case
+#         ai_output, growth_output = _run_ollama_parallel([
+#             (ai_prompt,    30),   # strategic insights — 30 s
+#             (growth_prompt, 40),  # growth JSON        — 40 s
+#         ])
+
+#         # ── process prompt-1 output ──
+#         insights["ai_generated_insights"] = (
+#             ai_output
+#             if ai_output and len(ai_output) > 20
+#             else "AI analysis temporarily unavailable. Using rule-based recommendations below."
+#         )
+
+#         # ── process prompt-2 output (JSON parse with single fallback) ──
+#         growth_ok = False
+#         if growth_output:
+#             try:
+#                 growth_data = json.loads(growth_output)
+#                 phases = growth_data.get("phases")
+#                 if isinstance(phases, list) and phases:
+#                     insights["growth_strategy"] = phases
+#                     growth_ok = True
+#                     print("✓ AI growth strategy parsed OK")
+#             except (json.JSONDecodeError, ValueError) as e:
+#                 print(f"[growth] JSON parse failed: {e}")
+
+#         if not growth_ok:
+#             print("[growth] using rule-based fallback")
+#             insights["growth_strategy"] = _generate_fallback_strategy(
+#                 gap, target_days, current_share, target_share, num_phases
+#             )
+
+#         # ── Rule-Based Actionable Recommendations ──
+#         # Averages from top-5 (computed once)
+#         avg_products = (
+#             sum(b.get("product_count", 0) for b in top_5_brands if b.get("product_count"))
+#             / max(sum(1 for b in top_5_brands if b.get("product_count")), 1)
+#         )
+#         avg_rating = (
+#             sum(b.get("avg_rating", 0) for b in top_5_brands if b.get("avg_rating"))
+#             / max(sum(1 for b in top_5_brands if b.get("avg_rating")), 1)
+#         )
+#         avg_reviews = (
+#             sum(b.get("total_reviews", 0) for b in top_5_brands if b.get("total_reviews"))
+#             / max(sum(1 for b in top_5_brands if b.get("total_reviews")), 1)
+#         )
+#         avg_price = (
+#             sum(b.get("avg_price", 0) for b in top_5_brands if b.get("avg_price"))
+#             / max(sum(1 for b in top_5_brands if b.get("avg_price")), 1)
+#         )
+
+#         # Product expansion
+#         if avg_products > 0 and your_products < avg_products:
+#             insights["actionable_recommendations"].append({
+#                 "type": "Product Expansion",
+#                 "priority": "High",
+#                 "current": your_products,
+#                 "benchmark": int(avg_products),
+#                 "action": f"Expand product line by {int(avg_products - your_products)} products to match competitors",
+#                 "impact": "Could increase market share by 2-5%"
+#             })
+
+#         # Quality / rating
+#         if avg_rating > 0 and your_avg_rating > 0 and your_avg_rating < avg_rating:
+#             insights["actionable_recommendations"].append({
+#                 "type": "Quality Improvement",
+#                 "priority": "High",
+#                 "current": your_avg_rating,
+#                 "benchmark": round(avg_rating, 2),
+#                 "action": f"Improve product rating by {round(avg_rating - your_avg_rating, 2)} points through quality enhancements",
+#                 "impact": "Better ratings can increase conversions by 15-20%"
+#             })
+
+#         # Review generation
+#         if avg_reviews > 0 and your_reviews < avg_reviews:
+#             insights["actionable_recommendations"].append({
+#                 "type": "Review Generation",
+#                 "priority": "Medium",
+#                 "current": your_reviews,
+#                 "benchmark": int(avg_reviews),
+#                 "action": f"Increase reviews by {int(avg_reviews - your_reviews)} through customer engagement campaigns",
+#                 "impact": "More reviews increase trust and visibility"
+#             })
+
+#         # Pricing
+#         if avg_price > 0 and your_avg_price > 0:
+#             price_diff = your_avg_price - avg_price
+#             if abs(price_diff) > avg_price * 0.15:
+#                 if price_diff > 0:
+#                     insights["actionable_recommendations"].append({
+#                         "type": "Pricing Optimization",
+#                         "priority": "Medium",
+#                         "current": your_avg_price,
+#                         "benchmark": round(avg_price, 2),
+#                         "action": f"Consider reducing price by ₹{round(price_diff, 2)} to be more competitive",
+#                         "impact": "Price optimization can increase sales by 10-15%"
+#                     })
+#                 else:
+#                     insights["actionable_recommendations"].append({
+#                         "type": "Premium Positioning",
+#                         "priority": "Low",
+#                         "current": your_avg_price,
+#                         "benchmark": round(avg_price, 2),
+#                         "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
+#                         "impact": "Could justify price increase with improved marketing"
+#                     })
+
+#         # ── Product Gaps Analysis ──
+#         try:
+#             if marketplace == "flipkart":
+#                 gaps_query = text("""
+#                     SELECT
+#                         product_title,
+#                         COUNT(*) as competitor_products,
+#                         AVG(product_price) as avg_price,
+#                         AVG(CAST(product_star_rating AS FLOAT)) as avg_rating,
+#                         SUM(product_rating_count) as total_reviews
+#                     FROM rapidapi_flipkart_products
+#                     WHERE category_name = :category_name
+#                         AND LOWER(brand) != LOWER(:your_brand)
+#                     GROUP BY product_title
+#                     HAVING COUNT(*) >= 2
+#                     ORDER BY total_reviews DESC
+#                     LIMIT 10
+#                 """)
+#             else:
+#                 gaps_query = text("""
+#                     SELECT
+#                         product_title,
+#                         COUNT(*) as competitor_products,
+#                         AVG(product_price_numeric) as avg_price,
+#                         AVG(product_star_rating_numeric) as avg_rating,
+#                         SUM(product_num_ratings) as total_reviews
+#                     FROM rapidapi_amazon_products
+#                     WHERE category_name = :category_name
+#                         AND LOWER(brand) != LOWER(:your_brand)
+#                     GROUP BY product_title
+#                     HAVING COUNT(*) >= 2
+#                     ORDER BY total_reviews DESC
+#                     LIMIT 10
+#                 """)
+
+#             result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
+#             gaps_rows = result.fetchall()
+
+#             for gap_item in gaps_rows[:5]:
+#                 demand = int(gap_item[4]) if gap_item[4] else 0
+#                 insights["product_gaps"].append({
+#                     "product_type":         gap_item[0][:100] if gap_item[0] else "Unknown",
+#                     "competitors_offering": int(gap_item[1]) if gap_item[1] else 0,
+#                     "avg_price":            round(float(gap_item[2]), 2) if gap_item[2] else 0,
+#                     "avg_rating":           round(float(gap_item[3]), 2) if gap_item[3] else 0,
+#                     "total_demand":         demand,
+#                     "opportunity":          "High" if demand > 1000 else ("Medium" if demand > 500 else "Low")
+#                 })
+#         except Exception as e:
+#             print(f"Product gaps error: {str(e)}")
+
+#         # ── Pricing Insights ──
+#         if your_avg_price and avg_price > 0:
+#             budget_count   = sum(1 for b in brands if b.get("avg_price") and b["avg_price"] < your_avg_price * 0.8)
+#             similar_count  = sum(1 for b in brands if b.get("avg_price") and your_avg_price * 0.8 <= b["avg_price"] <= your_avg_price * 1.2)
+#             premium_count  = sum(1 for b in brands if b.get("avg_price") and b["avg_price"] > your_avg_price * 1.2)
+
+#             insights["pricing_insights"] = {
+#                 "your_price":                your_avg_price,
+#                 "market_average":            round(avg_price, 2),
+#                 "budget_competitors":        budget_count,
+#                 "similar_price_competitors": similar_count,
+#                 "premium_competitors":       premium_count,
+#                 "price_positioning":         "Budget" if your_avg_price < avg_price * 0.8 else ("Premium" if your_avg_price > avg_price * 1.2 else "Mid-Range"),
+#                 "recommendation":            "Your pricing is competitive" if similar_count > budget_count else "Consider price adjustment to be more competitive"
+#             }
+
+#         return insights
+
+#     except Exception as e:
+#         print(f"Error in AI insights: {traceback.format_exc()}")
+#         return {
+#             "error": f"Error generating AI insights: {str(e)}",
+#             "ai_generated_insights": "Unable to generate insights due to an error. Please try again.",
+#             "details": str(e)
+#         }
+
+
+# # ==================== Fallback Growth Strategy ====================
+
+# def _generate_fallback_strategy(gap, target_days, current_share, target_share, num_phases):
+#     """Generate rule-based growth strategy when AI is unavailable"""
+
+#     days_per_phase = target_days // num_phases
+#     strategies = []
+
+#     for i in range(num_phases):
+#         start_day = i * days_per_phase + 1
+#         end_day = (i + 1) * days_per_phase if i < num_phases - 1 else target_days
+
+#         # Calculate progressive target
+#         progress_ratio = (i + 1) / num_phases
+#         phase_target = round(current_share + (gap * progress_ratio), 2)
+
+#         if i == 0:
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Quick Wins & Foundation",
+#                 "actions": [
+#                     "Launch aggressive review generation campaign with post-purchase emails",
+#                     "Optimize top 5 product listings with better keywords and images",
+#                     "Run limited-time promotional pricing on bestsellers",
+#                     "Set up automated customer feedback system"
+#                 ],
+#                 "target": f"{phase_target}% market share"
+#             }
+#         elif i == num_phases - 1:
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Market Dominance & Scaling",
+#                 "actions": [
+#                     "Scale successful products with increased inventory",
+#                     "Launch premium product line to capture higher margins",
+#                     "Implement customer loyalty and referral program",
+#                     "Expand to adjacent categories with proven success formula"
+#                 ],
+#                 "target": f"{target_share}% market share"
+#             }
+#         elif i == 1:
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Product Expansion & Marketing",
+#                 "actions": [
+#                     "Add 5-7 new product variants based on competitor gaps",
+#                     "Launch influencer marketing campaign with micro-influencers",
+#                     "Improve product photography and video content",
+#                     "Implement A/B testing on product descriptions and pricing"
+#                 ],
+#                 "target": f"{phase_target}% market share"
+#             }
+#         else:
+#             phase = {
+#                 "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
+#                 "focus": "Growth Acceleration",
+#                 "actions": [
+#                     "Expand product catalog with data-driven selections",
+#                     "Launch seasonal promotions and bundle offers",
+#                     "Optimize pricing strategy based on competitor monitoring",
+#                     "Increase advertising spend on top-performing products"
+#                 ],
+#                 "target": f"{phase_target}% market share"
+#             }
+
+#         strategies.append(phase)
+
+#     return strategies

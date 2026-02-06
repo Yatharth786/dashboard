@@ -418,6 +418,7 @@ import {
   Users,
   History,
   Target,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -439,6 +440,8 @@ const SECTIONS = [
       { href: "/overview", label: "Overview", icon: DollarSign },
       { href: "/categories", label: "Categories", icon: PieChart },
       { href: "/product-tracker", label: "Product Radar", icon: Target },
+      { href: "/share-of-voice", label: "Market Visibility Score", icon: BarChart3},
+      { href: "/keyword-tracker", label: "Keyword Tracker", icon: History}
     ],
   },
 ];

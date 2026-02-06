@@ -939,6 +939,7 @@ import SentimentProducts from "@/pages/sentiment-products";
 import ProductTracker from "@/pages/product-tracker";
 import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
 import ShareOfVoice from "@/pages/ShareOfVoice";
+import KeywordTracker from "@/pages/keyword-tracker";
 
 
 // ==================
@@ -1189,6 +1190,7 @@ function Router() {
       <ProtectedRoute path="/subscription" component={Subscription} />
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/share-of-voice" component={ShareOfVoice} />
+      <ProtectedRoute path="/keyword-tracker" component={KeywordTracker} />
 
       {/* 404 Fallback */}
       <Route component={NotFound} />

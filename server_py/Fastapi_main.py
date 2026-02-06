@@ -15,12 +15,12 @@ import numpy as np
 import pandas as pd
 from decimal import Decimal
 from server_py.crud import lstm_forecast
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from . import crud, schemas, models
 from .database_config import get_db, engine
 import requests, traceback
 models.Base.metadata.create_all(bind=engine)
-from .models import AmazonProductDetails, User
+from .models import AmazonProductDetails, User, TrackedProduct, KeywordRankHistory
 app = FastAPI(title="API", version="1.0.0")
 
 app.add_middleware(
@@ -11748,6 +11748,343 @@ def generate_fallback_strategy(gap, target_days, current_share, target_share, nu
 
 
 
+# import os
+# import requests
+# from dotenv import load_dotenv
+# from datetime import datetime
+# from typing import List
+# from fastapi import FastAPI, HTTPException, Depends
+# from pydantic import BaseModel
+# from sqlalchemy.orm import Session
+# from pathlib import Path
+# from collections import defaultdict
+
+# BASE_DIR = Path(__file__).resolve().parent
+# ENV_PATH = BASE_DIR / ".env"
+
+# load_dotenv(dotenv_path=ENV_PATH, override=True)
+
+# print("ENV PATH:", ENV_PATH)
+# print("RAPIDAPI_KEY:", os.getenv("RAPIDAPI_KEY"))
+
+# RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
+# RAPIDAPI_HOST = os.environ.get("RAPIDAPI_HOST", "real-time-amazon-data.p.rapidapi.com")
+# AMAZON_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-products"
+
+# HEADERS = {
+#     "X-RapidAPI-Key": RAPIDAPI_KEY,
+#     "X-RapidAPI-Host": RAPIDAPI_HOST
+# }
+
+# # ----------------------
+# # Pydantic schemas
+# # ----------------------
+# class ProductTrackRequest(BaseModel):
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str = "IN"
+
+# class TrackedProductResponse(BaseModel):
+#     id: int
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+# class KeywordTrackRequest(BaseModel):
+#     tracked_product_id: int
+#     keywords: List[str]
+
+# class KeywordRankResponse(BaseModel):
+#     keyword: str
+#     rank: Optional[int] = 0
+#     checked_at: datetime
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+# class AIAnalysisResponse(BaseModel):
+#     product_title: str
+#     asin: str
+#     total_keywords: int
+#     analysis: dict 
+
+# # ----------------------
+# # 6️⃣ AI-Powered Keyword Analysis using Ollama
+# # ----------------------
+# @app.get("/keyword_tracker/ai_analysis/{tracked_product_id}", response_model=AIAnalysisResponse)
+# def get_ai_keyword_analysis(tracked_product_id: int, db: Session = Depends(get_db)):
+#     """
+#     Generate AI-powered insights for keyword rankings using Ollama Mistral
+#     """
+#     # Get the product
+#     product = db.query(TrackedProduct).filter(TrackedProduct.id == tracked_product_id).first()
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Tracked product not found")
+
+#     # Get all keyword rank history for this product
+#     rank_history = db.query(KeywordRankHistory)\
+#         .filter(KeywordRankHistory.tracked_product_id == tracked_product_id)\
+#         .order_by(KeywordRankHistory.keyword, KeywordRankHistory.checked_at.desc())\
+#         .all()
+
+#     if not rank_history:
+#         raise HTTPException(status_code=404, detail="No rank history found for this product")
+
+#     # Organize rank history by keyword
+#     keyword_ranks = defaultdict(list)
+#     for entry in rank_history:
+#         keyword_ranks[entry.keyword].append({
+#             "rank": entry.rank,
+#             "checked_at": entry.checked_at.isoformat()
+#         })
+
+#     # Prepare data summary for AI
+#     rank_summary = []
+#     for keyword, ranks in keyword_ranks.items():
+#         if len(ranks) >= 2:
+#             latest_rank = ranks[0]["rank"]
+#             previous_rank = ranks[1]["rank"]
+#             change = previous_rank - latest_rank  # Positive = improved, Negative = declined
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": latest_rank,
+#                 "previous_rank": previous_rank,
+#                 "change": change,
+#                 "trend": "improved" if change > 0 else "declined" if change < 0 else "stable"
+#             })
+#         else:
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": ranks[0]["rank"],
+#                 "previous_rank": None,
+#                 "change": 0,
+#                 "trend": "new"
+#             })
+
+#     # Create AI prompt
+#     prompt = f"""You are an Amazon SEO expert analyzing keyword ranking performance for a product.
+
+# Product: {product.product_title}
+# ASIN: {product.asin}
+# Country: {product.country}
+
+# Current Keyword Rankings:
+# {json.dumps(rank_summary, indent=2)}
+
+# Provide a detailed analysis in the following JSON format (respond ONLY with valid JSON, no markdown):
+# {{
+#   "why_changed": "Explain the likely reasons for rank changes (2-3 sentences)",
+#   "what_to_do": "Actionable steps the seller should take immediately (3-4 bullet points)",
+#   "which_keywords_matter": "Identify the most important keywords to focus on and why (2-3 keywords with explanations)",
+#   "future_prediction": "Predict potential ranking trends for the next 30 days (2-3 sentences)",
+#   "product_optimization": "Specific product listing optimization recommendations (3-4 bullet points)",
+#   "roadmap": "30-60-90 day strategic roadmap (3 phases with specific goals)"
+# }}
+
+# Be specific, data-driven, and focus on actionable insights."""
+
+#     try:
+#         # Call Ollama API
+#         ollama_response = requests.post(
+#             "http://localhost:11434/api/generate",
+#             json={
+#                 "model": "mistral",
+#                 "prompt": prompt,
+#                 "stream": False,
+#                 "format": "json"
+#             },
+#             timeout=60
+#         )
+        
+#         if ollama_response.status_code != 200:
+#             raise HTTPException(status_code=500, detail=f"Ollama API error: {ollama_response.text}")
+
+#         # Parse Ollama response
+#         ollama_data = ollama_response.json()
+#         ai_response_text = ollama_data.get("response", "{}")
+        
+#         # Clean up response (remove markdown if present)
+#         ai_response_text = ai_response_text.strip()
+#         if ai_response_text.startswith("```json"):
+#             ai_response_text = ai_response_text[7:]
+#         if ai_response_text.startswith("```"):
+#             ai_response_text = ai_response_text[3:]
+#         if ai_response_text.endswith("```"):
+#             ai_response_text = ai_response_text[:-3]
+#         ai_response_text = ai_response_text.strip()
+
+#         # Parse AI response
+#         try:
+#             analysis = json.loads(ai_response_text)
+#         except json.JSONDecodeError:
+#             # Fallback response if JSON parsing fails
+#             analysis = {
+#                 "why_changed": "Unable to parse AI response. Please try again.",
+#                 "what_to_do": "Check your keyword rankings manually and adjust your listing accordingly.",
+#                 "which_keywords_matter": "Focus on keywords with high search volume and low competition.",
+#                 "future_prediction": "Rankings may fluctuate based on competition and seasonality.",
+#                 "product_optimization": "Improve product images, title, and description with relevant keywords.",
+#                 "roadmap": "Week 1-4: Optimize listing. Week 5-8: Monitor rankings. Week 9-12: Adjust strategy."
+#             }
+
+#         return {
+#             "product_title": product.product_title,
+#             "asin": product.asin,
+#             "total_keywords": len(rank_summary),
+#             "analysis": analysis
+#         }
+
+#     except requests.exceptions.RequestException as e:
+#         raise HTTPException(status_code=503, detail=f"Ollama service unavailable: {str(e)}. Make sure Ollama is running on localhost:11434")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+# # ----------------------
+# # 1️⃣ Fetch live seller products and store in DB
+# # ----------------------
+# @app.get("/keyword_tracker/fetch_and_store_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def fetch_and_store_seller_products(seller_id: str, country: str = "IN", page: int = 1, db: Session = Depends(get_db)):
+#     try:
+#         params = {
+#             "seller_id": seller_id,
+#             "country": country,
+#             "page": page,
+#             "sort_by": "RELEVANCE"
+#         }
+#         print("HEADERS SENT:", HEADERS)
+
+#         response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#         response.raise_for_status()
+#         data = response.json()
+
+#         seller_products = data.get("data", {}).get("seller_products", [])
+#         if not seller_products:
+#             print("No products returned from RapidAPI")
+#             return []
+
+#         saved_products = []
+
+#         for item in seller_products:
+#             existing = db.query(TrackedProduct).filter(
+#                 TrackedProduct.seller_id == seller_id,
+#                 TrackedProduct.asin == item["asin"]
+#             ).first()
+#             if existing:
+#                 saved_products.append(existing)
+#                 continue
+
+#             new_product = TrackedProduct(
+#                 seller_id=seller_id,
+#                 asin=item["asin"],
+#                 product_title=item["product_title"],
+#                 product_photo=item.get("product_photo", ""),
+#                 country=country
+#             )
+#             db.add(new_product)
+#             db.commit()
+#             db.refresh(new_product)
+#             saved_products.append(new_product)
+
+#         return saved_products
+
+#     except requests.exceptions.RequestException as e:
+#         print(f"RapidAPI request failed: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"RapidAPI request failed: {str(e)}")
+#     except Exception as e:
+#         print(f"Unexpected error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+# # ----------------------
+# # 2️⃣ Track keywords for a product
+# # ----------------------
+# @app.post("/keyword_tracker/track_keywords")
+# def track_keywords(req: KeywordTrackRequest, db: Session = Depends(get_db)):
+#     product = db.query(TrackedProduct).filter(TrackedProduct.id == req.tracked_product_id).first()
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Tracked product not found")
+
+#     for kw in req.keywords:
+#         existing_kw = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == req.tracked_product_id,
+#             KeywordRankHistory.keyword == kw
+#         ).first()
+#         if existing_kw:
+#             continue
+#         entry = KeywordRankHistory(
+#     tracked_product_id=req.tracked_product_id,
+#     keyword=kw,
+#     rank=0,
+#     checked_at=datetime.utcnow()
+# )
+
+#         db.add(entry)
+#     db.commit()
+#     return {"status": "ok"}
+
+# # ----------------------
+# # 3️⃣ Get all tracked products for a seller
+# # ----------------------
+# @app.get("/keyword_tracker/tracked_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def get_tracked_products(seller_id: str, db: Session = Depends(get_db)):
+#     products = db.query(TrackedProduct).filter(TrackedProduct.seller_id == seller_id).all()
+#     return products
+
+# # ----------------------
+# # 4️⃣ Get keyword rank history for a product
+# # ----------------------
+# @app.get("/keyword_tracker/rank_history/{tracked_product_id}", response_model=List[KeywordRankResponse])
+# def get_rank_history(tracked_product_id: int, db: Session = Depends(get_db)):
+#     history = db.query(KeywordRankHistory)\
+#         .filter(KeywordRankHistory.tracked_product_id == tracked_product_id)\
+#         .order_by(KeywordRankHistory.checked_at.asc())\
+#         .all()
+#     return history
+
+# # ----------------------
+# # 5️⃣ Update daily ranks using RapidAPI
+# # ----------------------
+# @app.post("/keyword_tracker/update_daily_ranks")
+# def update_daily_ranks(db: Session = Depends(get_db)):
+#     """
+#     Update ranks for all tracked keywords using live RapidAPI data.
+#     """
+#     products = db.query(TrackedProduct).all()
+#     for product in products:
+#         for kw in product.keywords:
+#             try:
+#                 # Call RapidAPI to fetch seller products for this seller
+#                 params = {
+#                     "seller_id": product.seller_id,
+#                     "country": product.country,
+#                     "page": 1,
+#                     "sort_by": "RELEVANCE"
+#                 }
+#                 response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#                 response.raise_for_status()
+#                 data = response.json()
+#                 seller_products = data.get("data", {}).get("seller_products", [])
+
+#                 # Find rank of the ASIN in seller_products
+#                 asin_rank_map = {item["asin"]: idx + 1 for idx, item in enumerate(seller_products)}
+#                 rank = asin_rank_map.get(product.asin)
+#                 if rank:
+#                     kw.rank = rank
+#                     kw.checked_at = datetime.utcnow()
+#             except Exception as e:
+#                 print(f"Error updating rank for {product.asin}, keyword {kw.keyword}: {str(e)}")
+
+#     db.commit()
+#     return {"status": "success"}
 
 
 
@@ -11757,1272 +12094,2478 @@ def generate_fallback_strategy(gap, target_days, current_share, target_share, nu
 
 
 
-class BrandShareData(BaseModel):
-    brand: str
-    share_percentage: float
-    total_reviews: int
-    total_sales: int
-    avg_rating: Optional[float]
-    avg_price: Optional[float]
-    product_count: int
-
-class CategorySOVResponse(BaseModel):
-    category_name: str
-    total_products: int
-    total_reviews: int
-    total_sales: int
-    brands: List[BrandShareData]
-    your_brand_share: Optional[float]
-    market_leader: Optional[str]
-    marketplace: str
-
-class KeywordSOVResponse(BaseModel):
-    keyword: str
-    total_products: int
-    total_reviews: int
-    brands: List[BrandShareData]
-    price_range: Dict[str, float]
-    marketplace: str
-
-class ProgressTrackingData(BaseModel):
-    date: str
-    share_percentage: float
-    reviews: int
-    sales: int
-
-class ProgressTrackingResponse(BaseModel):
-    category_name: str
-    your_brand: str
-    current_share: float
-    target_share: float
-    start_date: str
-    target_date: str
-    days_elapsed: int
-    days_remaining: int
-    is_on_track: bool
-    required_growth_rate: float
-    actual_growth_rate: float
-    weekly_progress: List[ProgressTrackingData]
-
-class CompetitorAnalysis(BaseModel):
-    competitor_name: str
-    market_share: float
-    avg_price: float
-    total_products: int
-    avg_rating: Optional[float]
-    total_reviews: int
-    total_sales: int
-
-class CombinedSOVResponse(BaseModel):
-    category_name: str
-    combined_brands: List[BrandShareData]
-    flipkart_data: CategorySOVResponse
-    amazon_data: CategorySOVResponse
-    your_brand_combined_share: Optional[float]
 
 
-# ==================== Tier Limits ====================
 
-SOV_TIER_LIMITS = {
-    'free': 3,           # Free tier: 3 SOV analyses per month
-    'basic': 15,         # Basic tier: 15 SOV analyses per month
-    'premium': -1,       # Premium tier: unlimited
-    'enterprise': -1     # Enterprise tier: unlimited
+# import os
+# import json
+# import requests
+# from dotenv import load_dotenv
+# from datetime import datetime
+# from typing import List, Optional
+# from fastapi import FastAPI, HTTPException, Depends
+# from pydantic import BaseModel
+# from sqlalchemy.orm import Session
+# from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.orm import relationship
+# from pathlib import Path
+# from collections import defaultdict
+
+# BASE_DIR = Path(__file__).resolve().parent
+# ENV_PATH = BASE_DIR / ".env"
+
+# load_dotenv(dotenv_path=ENV_PATH, override=True)
+
+# print("ENV PATH:", ENV_PATH)
+# print("RAPIDAPI_KEY:", os.getenv("RAPIDAPI_KEY"))
+
+# RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
+# RAPIDAPI_HOST = os.environ.get("RAPIDAPI_HOST", "real-time-amazon-data.p.rapidapi.com")
+# AMAZON_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-products"
+
+# HEADERS = {
+#     "X-RapidAPI-Key": RAPIDAPI_KEY,
+#     "X-RapidAPI-Host": RAPIDAPI_HOST
+# }
+
+# Base = declarative_base()
+
+# class ProductTrackRequest(BaseModel):
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str = "IN"
+#     user_email: str  # ✅ Added
+
+
+# class TrackedProductResponse(BaseModel):
+#     id: int
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str
+#     user_email: str  # ✅ Added
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+
+# class KeywordTrackRequest(BaseModel):
+#     tracked_product_id: int
+#     keywords: List[str]
+#     user_email: str  # ✅ Added
+
+
+# class KeywordRankResponse(BaseModel):
+#     keyword: str
+#     rank: Optional[int] = 0
+#     checked_at: datetime
+#     user_email: str  # ✅ Added
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+
+# class AIAnalysisResponse(BaseModel):
+#     product_title: str
+#     asin: str
+#     total_keywords: int
+#     analysis: dict
+
+
+# class UpdateRanksRequest(BaseModel):
+#     user_email: str  # ✅ Added
+
+
+# # ----------------------
+# # 1️⃣ Fetch live seller products and store in DB with user_email
+# # ----------------------
+# @app.get("/keyword_tracker/fetch_and_store_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def fetch_and_store_seller_products(
+#     seller_id: str, 
+#     country: str = "IN", 
+#     page: int = 1, 
+#     user_email: str = None,  # ✅ Added query parameter
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Fetch products from Amazon API and store them with user_email
+#     """
+#     # ✅ Validate user_email
+#     if not user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     try:
+#         params = {
+#             "seller_id": seller_id,
+#             "country": country,
+#             "page": page,
+#             "sort_by": "RELEVANCE"
+#         }
+#         print("HEADERS SENT:", HEADERS)
+#         print(f"Fetching products for user: {user_email}")
+
+#         response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#         response.raise_for_status()
+#         data = response.json()
+
+#         seller_products = data.get("data", {}).get("seller_products", [])
+#         if not seller_products:
+#             print("No products returned from RapidAPI")
+#             return []
+
+#         saved_products = []
+
+#         for item in seller_products:
+#             # ✅ Check if product already exists for this user
+#             existing = db.query(TrackedProduct).filter(
+#                 TrackedProduct.seller_id == seller_id,
+#                 TrackedProduct.asin == item["asin"],
+#                 TrackedProduct.user_email == user_email  # ✅ Added user filter
+#             ).first()
+            
+#             if existing:
+#                 saved_products.append(existing)
+#                 continue
+
+#             # ✅ Create new product with user_email
+#             new_product = TrackedProduct(
+#                 seller_id=seller_id,
+#                 asin=item["asin"],
+#                 product_title=item["product_title"],
+#                 product_photo=item.get("product_photo", ""),
+#                 country=country,
+#                 user_email=user_email  # ✅ Added user_email
+#             )
+#             db.add(new_product)
+#             db.commit()
+#             db.refresh(new_product)
+#             saved_products.append(new_product)
+
+#         print(f"Saved {len(saved_products)} products for user {user_email}")
+#         return saved_products
+
+#     except requests.exceptions.RequestException as e:
+#         print(f"RapidAPI request failed: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"RapidAPI request failed: {str(e)}")
+#     except Exception as e:
+#         print(f"Unexpected error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+# # ----------------------
+# # 2️⃣ Track keywords for a product with user_email
+# # ----------------------
+# @app.post("/keyword_tracker/track_keywords")
+# def track_keywords(req: KeywordTrackRequest, db: Session = Depends(get_db)):
+#     """
+#     Track keywords for a product with user_email
+#     """
+#     # ✅ Validate user_email
+#     if not req.user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     # ✅ Verify product exists and belongs to user
+#     product = db.query(TrackedProduct).filter(
+#         TrackedProduct.id == req.tracked_product_id,
+#         TrackedProduct.user_email == req.user_email  # ✅ Verify ownership
+#     ).first()
+    
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Tracked product not found or doesn't belong to this user")
+
+#     for kw in req.keywords:
+#         # ✅ Check if keyword already exists for this user
+#         existing_kw = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == req.tracked_product_id,
+#             KeywordRankHistory.keyword == kw,
+#             KeywordRankHistory.user_email == req.user_email  # ✅ Added user filter
+#         ).first()
+        
+#         if existing_kw:
+#             continue
+            
+#         # ✅ Create keyword entry with user_email
+#         entry = KeywordRankHistory(
+#             tracked_product_id=req.tracked_product_id,
+#             keyword=kw,
+#             rank=0,
+#             checked_at=datetime.utcnow(),
+#             user_email=req.user_email  # ✅ Added user_email
+#         )
+#         db.add(entry)
+    
+#     db.commit()
+#     print(f"Tracked {len(req.keywords)} keywords for user {req.user_email}")
+#     return {"status": "ok", "message": f"Keywords tracked for {req.user_email}"}
+
+
+# # ----------------------
+# # 3️⃣ Get all tracked products for a seller (filtered by user_email)
+# # ----------------------
+# @app.get("/keyword_tracker/tracked_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def get_tracked_products(
+#     seller_id: str, 
+#     user_email: str = None,  # ✅ Added query parameter
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get tracked products for a seller, optionally filtered by user_email
+#     """
+#     query = db.query(TrackedProduct).filter(TrackedProduct.seller_id == seller_id)
+    
+#     # ✅ Filter by user_email if provided
+#     if user_email:
+#         query = query.filter(TrackedProduct.user_email == user_email)
+    
+#     products = query.all()
+#     return products
+
+
+# # ----------------------
+# # 4️⃣ Get keyword rank history for a product (filtered by user)
+# # ----------------------
+# @app.get("/keyword_tracker/rank_history/{tracked_product_id}", response_model=List[KeywordRankResponse])
+# def get_rank_history(
+#     tracked_product_id: int, 
+#     user_email: str = None,  # ✅ Added query parameter
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get rank history for a product, optionally filtered by user_email
+#     """
+#     query = db.query(KeywordRankHistory).filter(
+#         KeywordRankHistory.tracked_product_id == tracked_product_id
+#     )
+    
+#     # ✅ Filter by user_email if provided
+#     if user_email:
+#         query = query.filter(KeywordRankHistory.user_email == user_email)
+    
+#     history = query.order_by(KeywordRankHistory.checked_at.asc()).all()
+#     return history
+
+
+# # ----------------------
+# # 5️⃣ Update daily ranks using RapidAPI (filtered by user)
+# # ----------------------
+# @app.post("/keyword_tracker/update_daily_ranks")
+# def update_daily_ranks(req: UpdateRanksRequest, db: Session = Depends(get_db)):
+#     """
+#     Update ranks for all tracked keywords for a specific user using live RapidAPI data.
+#     """
+#     # ✅ Validate user_email
+#     if not req.user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     # ✅ Get products for this user only
+#     products = db.query(TrackedProduct).filter(
+#         TrackedProduct.user_email == req.user_email
+#     ).all()
+    
+#     if not products:
+#         return {"status": "success", "message": f"No products found for {req.user_email}"}
+    
+#     updated_count = 0
+    
+#     for product in products:
+#         # Get keyword history for this product and user
+#         keyword_entries = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == product.id,
+#             KeywordRankHistory.user_email == req.user_email  # ✅ Filter by user
+#         ).all()
+        
+#         for kw_entry in keyword_entries:
+#             try:
+#                 # Call RapidAPI to fetch seller products for this seller
+#                 params = {
+#                     "seller_id": product.seller_id,
+#                     "country": product.country,
+#                     "page": 1,
+#                     "sort_by": "RELEVANCE"
+#                 }
+#                 response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#                 response.raise_for_status()
+#                 data = response.json()
+#                 seller_products = data.get("data", {}).get("seller_products", [])
+
+#                 # Find rank of the ASIN in seller_products
+#                 asin_rank_map = {item["asin"]: idx + 1 for idx, item in enumerate(seller_products)}
+#                 rank = asin_rank_map.get(product.asin)
+                
+#                 if rank:
+#                     kw_entry.rank = rank
+#                     kw_entry.checked_at = datetime.utcnow()
+#                     updated_count += 1
+                    
+#             except Exception as e:
+#                 print(f"Error updating rank for {product.asin}, keyword {kw_entry.keyword}: {str(e)}")
+
+#     db.commit()
+#     print(f"Updated {updated_count} keyword ranks for user {req.user_email}")
+#     return {
+#         "status": "success", 
+#         "message": f"Updated {updated_count} keyword ranks for {req.user_email}",
+#         "updated_count": updated_count
+#     }
+
+
+# # ----------------------
+# # 6️⃣ AI-Powered Keyword Analysis using Ollama (with user verification)
+# # ----------------------
+# @app.get("/keyword_tracker/ai_analysis/{tracked_product_id}", response_model=AIAnalysisResponse)
+# def get_ai_keyword_analysis(
+#     tracked_product_id: int, 
+#     user_email: str = None,  # ✅ Added query parameter
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Generate AI-powered insights for keyword rankings using Ollama Mistral
+#     Optionally filtered by user_email
+#     """
+#     # ✅ Get the product
+#     query = db.query(TrackedProduct).filter(TrackedProduct.id == tracked_product_id)
+    
+#     # ✅ Filter by user_email if provided (for security)
+#     if user_email:
+#         query = query.filter(TrackedProduct.user_email == user_email)
+    
+#     product = query.first()
+    
+#     if not product:
+#         raise HTTPException(
+#             status_code=404, 
+#             detail="Tracked product not found or doesn't belong to this user"
+#         )
+
+#     # ✅ Get keyword rank history (filtered by user if provided)
+#     rank_query = db.query(KeywordRankHistory).filter(
+#         KeywordRankHistory.tracked_product_id == tracked_product_id
+#     )
+    
+#     if user_email:
+#         rank_query = rank_query.filter(KeywordRankHistory.user_email == user_email)
+    
+#     rank_history = rank_query.order_by(
+#         KeywordRankHistory.keyword, 
+#         KeywordRankHistory.checked_at.desc()
+#     ).all()
+
+#     if not rank_history:
+#         raise HTTPException(status_code=404, detail="No rank history found for this product")
+
+#     # Organize rank history by keyword
+#     keyword_ranks = defaultdict(list)
+#     for entry in rank_history:
+#         keyword_ranks[entry.keyword].append({
+#             "rank": entry.rank,
+#             "checked_at": entry.checked_at.isoformat()
+#         })
+
+#     # Prepare data summary for AI
+#     rank_summary = []
+#     for keyword, ranks in keyword_ranks.items():
+#         if len(ranks) >= 2:
+#             latest_rank = ranks[0]["rank"]
+#             previous_rank = ranks[1]["rank"]
+#             change = previous_rank - latest_rank  # Positive = improved, Negative = declined
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": latest_rank,
+#                 "previous_rank": previous_rank,
+#                 "change": change,
+#                 "trend": "improved" if change > 0 else "declined" if change < 0 else "stable"
+#             })
+#         else:
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": ranks[0]["rank"],
+#                 "previous_rank": None,
+#                 "change": 0,
+#                 "trend": "new"
+#             })
+
+#     # Create AI prompt
+#     prompt = f"""You are an Amazon SEO expert analyzing keyword ranking performance for a product.
+
+# Product: {product.product_title}
+# ASIN: {product.asin}
+# Country: {product.country}
+
+# Current Keyword Rankings:
+# {json.dumps(rank_summary, indent=2)}
+
+# Provide a detailed analysis in the following JSON format (respond ONLY with valid JSON, no markdown):
+# {{
+#   "why_changed": "Explain the likely reasons for rank changes (2-3 sentences)",
+#   "what_to_do": "Actionable steps the seller should take immediately (3-4 bullet points)",
+#   "which_keywords_matter": "Identify the most important keywords to focus on and why (2-3 keywords with explanations)",
+#   "future_prediction": "Predict potential ranking trends for the next 30 days (2-3 sentences)",
+#   "product_optimization": "Specific product listing optimization recommendations (3-4 bullet points)",
+#   "roadmap": "30-60-90 day strategic roadmap (3 phases with specific goals)"
+# }}
+
+# Be specific, data-driven, and focus on actionable insights."""
+
+#     try:
+#         # Call Ollama API
+#         ollama_response = requests.post(
+#             "http://localhost:11434/api/generate",
+#             json={
+#                 "model": "mistral",
+#                 "prompt": prompt,
+#                 "stream": False,
+#                 "format": "json"
+#             },
+#             timeout=60
+#         )
+        
+#         if ollama_response.status_code != 200:
+#             raise HTTPException(status_code=500, detail=f"Ollama API error: {ollama_response.text}")
+
+#         # Parse Ollama response
+#         ollama_data = ollama_response.json()
+#         ai_response_text = ollama_data.get("response", "{}")
+        
+#         # Clean up response (remove markdown if present)
+#         ai_response_text = ai_response_text.strip()
+#         if ai_response_text.startswith("```json"):
+#             ai_response_text = ai_response_text[7:]
+#         if ai_response_text.startswith("```"):
+#             ai_response_text = ai_response_text[3:]
+#         if ai_response_text.endswith("```"):
+#             ai_response_text = ai_response_text[:-3]
+#         ai_response_text = ai_response_text.strip()
+
+#         # Parse AI response
+#         try:
+#             analysis = json.loads(ai_response_text)
+#         except json.JSONDecodeError:
+#             # Fallback response if JSON parsing fails
+#             analysis = {
+#                 "why_changed": "Unable to parse AI response. Please try again.",
+#                 "what_to_do": "Check your keyword rankings manually and adjust your listing accordingly.",
+#                 "which_keywords_matter": "Focus on keywords with high search volume and low competition.",
+#                 "future_prediction": "Rankings may fluctuate based on competition and seasonality.",
+#                 "product_optimization": "Improve product images, title, and description with relevant keywords.",
+#                 "roadmap": "Week 1-4: Optimize listing. Week 5-8: Monitor rankings. Week 9-12: Adjust strategy."
+#             }
+
+#         return {
+#             "product_title": product.product_title,
+#             "asin": product.asin,
+#             "total_keywords": len(rank_summary),
+#             "analysis": analysis
+#         }
+
+#     except requests.exceptions.RequestException as e:
+#         raise HTTPException(
+#             status_code=503, 
+#             detail=f"Ollama service unavailable: {str(e)}. Make sure Ollama is running on localhost:11434"
+#         )
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+
+
+
+# import os
+# import json
+# import requests
+# from dotenv import load_dotenv
+# from datetime import datetime
+# from typing import List, Optional
+# from fastapi import FastAPI, HTTPException, Depends
+# from pydantic import BaseModel
+# from sqlalchemy.orm import Session
+# from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.orm import relationship
+# from pathlib import Path
+# from collections import defaultdict
+
+# BASE_DIR = Path(__file__).resolve().parent
+# ENV_PATH = BASE_DIR / ".env"
+
+# load_dotenv(dotenv_path=ENV_PATH, override=True)
+
+# print("ENV PATH:", ENV_PATH)
+# print("RAPIDAPI_KEY:", os.getenv("RAPIDAPI_KEY"))
+
+# RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
+# RAPIDAPI_HOST = os.environ.get("RAPIDAPI_HOST", "real-time-amazon-data.p.rapidapi.com")
+# AMAZON_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-products"
+# AMAZON_REVIEWS_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-reviews"
+
+# HEADERS = {
+#     "X-RapidAPI-Key": RAPIDAPI_KEY,
+#     "X-RapidAPI-Host": RAPIDAPI_HOST
+# }
+
+# Base = declarative_base()
+
+# class ProductTrackRequest(BaseModel):
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str = "IN"
+#     user_email: str
+
+
+# class TrackedProductResponse(BaseModel):
+#     id: int
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str
+#     user_email: str
+#     review_comments: Optional[List[str]] = []
+#     review_ratings: Optional[List[int]] = []
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+
+# class KeywordTrackRequest(BaseModel):
+#     tracked_product_id: int
+#     keywords: List[str]
+#     user_email: str
+
+
+# class KeywordRankResponse(BaseModel):
+#     keyword: str
+#     rank: Optional[int] = 0
+#     checked_at: datetime
+#     user_email: str
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+
+# class AIAnalysisResponse(BaseModel):
+#     product_title: str
+#     asin: str
+#     total_keywords: int
+#     analysis: dict
+
+
+# class UpdateRanksRequest(BaseModel):
+#     user_email: str
+
+
+# # ===========================
+# # HELPER FUNCTIONS
+# # ===========================
+
+# def parse_review_comments(comments_json: str) -> List[str]:
+#     """Parse review comments from JSON string"""
+#     if not comments_json:
+#         return []
+#     try:
+#         return json.loads(comments_json)
+#     except:
+#         return []
+
+
+# def parse_review_ratings(ratings_json: str) -> List[int]:
+#     """Parse review ratings from JSON string"""
+#     if not ratings_json:
+#         return []
+#     try:
+#         return json.loads(ratings_json)
+#     except:
+#         return []
+
+
+# def fetch_seller_reviews(seller_id: str, country: str) -> tuple:
+#     """
+#     Fetch seller reviews from RapidAPI
+#     Returns: (comments_list, ratings_list)
+#     """
+#     try:
+#         params = {
+#             "seller_id": seller_id,
+#             "country": country,
+#             "page": 1
+#         }
+        
+#         response = requests.get(AMAZON_REVIEWS_API_URL, headers=HEADERS, params=params, timeout=20)
+#         response.raise_for_status()
+#         data = response.json()
+        
+#         if data.get("status") != "OK":
+#             print(f"Failed to fetch reviews for seller {seller_id}")
+#             return [], []
+        
+#         seller_reviews = data.get("data", {}).get("seller_reviews", [])
+        
+#         if not seller_reviews:
+#             return [], []
+        
+#         # ✅ Separate comments and ratings into two lists
+#         comments = []
+#         ratings = []
+        
+#         for review in seller_reviews:
+#             comments.append(review.get("review_comment", ""))
+#             ratings.append(review.get("review_star_rating", 0))
+        
+#         return comments, ratings
+        
+#     except Exception as e:
+#         print(f"Error fetching reviews: {str(e)}")
+#         return [], []
+
+
+# # ===========================
+# # API ENDPOINTS
+# # ===========================
+
+# # ----------------------
+# # 1️⃣ Fetch live seller products AND reviews, store in DB
+# # ----------------------
+# @app.get("/keyword_tracker/fetch_and_store_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def fetch_and_store_seller_products(
+#     seller_id: str, 
+#     country: str = "IN", 
+#     page: int = 1, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     ✅ Fetch products from Amazon API AND their reviews
+#     ✅ Store comments and ratings in SEPARATE columns
+#     """
+#     if not user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     try:
+#         # Step 1: Fetch seller products
+#         params = {
+#             "seller_id": seller_id,
+#             "country": country,
+#             "page": page,
+#             "sort_by": "RELEVANCE"
+#         }
+#         print("HEADERS SENT:", HEADERS)
+#         print(f"Fetching products for user: {user_email}")
+
+#         response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#         response.raise_for_status()
+#         data = response.json()
+
+#         seller_products = data.get("data", {}).get("seller_products", [])
+#         if not seller_products:
+#             print("No products returned from RapidAPI")
+#             return []
+
+#         # Step 2: Fetch seller reviews once for the entire seller
+#         print(f"Fetching reviews for seller {seller_id}...")
+#         comments, ratings = fetch_seller_reviews(seller_id, country)
+        
+#         # ✅ Convert to separate JSON strings for storage
+#         comments_json = json.dumps(comments) if comments else None
+#         ratings_json = json.dumps(ratings) if ratings else None
+
+#         saved_products = []
+
+#         for item in seller_products:
+#             # Check if product already exists
+#             existing = db.query(TrackedProduct).filter(
+#                 TrackedProduct.seller_id == seller_id,
+#                 TrackedProduct.asin == item["asin"],
+#                 TrackedProduct.user_email == user_email
+#             ).first()
+            
+#             if existing:
+#                 # ✅ Update existing product with separate reviews data
+#                 existing.review_comments = comments_json
+#                 existing.review_ratings = ratings_json
+#                 db.commit()
+#                 db.refresh(existing)
+#                 saved_products.append(existing)
+#                 continue
+
+#             # ✅ Create new product with separate reviews data
+#             new_product = TrackedProduct(
+#                 seller_id=seller_id,
+#                 asin=item["asin"],
+#                 product_title=item["product_title"],
+#                 product_photo=item.get("product_photo", ""),
+#                 country=country,
+#                 user_email=user_email,
+#                 review_comments=comments_json,
+#                 review_ratings=ratings_json
+#             )
+#             db.add(new_product)
+#             db.commit()
+#             db.refresh(new_product)
+#             saved_products.append(new_product)
+
+#         print(f"Saved {len(saved_products)} products with reviews for user {user_email}")
+        
+#         # Format response with parsed reviews
+#         response_products = []
+#         for product in saved_products:
+#             response_products.append(TrackedProductResponse(
+#                 id=product.id,
+#                 seller_id=product.seller_id,
+#                 asin=product.asin,
+#                 product_title=product.product_title,
+#                 product_photo=product.product_photo,
+#                 country=product.country,
+#                 user_email=product.user_email,
+#                 review_comments=parse_review_comments(product.review_comments),
+#                 review_ratings=parse_review_ratings(product.review_ratings)
+#             ))
+        
+#         return response_products
+
+#     except requests.exceptions.RequestException as e:
+#         print(f"RapidAPI request failed: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"RapidAPI request failed: {str(e)}")
+#     except Exception as e:
+#         print(f"Unexpected error: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+# # ----------------------
+# # 2️⃣ Track keywords for a product with user_email
+# # ----------------------
+# @app.post("/keyword_tracker/track_keywords")
+# def track_keywords(req: KeywordTrackRequest, db: Session = Depends(get_db)):
+#     """
+#     Track keywords for a product with user_email
+#     """
+#     if not req.user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     product = db.query(TrackedProduct).filter(
+#         TrackedProduct.id == req.tracked_product_id,
+#         TrackedProduct.user_email == req.user_email
+#     ).first()
+    
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Tracked product not found or doesn't belong to this user")
+
+#     for kw in req.keywords:
+#         existing_kw = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == req.tracked_product_id,
+#             KeywordRankHistory.keyword == kw,
+#             KeywordRankHistory.user_email == req.user_email
+#         ).first()
+        
+#         if existing_kw:
+#             continue
+            
+#         entry = KeywordRankHistory(
+#             tracked_product_id=req.tracked_product_id,
+#             keyword=kw,
+#             rank=0,
+#             checked_at=datetime.utcnow(),
+#             user_email=req.user_email
+#         )
+#         db.add(entry)
+    
+#     db.commit()
+#     print(f"Tracked {len(req.keywords)} keywords for user {req.user_email}")
+#     return {"status": "ok", "message": f"Keywords tracked for {req.user_email}"}
+
+
+# # ----------------------
+# # 3️⃣ Get all tracked products for a seller (with reviews)
+# # ----------------------
+# @app.get("/keyword_tracker/tracked_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def get_tracked_products(
+#     seller_id: str, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get tracked products for a seller with reviews included
+#     """
+#     query = db.query(TrackedProduct).filter(TrackedProduct.seller_id == seller_id)
+    
+#     if user_email:
+#         query = query.filter(TrackedProduct.user_email == user_email)
+    
+#     products = query.all()
+    
+#     # Format response with parsed reviews
+#     response_products = []
+#     for product in products:
+#         response_products.append(TrackedProductResponse(
+#             id=product.id,
+#             seller_id=product.seller_id,
+#             asin=product.asin,
+#             product_title=product.product_title,
+#             product_photo=product.product_photo,
+#             country=product.country,
+#             user_email=product.user_email,
+#             review_comments=parse_review_comments(product.review_comments),
+#             review_ratings=parse_review_ratings(product.review_ratings)
+#         ))
+    
+#     return response_products
+
+
+# # ----------------------
+# # 4️⃣ Get keyword rank history for a product (filtered by user)
+# # ----------------------
+# @app.get("/keyword_tracker/rank_history/{tracked_product_id}", response_model=List[KeywordRankResponse])
+# def get_rank_history(
+#     tracked_product_id: int, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get rank history for a product, optionally filtered by user_email
+#     """
+#     query = db.query(KeywordRankHistory).filter(
+#         KeywordRankHistory.tracked_product_id == tracked_product_id
+#     )
+    
+#     if user_email:
+#         query = query.filter(KeywordRankHistory.user_email == user_email)
+    
+#     history = query.order_by(KeywordRankHistory.checked_at.asc()).all()
+#     return history
+
+
+# # ----------------------
+# # 5️⃣ Update daily ranks using RapidAPI (filtered by user)
+# # ----------------------
+# @app.post("/keyword_tracker/update_daily_ranks")
+# def update_daily_ranks(req: UpdateRanksRequest, db: Session = Depends(get_db)):
+#     """
+#     Update ranks for all tracked keywords for a specific user using live RapidAPI data.
+#     """
+#     if not req.user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     products = db.query(TrackedProduct).filter(
+#         TrackedProduct.user_email == req.user_email
+#     ).all()
+    
+#     if not products:
+#         return {"status": "success", "message": f"No products found for {req.user_email}"}
+    
+#     updated_count = 0
+    
+#     for product in products:
+#         keyword_entries = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == product.id,
+#             KeywordRankHistory.user_email == req.user_email
+#         ).all()
+        
+#         for kw_entry in keyword_entries:
+#             try:
+#                 params = {
+#                     "seller_id": product.seller_id,
+#                     "country": product.country,
+#                     "page": 1,
+#                     "sort_by": "RELEVANCE"
+#                 }
+#                 response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#                 response.raise_for_status()
+#                 data = response.json()
+#                 seller_products = data.get("data", {}).get("seller_products", [])
+
+#                 asin_rank_map = {item["asin"]: idx + 1 for idx, item in enumerate(seller_products)}
+#                 rank = asin_rank_map.get(product.asin)
+                
+#                 if rank:
+#                     kw_entry.rank = rank
+#                     kw_entry.checked_at = datetime.utcnow()
+#                     updated_count += 1
+                    
+#             except Exception as e:
+#                 print(f"Error updating rank for {product.asin}, keyword {kw_entry.keyword}: {str(e)}")
+
+#     db.commit()
+#     print(f"Updated {updated_count} keyword ranks for user {req.user_email}")
+#     return {
+#         "status": "success", 
+#         "message": f"Updated {updated_count} keyword ranks for {req.user_email}",
+#         "updated_count": updated_count
+#     }
+
+
+# # ----------------------
+# # 6️⃣ AI-Powered Keyword Analysis using Ollama (with user verification)
+# # ----------------------
+# @app.get("/keyword_tracker/ai_analysis/{tracked_product_id}", response_model=AIAnalysisResponse)
+# def get_ai_keyword_analysis(
+#     tracked_product_id: int, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Generate AI-powered insights for keyword rankings using Ollama Mistral
+#     Optionally filtered by user_email
+#     """
+#     query = db.query(TrackedProduct).filter(TrackedProduct.id == tracked_product_id)
+    
+#     if user_email:
+#         query = query.filter(TrackedProduct.user_email == user_email)
+    
+#     product = query.first()
+    
+#     if not product:
+#         raise HTTPException(
+#             status_code=404, 
+#             detail="Tracked product not found or doesn't belong to this user"
+#         )
+
+#     rank_query = db.query(KeywordRankHistory).filter(
+#         KeywordRankHistory.tracked_product_id == tracked_product_id
+#     )
+    
+#     if user_email:
+#         rank_query = rank_query.filter(KeywordRankHistory.user_email == user_email)
+    
+#     rank_history = rank_query.order_by(
+#         KeywordRankHistory.keyword, 
+#         KeywordRankHistory.checked_at.desc()
+#     ).all()
+
+#     if not rank_history:
+#         raise HTTPException(status_code=404, detail="No rank history found for this product")
+
+#     # Organize rank history by keyword
+#     keyword_ranks = defaultdict(list)
+#     for entry in rank_history:
+#         keyword_ranks[entry.keyword].append({
+#             "rank": entry.rank,
+#             "checked_at": entry.checked_at.isoformat()
+#         })
+
+#     # Prepare data summary for AI
+#     rank_summary = []
+#     for keyword, ranks in keyword_ranks.items():
+#         if len(ranks) >= 2:
+#             latest_rank = ranks[0]["rank"]
+#             previous_rank = ranks[1]["rank"]
+#             change = previous_rank - latest_rank
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": latest_rank,
+#                 "previous_rank": previous_rank,
+#                 "change": change,
+#                 "trend": "improved" if change > 0 else "declined" if change < 0 else "stable"
+#             })
+#         else:
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": ranks[0]["rank"],
+#                 "previous_rank": None,
+#                 "change": 0,
+#                 "trend": "new"
+#             })
+
+#     # Create AI prompt
+#     prompt = f"""You are an Amazon SEO expert analyzing keyword ranking performance for a product.
+
+# Product: {product.product_title}
+# ASIN: {product.asin}
+# Country: {product.country}
+
+# Current Keyword Rankings:
+# {json.dumps(rank_summary, indent=2)}
+
+# Provide a detailed analysis in the following JSON format (respond ONLY with valid JSON, no markdown):
+# {{
+#   "why_changed": "Explain the likely reasons for rank changes (2-3 sentences)",
+#   "what_to_do": "Actionable steps the seller should take immediately (3-4 bullet points)",
+#   "which_keywords_matter": "Identify the most important keywords to focus on and why (2-3 keywords with explanations)",
+#   "future_prediction": "Predict potential ranking trends for the next 30 days (2-3 sentences)",
+#   "product_optimization": "Specific product listing optimization recommendations (3-4 bullet points)",
+#   "roadmap": "30-60-90 day strategic roadmap (3 phases with specific goals)"
+# }}
+
+# Be specific, data-driven, and focus on actionable insights."""
+
+#     try:
+#         ollama_response = requests.post(
+#             "http://localhost:11434/api/generate",
+#             json={
+#                 "model": "mistral",
+#                 "prompt": prompt,
+#                 "stream": False,
+#                 "format": "json"
+#             },
+#             timeout=60
+#         )
+        
+#         if ollama_response.status_code != 200:
+#             raise HTTPException(status_code=500, detail=f"Ollama API error: {ollama_response.text}")
+
+#         ollama_data = ollama_response.json()
+#         ai_response_text = ollama_data.get("response", "{}")
+        
+#         # Clean up response
+#         ai_response_text = ai_response_text.strip()
+#         if ai_response_text.startswith("```json"):
+#             ai_response_text = ai_response_text[7:]
+#         if ai_response_text.startswith("```"):
+#             ai_response_text = ai_response_text[3:]
+#         if ai_response_text.endswith("```"):
+#             ai_response_text = ai_response_text[:-3]
+#         ai_response_text = ai_response_text.strip()
+
+#         try:
+#             analysis = json.loads(ai_response_text)
+#         except json.JSONDecodeError:
+#             analysis = {
+#                 "why_changed": "Unable to parse AI response. Please try again.",
+#                 "what_to_do": "Check your keyword rankings manually and adjust your listing accordingly.",
+#                 "which_keywords_matter": "Focus on keywords with high search volume and low competition.",
+#                 "future_prediction": "Rankings may fluctuate based on competition and seasonality.",
+#                 "product_optimization": "Improve product images, title, and description with relevant keywords.",
+#                 "roadmap": "Week 1-4: Optimize listing. Week 5-8: Monitor rankings. Week 9-12: Adjust strategy."
+#             }
+
+#         return {
+#             "product_title": product.product_title,
+#             "asin": product.asin,
+#             "total_keywords": len(rank_summary),
+#             "analysis": analysis
+#         }
+
+#     except requests.exceptions.RequestException as e:
+#         raise HTTPException(
+#             status_code=503, 
+#             detail=f"Ollama service unavailable: {str(e)}. Make sure Ollama is running on localhost:11434"
+#         )
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
+# import os
+# import json
+# import requests
+# from dotenv import load_dotenv
+# from datetime import datetime
+# from typing import List, Optional
+# from fastapi import FastAPI, HTTPException, Depends
+# from pydantic import BaseModel
+# from sqlalchemy.orm import Session
+# from sqlalchemy import text
+# from pathlib import Path
+# from collections import defaultdict
+# from .models import TrackedProduct, KeywordRankHistory, User
+# from .database_config import get_db, SessionLocal
+
+# BASE_DIR = Path(__file__).resolve().parent
+# ENV_PATH = BASE_DIR / ".env"
+
+# load_dotenv(dotenv_path=ENV_PATH, override=True)
+
+# print("ENV PATH:", ENV_PATH)
+# print("RAPIDAPI_KEY:", os.getenv("RAPIDAPI_KEY"))
+
+# RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
+# RAPIDAPI_HOST = os.environ.get("RAPIDAPI_HOST", "real-time-amazon-data.p.rapidapi.com")
+# AMAZON_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-products"
+# AMAZON_REVIEWS_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-reviews"
+
+# HEADERS = {
+#     "X-RapidAPI-Key": RAPIDAPI_KEY,
+#     "X-RapidAPI-Host": RAPIDAPI_HOST
+# }
+# # ===========================
+# # SUBSCRIPTION TIER LIMITS
+# # ===========================
+# KEYWORD_TRACKER_LIMITS = {
+#     'free': 2,        # 2 products per month
+#     'basic': 10,      # 10 products per month
+#     'premium': -1,    # Unlimited
+#     'enterprise': -1  # Unlimited
+# }
+
+# class ProductTrackRequest(BaseModel):
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str = "IN"
+#     user_email: str
+
+
+# class TrackedProductResponse(BaseModel):
+#     id: int
+#     seller_id: str
+#     asin: str
+#     product_title: str
+#     product_photo: str
+#     country: str
+#     user_email: str
+#     review_comments: Optional[List[str]] = []
+#     review_ratings: Optional[List[int]] = []
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+
+# class KeywordTrackRequest(BaseModel):
+#     tracked_product_id: int
+#     keywords: List[str]
+#     user_email: str
+
+
+# class KeywordRankResponse(BaseModel):
+#     keyword: str
+#     rank: Optional[int] = 0
+#     checked_at: datetime
+#     user_email: str
+
+#     model_config = {
+#         "from_attributes": True
+#     }
+
+
+# class AIAnalysisResponse(BaseModel):
+#     product_title: str
+#     asin: str
+#     total_keywords: int
+#     analysis: dict
+
+
+# class UpdateRanksRequest(BaseModel):
+#     user_email: str
+
+
+# class UsageLimitsResponse(BaseModel):
+#     count: int
+#     limit: int
+#     remaining: int
+#     subscription_tier: str
+
+
+# # ===========================
+# # HELPER FUNCTIONS
+# # ===========================
+
+# def parse_review_comments(comments_json: str) -> List[str]:
+#     """Parse review comments from JSON string"""
+#     if not comments_json:
+#         return []
+#     try:
+#         return json.loads(comments_json)
+#     except:
+#         return []
+
+
+# def parse_review_ratings(ratings_json: str) -> List[int]:
+#     """Parse review ratings from JSON string"""
+#     if not ratings_json:
+#         return []
+#     try:
+#         return json.loads(ratings_json)
+#     except:
+#         return []
+
+
+# def fetch_seller_reviews(seller_id: str, country: str) -> tuple:
+#     """
+#     Fetch seller reviews from RapidAPI
+#     Returns: (comments_list, ratings_list)
+#     """
+#     try:
+#         params = {
+#             "seller_id": seller_id,
+#             "country": country,
+#             "page": 1
+#         }
+        
+#         response = requests.get(AMAZON_REVIEWS_API_URL, headers=HEADERS, params=params, timeout=20)
+#         response.raise_for_status()
+#         data = response.json()
+        
+#         if data.get("status") != "OK":
+#             print(f"Failed to fetch reviews for seller {seller_id}")
+#             return [], []
+        
+#         seller_reviews = data.get("data", {}).get("seller_reviews", [])
+        
+#         if not seller_reviews:
+#             return [], []
+        
+#         # ✅ Separate comments and ratings into two lists
+#         comments = []
+#         ratings = []
+        
+#         for review in seller_reviews:
+#             comments.append(review.get("review_comment", ""))
+#             ratings.append(review.get("review_star_rating", 0))
+        
+#         return comments, ratings
+        
+#     except Exception as e:
+#         print(f"Error fetching reviews: {str(e)}")
+#         return [], []
+
+
+# def check_keyword_tracker_limit(user_id: int, db: Session) -> dict:
+#     """
+#     Check if user has reached keyword tracker limit for the month
+#     Returns: dict with count, limit, remaining, subscription_tier
+#     """
+#     # Get user's subscription tier and current month usage
+#     query = text("""
+#         SELECT subscription_tier, 
+#                COALESCE(keyword_tracker_used, 0) as used,
+#                keyword_tracker_month
+#         FROM users 
+#         WHERE id = :user_id
+#     """)
+    
+#     result = db.execute(query, {"user_id": user_id}).fetchone()
+    
+#     if not result:
+#         raise HTTPException(status_code=404, detail="User not found")
+    
+#     tier = result[0] or 'free'
+#     used = result[1]
+#     tracked_month = result[2]
+    
+#     current_month = datetime.utcnow().strftime('%Y-%m')
+    
+#     # Reset counter if it's a new month
+#     if tracked_month != current_month:
+#         reset_query = text("""
+#             UPDATE users 
+#             SET keyword_tracker_used = 0, 
+#                 keyword_tracker_month = :current_month 
+#             WHERE id = :user_id
+#         """)
+#         db.execute(reset_query, {"current_month": current_month, "user_id": user_id})
+#         db.commit()
+#         used = 0
+    
+#     limit = KEYWORD_TRACKER_LIMITS.get(tier.lower(), KEYWORD_TRACKER_LIMITS['free'])
+#     remaining = limit - used if limit != -1 else -1
+    
+#     return {
+#         "count": used,
+#         "limit": limit,
+#         "remaining": remaining,
+#         "subscription_tier": tier
+#     }
+
+
+# def increment_keyword_tracker_usage(user_id: int, db: Session):
+#     """Increment keyword tracker usage for the user"""
+#     current_month = datetime.utcnow().strftime('%Y-%m')
+    
+#     # ✅ FIXED: Use proper SQL query with text()
+#     query = text("""
+#         UPDATE users 
+#         SET keyword_tracker_used = COALESCE(keyword_tracker_used, 0) + 1,
+#             keyword_tracker_month = :current_month
+#         WHERE id = :user_id
+#     """)
+    
+#     db.execute(query, {"current_month": current_month, "user_id": user_id})
+#     db.commit()
+    
+#     # ✅ DEBUG: Print to verify increment happened
+#     verify_query = text("SELECT keyword_tracker_used FROM users WHERE id = :user_id")
+#     result = db.execute(verify_query, {"user_id": user_id}).fetchone()
+#     print(f"✅ INCREMENTED: User {user_id} now has {result[0]} product trackings used")
+
+
+# # ===========================
+# # API ENDPOINTS
+# # ===========================
+
+# # ✅ NEW: Get keyword tracker usage limits
+# @app.get("/users/{user_id}/keyword-tracker-usage", response_model=UsageLimitsResponse)
+# def get_keyword_tracker_usage(user_id: int, db: Session = Depends(get_db)):
+#     """
+#     Get current keyword tracker usage and limits for a user
+#     """
+#     usage = check_keyword_tracker_limit(user_id, db)
+#     return UsageLimitsResponse(**usage)
+
+
+# # ----------------------
+# # 1️⃣ Fetch live seller products AND reviews, store in DB
+# # ----------------------
+# @app.get("/keyword_tracker/fetch_and_store_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def fetch_and_store_seller_products(
+#     seller_id: str, 
+#     country: str = "IN", 
+#     page: int = 1, 
+#     user_email: str = None,
+#     user_id: int = None,  # ✅ NEW: Add user_id parameter
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     ✅ Fetch products from Amazon API AND their reviews
+#     ✅ Store comments and ratings in SEPARATE columns
+#     ✅ Check subscription limits before allowing
+#     """
+#     if not user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     # ✅ DEBUG: Print incoming parameters
+#     print(f"🔍 FETCH REQUEST: user_id={user_id}, user_email={user_email}, seller_id={seller_id}")
+    
+#     # ✅ Check usage limits if user_id provided
+#     if user_id:
+#         usage = check_keyword_tracker_limit(user_id, db)
+#         print(f"📊 USAGE CHECK: count={usage['count']}, limit={usage['limit']}, tier={usage['subscription_tier']}")
+        
+#         # Check if limit reached (only if not unlimited)
+#         if usage['limit'] != -1 and usage['count'] >= usage['limit']:
+#             raise HTTPException(
+#                 status_code=403, 
+#                 detail=f"Keyword Tracker limit reached for {usage['subscription_tier'].upper()} plan. You've used all {usage['limit']} product trackings this month. Upgrade for more!"
+#             )
+    
+#     try:
+#         # Step 1: Fetch seller products
+#         params = {
+#             "seller_id": seller_id,
+#             "country": country,
+#             "page": page,
+#             "sort_by": "RELEVANCE"
+#         }
+#         print("HEADERS SENT:", HEADERS)
+#         print(f"Fetching products for user: {user_email}")
+
+#         response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#         response.raise_for_status()
+#         data = response.json()
+
+#         seller_products = data.get("data", {}).get("seller_products", [])
+#         if not seller_products:
+#             print("No products returned from RapidAPI")
+#             return []
+
+#         # Step 2: Fetch seller reviews once for the entire seller
+#         print(f"Fetching reviews for seller {seller_id}...")
+#         comments, ratings = fetch_seller_reviews(seller_id, country)
+        
+#         # ✅ Convert to separate JSON strings for storage
+#         comments_json = json.dumps(comments) if comments else None
+#         ratings_json = json.dumps(ratings) if ratings else None
+
+#         saved_products = []
+#         new_products_count = 0  # Track new products for usage increment
+
+#         for item in seller_products:
+#             # Check if product already exists
+#             existing = db.query(TrackedProduct).filter(
+#                 TrackedProduct.seller_id == seller_id,
+#                 TrackedProduct.asin == item["asin"],
+#                 TrackedProduct.user_email == user_email
+#             ).first()
+            
+#             if existing:
+#                 # ✅ Update existing product with separate reviews data
+#                 existing.review_comments = comments_json
+#                 existing.review_ratings = ratings_json
+#                 db.commit()
+#                 db.refresh(existing)
+#                 saved_products.append(existing)
+#                 print(f"📝 UPDATED existing product: {item['asin']}")
+#                 continue
+
+#             # ✅ Create new product with separate reviews data
+#             new_product = TrackedProduct(
+#                 seller_id=seller_id,
+#                 asin=item["asin"],
+#                 product_title=item["product_title"],
+#                 product_photo=item.get("product_photo", ""),
+#                 country=country,
+#                 user_email=user_email,
+#                 review_comments=comments_json,
+#                 review_ratings=ratings_json
+#             )
+#             db.add(new_product)
+#             db.commit()
+#             db.refresh(new_product)
+#             saved_products.append(new_product)
+#             new_products_count += 1
+#             print(f"✨ CREATED new product: {item['asin']}")
+
+#         # ✅ CRITICAL: Increment usage counter for NEW products only (if user_id provided)
+#         if user_id and new_products_count > 0:
+#             print(f"🔢 INCREMENTING usage for {new_products_count} new products...")
+#             for i in range(new_products_count):
+#                 increment_keyword_tracker_usage(user_id, db)
+#                 print(f"   Incremented {i+1}/{new_products_count}")
+#         else:
+#             if not user_id:
+#                 print("⚠️ WARNING: user_id not provided, usage NOT tracked")
+#             if new_products_count == 0:
+#                 print("ℹ️ INFO: No new products added, usage NOT incremented")
+
+#         print(f"✅ COMPLETED: Saved {len(saved_products)} products ({new_products_count} new) with reviews for user {user_email}")
+        
+#         # Format response with parsed reviews
+#         response_products = []
+#         for product in saved_products:
+#             response_products.append(TrackedProductResponse(
+#                 id=product.id,
+#                 seller_id=product.seller_id,
+#                 asin=product.asin,
+#                 product_title=product.product_title,
+#                 product_photo=product.product_photo,
+#                 country=product.country,
+#                 user_email=product.user_email,
+#                 review_comments=parse_review_comments(product.review_comments),
+#                 review_ratings=parse_review_ratings(product.review_ratings)
+#             ))
+        
+#         return response_products
+
+#     except requests.exceptions.RequestException as e:
+#         print(f"RapidAPI request failed: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"RapidAPI request failed: {str(e)}")
+#     except Exception as e:
+#         print(f"Unexpected error: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+# # ----------------------
+# # 2️⃣ Track keywords for a product with user_email
+# # ----------------------
+# @app.post("/keyword_tracker/track_keywords")
+# def track_keywords(req: KeywordTrackRequest, db: Session = Depends(get_db)):
+#     """
+#     Track keywords for a product with user_email
+#     """
+#     if not req.user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     product = db.query(TrackedProduct).filter(
+#         TrackedProduct.id == req.tracked_product_id,
+#         TrackedProduct.user_email == req.user_email
+#     ).first()
+    
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Tracked product not found or doesn't belong to this user")
+
+#     for kw in req.keywords:
+#         existing_kw = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == req.tracked_product_id,
+#             KeywordRankHistory.keyword == kw,
+#             KeywordRankHistory.user_email == req.user_email
+#         ).first()
+        
+#         if existing_kw:
+#             continue
+            
+#         entry = KeywordRankHistory(
+#             tracked_product_id=req.tracked_product_id,
+#             keyword=kw,
+#             rank=0,
+#             checked_at=datetime.utcnow(),
+#             user_email=req.user_email
+#         )
+#         db.add(entry)
+    
+#     db.commit()
+#     print(f"Tracked {len(req.keywords)} keywords for user {req.user_email}")
+#     return {"status": "ok", "message": f"Keywords tracked for {req.user_email}"}
+
+
+# # ----------------------
+# # 3️⃣ Get all tracked products for a seller (with reviews)
+# # ----------------------
+# @app.get("/keyword_tracker/tracked_products/{seller_id}", response_model=List[TrackedProductResponse])
+# def get_tracked_products(
+#     seller_id: str, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get tracked products for a seller with reviews included
+#     """
+#     query = db.query(TrackedProduct).filter(TrackedProduct.seller_id == seller_id)
+    
+#     if user_email:
+#         query = query.filter(TrackedProduct.user_email == user_email)
+    
+#     products = query.all()
+    
+#     # Format response with parsed reviews
+#     response_products = []
+#     for product in products:
+#         response_products.append(TrackedProductResponse(
+#             id=product.id,
+#             seller_id=product.seller_id,
+#             asin=product.asin,
+#             product_title=product.product_title,
+#             product_photo=product.product_photo,
+#             country=product.country,
+#             user_email=product.user_email,
+#             review_comments=parse_review_comments(product.review_comments),
+#             review_ratings=parse_review_ratings(product.review_ratings)
+#         ))
+    
+#     return response_products
+
+
+# # ----------------------
+# # 4️⃣ Get keyword rank history for a product (filtered by user)
+# # ----------------------
+# @app.get("/keyword_tracker/rank_history/{tracked_product_id}", response_model=List[KeywordRankResponse])
+# def get_rank_history(
+#     tracked_product_id: int, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Get rank history for a product, optionally filtered by user_email
+#     """
+#     query = db.query(KeywordRankHistory).filter(
+#         KeywordRankHistory.tracked_product_id == tracked_product_id
+#     )
+    
+#     if user_email:
+#         query = query.filter(KeywordRankHistory.user_email == user_email)
+    
+#     history = query.order_by(KeywordRankHistory.checked_at.asc()).all()
+#     return history
+
+
+# # ----------------------
+# # 5️⃣ Update daily ranks using RapidAPI (filtered by user)
+# # ----------------------
+# @app.post("/keyword_tracker/update_daily_ranks")
+# def update_daily_ranks(req: UpdateRanksRequest, db: Session = Depends(get_db)):
+#     """
+#     Update ranks for all tracked keywords for a specific user using live RapidAPI data.
+#     """
+#     if not req.user_email:
+#         raise HTTPException(status_code=400, detail="user_email is required")
+    
+#     products = db.query(TrackedProduct).filter(
+#         TrackedProduct.user_email == req.user_email
+#     ).all()
+    
+#     if not products:
+#         return {"status": "success", "message": f"No products found for {req.user_email}"}
+    
+#     updated_count = 0
+    
+#     for product in products:
+#         keyword_entries = db.query(KeywordRankHistory).filter(
+#             KeywordRankHistory.tracked_product_id == product.id,
+#             KeywordRankHistory.user_email == req.user_email
+#         ).all()
+        
+#         for kw_entry in keyword_entries:
+#             try:
+#                 params = {
+#                     "seller_id": product.seller_id,
+#                     "country": product.country,
+#                     "page": 1,
+#                     "sort_by": "RELEVANCE"
+#                 }
+#                 response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+#                 response.raise_for_status()
+#                 data = response.json()
+#                 seller_products = data.get("data", {}).get("seller_products", [])
+
+#                 asin_rank_map = {item["asin"]: idx + 1 for idx, item in enumerate(seller_products)}
+#                 rank = asin_rank_map.get(product.asin)
+                
+#                 if rank:
+#                     kw_entry.rank = rank
+#                     kw_entry.checked_at = datetime.utcnow()
+#                     updated_count += 1
+                    
+#             except Exception as e:
+#                 print(f"Error updating rank for {product.asin}, keyword {kw_entry.keyword}: {str(e)}")
+
+#     db.commit()
+#     print(f"Updated {updated_count} keyword ranks for user {req.user_email}")
+#     return {
+#         "status": "success", 
+#         "message": f"Updated {updated_count} keyword ranks for {req.user_email}",
+#         "updated_count": updated_count
+#     }
+
+
+# # ----------------------
+# # 6️⃣ AI-Powered Keyword Analysis using Ollama (with user verification)
+# # ----------------------
+# @app.get("/keyword_tracker/ai_analysis/{tracked_product_id}", response_model=AIAnalysisResponse)
+# def get_ai_keyword_analysis(
+#     tracked_product_id: int, 
+#     user_email: str = None,
+#     db: Session = Depends(get_db)
+# ):
+#     """
+#     Generate AI-powered insights for keyword rankings using Ollama Mistral
+#     Optionally filtered by user_email
+#     """
+#     query = db.query(TrackedProduct).filter(TrackedProduct.id == tracked_product_id)
+    
+#     if user_email:
+#         query = query.filter(TrackedProduct.user_email == user_email)
+    
+#     product = query.first()
+    
+#     if not product:
+#         raise HTTPException(
+#             status_code=404, 
+#             detail="Tracked product not found or doesn't belong to this user"
+#         )
+
+#     rank_query = db.query(KeywordRankHistory).filter(
+#         KeywordRankHistory.tracked_product_id == tracked_product_id
+#     )
+    
+#     if user_email:
+#         rank_query = rank_query.filter(KeywordRankHistory.user_email == user_email)
+    
+#     rank_history = rank_query.order_by(
+#         KeywordRankHistory.keyword, 
+#         KeywordRankHistory.checked_at.desc()
+#     ).all()
+
+#     if not rank_history:
+#         raise HTTPException(status_code=404, detail="No rank history found for this product")
+
+#     # Organize rank history by keyword
+#     keyword_ranks = defaultdict(list)
+#     for entry in rank_history:
+#         keyword_ranks[entry.keyword].append({
+#             "rank": entry.rank,
+#             "checked_at": entry.checked_at.isoformat()
+#         })
+
+#     # Prepare data summary for AI
+#     rank_summary = []
+#     for keyword, ranks in keyword_ranks.items():
+#         if len(ranks) >= 2:
+#             latest_rank = ranks[0]["rank"]
+#             previous_rank = ranks[1]["rank"]
+#             change = previous_rank - latest_rank
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": latest_rank,
+#                 "previous_rank": previous_rank,
+#                 "change": change,
+#                 "trend": "improved" if change > 0 else "declined" if change < 0 else "stable"
+#             })
+#         else:
+#             rank_summary.append({
+#                 "keyword": keyword,
+#                 "current_rank": ranks[0]["rank"],
+#                 "previous_rank": None,
+#                 "change": 0,
+#                 "trend": "new"
+#             })
+
+#     # Create AI prompt
+#     prompt = f"""You are an Amazon SEO expert analyzing keyword ranking performance for a product.
+
+# Product: {product.product_title}
+# ASIN: {product.asin}
+# Country: {product.country}
+
+# Current Keyword Rankings:
+# {json.dumps(rank_summary, indent=2)}
+
+# Provide a detailed analysis in the following JSON format (respond ONLY with valid JSON, no markdown):
+# {{
+#   "why_changed": "Explain the likely reasons for rank changes (2-3 sentences)",
+#   "what_to_do": "Actionable steps the seller should take immediately (3-4 bullet points)",
+#   "which_keywords_matter": "Identify the most important keywords to focus on and why (2-3 keywords with explanations)",
+#   "future_prediction": "Predict potential ranking trends for the next 30 days (2-3 sentences)",
+#   "product_optimization": "Specific product listing optimization recommendations (3-4 bullet points)",
+#   "roadmap": "30-60-90 day strategic roadmap (3 phases with specific goals)"
+# }}
+
+# Be specific, data-driven, and focus on actionable insights."""
+
+#     try:
+#         ollama_response = requests.post(
+#             "http://localhost:11434/api/generate",
+#             json={
+#                 "model": "mistral",
+#                 "prompt": prompt,
+#                 "stream": False,
+#                 "format": "json"
+#             },
+#             timeout=60
+#         )
+        
+#         if ollama_response.status_code != 200:
+#             raise HTTPException(status_code=500, detail=f"Ollama API error: {ollama_response.text}")
+
+#         ollama_data = ollama_response.json()
+#         ai_response_text = ollama_data.get("response", "{}")
+        
+#         # Clean up response
+#         ai_response_text = ai_response_text.strip()
+#         if ai_response_text.startswith("```json"):
+#             ai_response_text = ai_response_text[7:]
+#         if ai_response_text.startswith("```"):
+#             ai_response_text = ai_response_text[3:]
+#         if ai_response_text.endswith("```"):
+#             ai_response_text = ai_response_text[:-3]
+#         ai_response_text = ai_response_text.strip()
+
+#         try:
+#             analysis = json.loads(ai_response_text)
+#         except json.JSONDecodeError:
+#             analysis = {
+#                 "why_changed": "Unable to parse AI response. Please try again.",
+#                 "what_to_do": "Check your keyword rankings manually and adjust your listing accordingly.",
+#                 "which_keywords_matter": "Focus on keywords with high search volume and low competition.",
+#                 "future_prediction": "Rankings may fluctuate based on competition and seasonality.",
+#                 "product_optimization": "Improve product images, title, and description with relevant keywords.",
+#                 "roadmap": "Week 1-4: Optimize listing. Week 5-8: Monitor rankings. Week 9-12: Adjust strategy."
+#             }
+
+#         return {
+#             "product_title": product.product_title,
+#             "asin": product.asin,
+#             "total_keywords": len(rank_summary),
+#             "analysis": analysis
+#         }
+
+#     except requests.exceptions.RequestException as e:
+#         raise HTTPException(
+#             status_code=503, 
+#             detail=f"Ollama service unavailable: {str(e)}. Make sure Ollama is running on localhost:11434"
+#         )
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
+import os
+import json
+import requests
+from dotenv import load_dotenv
+from datetime import datetime
+from typing import List, Optional
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from pathlib import Path
+from collections import defaultdict
+from .models import TrackedProduct, KeywordRankHistory, User
+from .database_config import get_db, SessionLocal
+
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR / ".env"
+
+load_dotenv(dotenv_path=ENV_PATH, override=True)
+
+print("ENV PATH:", ENV_PATH)
+print("RAPIDAPI_KEY:", os.getenv("RAPIDAPI_KEY"))
+
+RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY")
+RAPIDAPI_HOST = os.environ.get("RAPIDAPI_HOST", "real-time-amazon-data.p.rapidapi.com")
+AMAZON_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-products"
+AMAZON_REVIEWS_API_URL = "https://real-time-amazon-data.p.rapidapi.com/seller-reviews"
+
+HEADERS = {
+    "X-RapidAPI-Key": RAPIDAPI_KEY,
+    "X-RapidAPI-Host": RAPIDAPI_HOST
+}
+# ===========================
+# SUBSCRIPTION TIER LIMITS
+# ===========================
+KEYWORD_TRACKER_LIMITS = {
+    'free': 2,        # 2 products per month
+    'basic': 10,      # 10 products per month
+    'premium': -1,    # Unlimited
+    'enterprise': -1  # Unlimited
 }
 
-
-# ==================== Helper Functions ====================
-
-def safe_float(value, default=0.0) -> float:
-    """Safely convert value to float"""
-    if value is None or value == 'NULL':
-        return default
-    try:
-        from decimal import Decimal
-        if isinstance(value, Decimal):
-            return float(value)
-        return float(value)
-    except:
-        return default
+class ProductTrackRequest(BaseModel):
+    seller_id: str
+    asin: str
+    product_title: str
+    product_photo: str
+    country: str = "IN"
+    user_email: str
 
 
-def safe_int(value, default=0) -> int:
-    """Safely convert value to int"""
-    if value is None or value == 'NULL':
-        return default
-    try:
-        return int(value)
-    except:
-        return default
+class TrackedProductResponse(BaseModel):
+    id: int
+    seller_id: str
+    asin: str
+    product_title: str
+    product_photo: str
+    country: str
+    user_email: str
+    review_comments: Optional[List[str]] = []
+    review_ratings: Optional[List[int]] = []
 
-
-def extract_sales_number(sales_text: str) -> int:
-    """Extract numeric sales from text like '9.4K+ bought', '2M bought'"""
-    if not sales_text or sales_text == 'NULL':
-        return 0
-
-    try:
-        sales_text = str(sales_text).upper().strip()
-        multipliers = {'K': 1000, 'M': 1000000, 'L': 100000, 'CR': 10000000}
-
-        match = re.search(r'([\d.]+)\s*([KML]|CR)?', sales_text)
-        if match:
-            number = float(match.group(1))
-            unit = match.group(2)
-
-            if unit and unit in multipliers:
-                return int(number * multipliers[unit])
-            return int(number)
-    except:
-        return 0
-    return 0
-
-
-# ==================== Internal SOV Data Helper ====================
-# This is the PURE query function. No async. No user_id. No usage tracking.
-# All internal endpoints (progress, competitors, combined, ai-insights) call this.
-# The HTTP endpoint get_category_sov does usage tracking FIRST, then calls this.
-
-def _get_category_sov_data(
-    category_name: str,
-    marketplace: str,
-    your_brand: Optional[str],
-    db: Session
-) -> dict:
-    """
-    Core SOV query logic — shared by all internal callers.
-    Does NOT touch usage counters. Does NOT require user_id.
-    Returns a plain dict (either data or {"error": "..."}).
-    """
-    if marketplace == "flipkart":
-        query = text("""
-            SELECT
-                brand,
-                COUNT(*) as product_count,
-                COALESCE(SUM(product_rating_count), 0) as total_reviews,
-                COALESCE(SUM(estimated_sales), 0) as total_sales,
-                COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
-                COALESCE(AVG(product_price), 0) as avg_price
-            FROM rapidapi_flipkart_products
-            WHERE category_name = :category_name
-                AND brand IS NOT NULL
-                AND brand != 'NULL'
-            GROUP BY brand
-            ORDER BY total_reviews DESC
-        """)
-    else:  # amazon
-        query = text("""
-            SELECT
-                SPLIT_PART(product_title, ' ', 1) as brand,
-                COUNT(*) as product_count,
-                COALESCE(SUM(product_num_ratings), 0) as total_reviews,
-                COALESCE(SUM(avg_sales_volume), 0) as total_sales,
-                COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
-                COALESCE(AVG(product_price_numeric), 0) as avg_price
-            FROM rapidapi_amazon_products
-            WHERE category_name = :category_name
-            GROUP BY brand
-            ORDER BY total_reviews DESC
-        """)
-
-    result = db.execute(query, {"category_name": category_name})
-    rows = result.fetchall()
-
-    if not rows:
-        return {"error": f"No data found for category: {category_name}"}
-
-    # Calculate totals
-    total_reviews = sum(int(row[2] or 0) for row in rows)
-    total_sales = sum(int(row[3] or 0) for row in rows)
-    total_products = sum(int(row[1] or 0) for row in rows)
-
-    # Build brand data
-    brands = []
-    your_brand_share = None
-    market_leader = None
-    max_share = 0
-
-    for row in rows:
-        brand_name = row[0] or "Unknown"
-        review_count = int(row[2] or 0)
-        sales_count = int(row[3] or 0)
-
-        share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
-
-        brand_data = {
-            "brand": brand_name,
-            "share_percentage": round(share_pct, 2),
-            "total_reviews": review_count,
-            "total_sales": sales_count,
-            "avg_rating": round(float(row[4] or 0), 2),
-            "avg_price": round(float(row[5] or 0), 2),
-            "product_count": int(row[1] or 0)
-        }
-        brands.append(brand_data)
-
-        # Track market leader
-        if share_pct > max_share:
-            max_share = share_pct
-            market_leader = brand_name
-
-        # Check if this is your brand
-        if your_brand and brand_name.lower() == your_brand.lower():
-            your_brand_share = share_pct
-
-    return {
-        "category_name": category_name,
-        "total_products": total_products,
-        "total_reviews": total_reviews,
-        "total_sales": total_sales,
-        "brands": brands,
-        "your_brand_share": round(your_brand_share, 2) if your_brand_share else None,
-        "market_leader": market_leader,
-        "marketplace": marketplace
+    model_config = {
+        "from_attributes": True
     }
 
 
-# ==================== Usage Tracking Endpoints ====================
+class KeywordTrackRequest(BaseModel):
+    tracked_product_id: int
+    keywords: List[str]
+    user_email: str
 
-@app.get("/users/{user_id}/sov-usage")
-async def get_sov_usage(user_id: int, db: Session = Depends(get_db)):
+
+class KeywordRankResponse(BaseModel):
+    keyword: str
+    rank: Optional[int] = 0
+    checked_at: datetime
+    user_email: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class AIAnalysisResponse(BaseModel):
+    product_title: str
+    asin: str
+    total_keywords: int
+    analysis: dict
+
+
+class UpdateRanksRequest(BaseModel):
+    user_email: str
+
+
+class UsageLimitsResponse(BaseModel):
+    count: int
+    limit: int
+    remaining: int
+    subscription_tier: str
+
+
+# ===========================
+# HELPER FUNCTIONS
+# ===========================
+
+def parse_review_comments(comments_json: str) -> List[str]:
+    """Parse review comments from JSON string"""
+    if not comments_json:
+        return []
+    try:
+        return json.loads(comments_json)
+    except:
+        return []
+
+
+def parse_review_ratings(ratings_json: str) -> List[int]:
+    """Parse review ratings from JSON string"""
+    if not ratings_json:
+        return []
+    try:
+        return json.loads(ratings_json)
+    except:
+        return []
+
+
+def fetch_seller_reviews(seller_id: str, country: str) -> tuple:
     """
-    Get Share of Voice analysis usage statistics for a user
-
-    Returns:
-    - count: Number of SOV analyses used this month
-    - limit: Maximum allowed SOV analyses for user's tier
-    - remaining: Number of SOV analyses remaining
-    - subscription_tier: User's current subscription tier
-    - month: Current tracking month (YYYY-MM format)
+    Fetch seller reviews from RapidAPI
+    Returns: (comments_list, ratings_list)
     """
     try:
-        # Fetch user from database
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Get subscription tier (default to 'free' if not set)
-        tier = (user.subscription_tier or 'free').lower()
-        limit = SOV_TIER_LIMITS.get(tier, 3)
-
-        # Get current month in YYYY-MM format
-        current_month = datetime.now().strftime("%Y-%m")
-        stored_month = user.sov_month
-
-        # Reset count if it's a new month
-        if stored_month != current_month:
-            user.sov_used = 0
-            user.sov_month = current_month
-            db.commit()
-            db.refresh(user)
-
-        # Calculate usage stats
-        count = user.sov_used or 0
-        remaining = limit - count if limit != -1 else -1
-
-        return {
-            "count": count,
-            "limit": limit,
-            "remaining": remaining,
-            "subscription_tier": tier,
-            "month": current_month
+        params = {
+            "seller_id": seller_id,
+            "country": country,
+            "page": 1
         }
-
-    except HTTPException:
-        raise
+        
+        response = requests.get(AMAZON_REVIEWS_API_URL, headers=HEADERS, params=params, timeout=20)
+        response.raise_for_status()
+        data = response.json()
+        
+        if data.get("status") != "OK":
+            print(f"Failed to fetch reviews for seller {seller_id}")
+            return [], []
+        
+        seller_reviews = data.get("data", {}).get("seller_reviews", [])
+        
+        if not seller_reviews:
+            return [], []
+        
+        # ✅ Separate comments and ratings into two lists
+        comments = []
+        ratings = []
+        
+        for review in seller_reviews:
+            comments.append(review.get("review_comment", ""))
+            ratings.append(review.get("review_star_rating", 0))
+        
+        return comments, ratings
+        
     except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error fetching SOV usage: {str(e)}")
+        print(f"Error fetching reviews: {str(e)}")
+        return [], []
 
 
-@app.post("/users/{user_id}/increment-sov-usage")
-async def increment_sov_usage(user_id: int, db: Session = Depends(get_db)):
+def check_keyword_tracker_limit(user_id: int, db: Session) -> dict:
     """
-    Increment SOV analysis usage count for a user
-
-    This should be called AFTER a successful SOV analysis
-    Checks if user has remaining analyses before incrementing
+    Check if user has reached keyword tracker limit for the month
+    Returns: dict with count, limit, remaining, subscription_tier
     """
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Get tier and limit
-        tier = (user.subscription_tier or 'free').lower()
-        limit = SOV_TIER_LIMITS.get(tier, 3)
-
-        # Get current month
-        current_month = datetime.now().strftime("%Y-%m")
-        stored_month = user.sov_month
-
-        # Reset if new month
-        if stored_month != current_month:
-            user.sov_used = 0
-            user.sov_month = current_month
-
-        # Check if user has reached limit (only if not unlimited)
-        if limit != -1 and (user.sov_used or 0) >= limit:
-            raise HTTPException(
-                status_code=403,
-                detail=f"SOV analysis limit reached for {tier} tier. You've used all {limit} analyses this month. Upgrade to get more!"
-            )
-
-        # Increment usage count
-        user.sov_used = (user.sov_used or 0) + 1
+    # Get user's subscription tier and current month usage
+    query = text("""
+        SELECT subscription_tier, 
+               COALESCE(keyword_tracker_used, 0) as used,
+               keyword_tracker_month
+        FROM users 
+        WHERE id = :user_id
+    """)
+    
+    result = db.execute(query, {"user_id": user_id}).fetchone()
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    tier = result[0] or 'free'
+    used = result[1]
+    tracked_month = result[2]
+    
+    current_month = datetime.utcnow().strftime('%Y-%m')
+    
+    # Reset counter if it's a new month
+    if tracked_month != current_month:
+        reset_query = text("""
+            UPDATE users 
+            SET keyword_tracker_used = 0, 
+                keyword_tracker_month = :current_month 
+            WHERE id = :user_id
+        """)
+        db.execute(reset_query, {"current_month": current_month, "user_id": user_id})
         db.commit()
-        db.refresh(user)
-
-        remaining = limit - user.sov_used if limit != -1 else -1
-
-        return {
-            "success": True,
-            "count": user.sov_used,
-            "limit": limit,
-            "remaining": remaining,
-            "subscription_tier": tier
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error incrementing SOV usage: {str(e)}")
+        used = 0
+    
+    limit = KEYWORD_TRACKER_LIMITS.get(tier.lower(), KEYWORD_TRACKER_LIMITS['free'])
+    remaining = limit - used if limit != -1 else -1
+    
+    return {
+        "count": used,
+        "limit": limit,
+        "remaining": remaining,
+        "subscription_tier": tier
+    }
 
 
-# ==================== Category & Keyword Endpoints ====================
+# ===========================
+# API ENDPOINTS
+# ===========================
 
-@app.get("/sov/categories")
-def get_sov_categories(
-    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
-    db: Session = Depends(get_db)
-):
-    """Get list of all available categories for SOV analysis"""
-    try:
-        categories = set()
-
-        if marketplace in ["flipkart", "all"]:
-            flipkart_query = text("""
-                SELECT DISTINCT category_name
-                FROM rapidapi_flipkart_products
-                WHERE category_name IS NOT NULL AND category_name != 'NULL'
-                ORDER BY category_name
-            """)
-            result = db.execute(flipkart_query)
-            categories.update([row[0] for row in result if row[0]])
-
-        if marketplace in ["amazon", "all"]:
-            amazon_query = text("""
-                SELECT DISTINCT category_name
-                FROM rapidapi_amazon_products
-                WHERE category_name IS NOT NULL AND category_name != 'NULL'
-                ORDER BY category_name
-            """)
-            result = db.execute(amazon_query)
-            categories.update([row[0] for row in result if row[0]])
-
-        return {"categories": sorted(list(categories))}
-
-    except Exception as e:
-        return {"error": f"Error fetching categories: {str(e)}"}
+# ✅ NEW: Get keyword tracker usage limits
+@app.get("/users/{user_id}/keyword-tracker-usage", response_model=UsageLimitsResponse)
+def get_keyword_tracker_usage(user_id: int, db: Session = Depends(get_db)):
+    """
+    Get current keyword tracker usage and limits for a user
+    """
+    usage = check_keyword_tracker_limit(user_id, db)
+    return UsageLimitsResponse(**usage)
 
 
-@app.get("/sov/category/{category_name}")
-async def get_category_sov(
-    category_name: str,
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    your_brand: Optional[str] = Query(default=None),
-    user_id: Optional[int] = Query(default=None),
+# ----------------------
+# 1️⃣ Fetch live seller products AND reviews, store in DB
+# ----------------------
+@app.get("/keyword_tracker/fetch_and_store_products/{seller_id}", response_model=List[TrackedProductResponse])
+def fetch_and_store_seller_products(
+    seller_id: str, 
+    country: str = "IN", 
+    page: int = 1, 
+    user_email: str = None,
+    user_id: int = None,  # ✅ NEW: Add user_id parameter
     db: Session = Depends(get_db)
 ):
     """
-    Get Share of Voice analysis for a specific category.
-    Usage is incremented ONCE here at the HTTP entry point only.
-    Internal helpers (progress, competitors, ai-insights) do NOT increment.
+    ✅ Fetch products from Amazon API AND their reviews
+    ✅ Store comments and ratings in SEPARATE columns
+    ✅ Check subscription limits before allowing
     """
-    try:
-        # ✅ Usage check + increment — ONLY place this happens for category SOV
-        if user_id:
-            user = db.query(User).filter(User.id == user_id).first()
-            if user:
-                tier = (user.subscription_tier or 'free').lower()
-                limit = SOV_TIER_LIMITS.get(tier, 3)
-
-                # Get current month
-                current_month = datetime.now().strftime("%Y-%m")
-                if user.sov_month != current_month:
-                    user.sov_used = 0
-                    user.sov_month = current_month
-
-                # Check limit before processing
-                if limit != -1 and (user.sov_used or 0) >= limit:
-                    raise HTTPException(
-                        status_code=403,
-                        detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
-                    )
-
-                # Increment usage
-                user.sov_used = (user.sov_used or 0) + 1
-                db.commit()
-
-        # Delegate all query logic to the shared helper
-        return _get_category_sov_data(category_name, marketplace, your_brand, db)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error analyzing category: {str(e)}")
-
-
-@app.get("/sov/keyword/{keyword}")
-async def get_keyword_sov(
-    keyword: str,
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    price_min: Optional[float] = Query(default=None),
-    price_max: Optional[float] = Query(default=None),
-    user_id: Optional[int] = Query(default=None),
-    db: Session = Depends(get_db)
-):
-    """
-    Get Share of Voice analysis for products matching a keyword.
-    Includes usage tracking for authenticated users.
-    """
-    try:
-        # ✅ Check and increment usage if user is logged in
-        if user_id:
-            user = db.query(User).filter(User.id == user_id).first()
-            if user:
-                tier = (user.subscription_tier or 'free').lower()
-                limit = SOV_TIER_LIMITS.get(tier, 3)
-
-                # Get current month
-                current_month = datetime.now().strftime("%Y-%m")
-                if user.sov_month != current_month:
-                    user.sov_used = 0
-                    user.sov_month = current_month
-
-                # Check limit
-                if limit != -1 and (user.sov_used or 0) >= limit:
-                    raise HTTPException(
-                        status_code=403,
-                        detail=f"You've reached your {tier.upper()} tier limit of {limit} SOV analyses this month. Upgrade for more!"
-                    )
-
-                # Increment usage
-                user.sov_used = (user.sov_used or 0) + 1
-                db.commit()
-
-        # Keyword SOV query logic
-        price_filter = ""
-        if marketplace == "flipkart":
-            if price_min is not None:
-                price_filter += f" AND product_price >= {price_min}"
-            if price_max is not None:
-                price_filter += f" AND product_price <= {price_max}"
-
-            query = text(f"""
-                SELECT
-                    brand,
-                    COUNT(*) as product_count,
-                    COALESCE(SUM(product_rating_count), 0) as total_reviews,
-                    COALESCE(SUM(estimated_sales), 0) as total_sales,
-                    COALESCE(AVG(CAST(product_star_rating AS FLOAT)), 0) as avg_rating,
-                    COALESCE(AVG(product_price), 0) as avg_price,
-                    MIN(product_price) as min_price,
-                    MAX(product_price) as max_price
-                FROM rapidapi_flipkart_products
-                WHERE (LOWER(product_title) LIKE LOWER(:keyword)
-                    OR LOWER(category_name) LIKE LOWER(:keyword))
-                    AND brand IS NOT NULL
-                    AND brand != 'NULL'
-                    {price_filter}
-                GROUP BY brand
-                ORDER BY total_reviews DESC
-            """)
-        else:  # amazon
-            if price_min is not None:
-                price_filter += f" AND product_price_numeric >= {price_min}"
-            if price_max is not None:
-                price_filter += f" AND product_price_numeric <= {price_max}"
-
-            query = text(f"""
-                SELECT
-                    SPLIT_PART(product_title, ' ', 1) as brand,
-                    COUNT(*) as product_count,
-                    COALESCE(SUM(product_num_ratings), 0) as total_reviews,
-                    COALESCE(SUM(avg_sales_volume), 0) as total_sales,
-                    COALESCE(AVG(product_star_rating_numeric), 0) as avg_rating,
-                    COALESCE(AVG(product_price_numeric), 0) as avg_price,
-                    MIN(product_price_numeric) as min_price,
-                    MAX(product_price_numeric) as max_price
-                FROM rapidapi_amazon_products
-                WHERE (LOWER(product_title) LIKE LOWER(:keyword)
-                    OR LOWER(category_name) LIKE LOWER(:keyword))
-                    {price_filter}
-                GROUP BY brand
-                ORDER BY total_reviews DESC
-            """)
-
-        result = db.execute(query, {"keyword": f"%{keyword}%"})
-        rows = result.fetchall()
-
-        if not rows:
-            return {"error": f"No products found matching keyword: {keyword}"}
-
-        total_reviews = sum(int(row[2] or 0) for row in rows)
-        total_products = sum(int(row[1] or 0) for row in rows)
-
-        brands = []
-        min_price = float('inf')
-        max_price = 0
-
-        for row in rows:
-            review_count = int(row[2] or 0)
-            share_pct = (review_count / total_reviews * 100) if total_reviews > 0 else 0
-
-            brands.append({
-                "brand": row[0] or "Unknown",
-                "share_percentage": round(share_pct, 2),
-                "total_reviews": review_count,
-                "total_sales": int(row[3] or 0),
-                "avg_rating": round(float(row[4] or 0), 2),
-                "avg_price": round(float(row[5] or 0), 2),
-                "product_count": int(row[1] or 0)
-            })
-
-            min_price = min(min_price, float(row[6] or float('inf')))
-            max_price = max(max_price, float(row[7] or 0))
-
-        return {
-            "keyword": keyword,
-            "total_products": total_products,
-            "total_reviews": total_reviews,
-            "brands": brands,
-            "price_range": {
-                "min": round(min_price if min_price != float('inf') else 0, 2),
-                "max": round(max_price, 2)
-            },
-            "marketplace": marketplace
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error analyzing keyword: {str(e)}")
-
-
-# ==================== Progress Tracking ====================
-
-@app.get("/sov/progress/{category_name}")
-def track_sov_progress(
-    category_name: str,
-    your_brand: str,
-    target_share: float = Query(default=20.0, ge=0, le=100),
-    target_days: int = Query(default=90, ge=1),
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    db: Session = Depends(get_db)
-):
-    """Track progress towards target market share"""
-    try:
-        # ✅ Uses the internal helper — no usage increment, no async mismatch
-        current_sov = _get_category_sov_data(category_name, marketplace, your_brand, db)
-
-        if "error" in current_sov:
-            return current_sov
-
-        current_share = current_sov.get("your_brand_share") or 0
-
-        # Calculate dates
-        start_date = datetime.now() - timedelta(days=30)
-        target_date = datetime.now() + timedelta(days=target_days)
-        days_elapsed = 30
-        days_remaining = target_days
-
-        # Calculate growth rates
-        required_growth_rate = (target_share - current_share) / target_days if target_days > 0 else 0
-        actual_growth_rate = current_share / days_elapsed if days_elapsed > 0 else 0
-
-        is_on_track = actual_growth_rate >= required_growth_rate
-
-        # Generate weekly progress
-        weekly_progress = []
-        weeks = min(12, (days_elapsed + days_remaining) // 7)
-
-        for week in range(weeks):
-            week_date = start_date + timedelta(weeks=week)
-            projected_share = min(current_share + (actual_growth_rate * week * 7), 100)
-
-            weekly_progress.append({
-                "date": week_date.strftime("%Y-%m-%d"),
-                "share_percentage": round(projected_share, 2),
-                "reviews": int(current_sov["total_reviews"] * projected_share / 100),
-                "sales": int(current_sov["total_sales"] * projected_share / 100)
-            })
-
-        return {
-            "category_name": category_name,
-            "your_brand": your_brand,
-            "current_share": round(current_share, 2),
-            "target_share": target_share,
-            "start_date": start_date.strftime("%Y-%m-%d"),
-            "target_date": target_date.strftime("%Y-%m-%d"),
-            "days_elapsed": days_elapsed,
-            "days_remaining": days_remaining,
-            "is_on_track": is_on_track,
-            "required_growth_rate": round(required_growth_rate, 4),
-            "actual_growth_rate": round(actual_growth_rate, 4),
-            "weekly_progress": weekly_progress
-        }
-
-    except Exception as e:
-        return {"error": f"Error tracking progress: {str(e)}"}
-
-
-# ==================== Competitor Analysis ====================
-
-@app.get("/sov/competitors/{category_name}")
-def analyze_sov_competitors(
-    category_name: str,
-    your_brand: str,
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    limit: int = Query(default=10, ge=1, le=50),
-    db: Session = Depends(get_db)
-):
-    """Get detailed competitor analysis"""
-    try:
-        # ✅ Uses the internal helper — no usage increment, no async mismatch
-        sov_data = _get_category_sov_data(category_name, marketplace, your_brand, db)
-
-        if "error" in sov_data:
-            return sov_data
-
-        competitors = []
-        for brand in sov_data["brands"]:
-            if brand["brand"].lower() != your_brand.lower():
-                competitors.append({
-                    "competitor_name": brand["brand"],
-                    "market_share": brand["share_percentage"],
-                    "avg_price": brand["avg_price"],
-                    "total_products": brand["product_count"],
-                    "avg_rating": brand["avg_rating"],
-                    "total_reviews": brand["total_reviews"],
-                    "total_sales": brand["total_sales"]
-                })
-
-        # Sort by market share and limit
-        competitors.sort(key=lambda x: x["market_share"], reverse=True)
-        return {"competitors": competitors[:limit]}
-
-    except Exception as e:
-        return {"error": f"Error analyzing competitors: {str(e)}"}
-
-
-# ==================== Combined SOV (Flipkart + Amazon) ====================
-
-@app.get("/sov/combined/{category_name}")
-def get_combined_sov(
-    category_name: str,
-    your_brand: Optional[str] = Query(default=None),
-    db: Session = Depends(get_db)
-):
-    """Get combined Share of Voice from both Flipkart and Amazon"""
-    try:
-        # ✅ Both calls use the internal helper — no usage increment, no async mismatch
-        flipkart_data = _get_category_sov_data(category_name, "flipkart", your_brand, db)
-        amazon_data = _get_category_sov_data(category_name, "amazon", your_brand, db)
-
-        # Handle errors
-        if "error" in flipkart_data and "error" in amazon_data:
-            return {"error": "No data found in either marketplace"}
-
-        # Combine brand data
-        brand_map = {}
-
-        for data in [flipkart_data, amazon_data]:
-            if "error" not in data:
-                for brand in data["brands"]:
-                    brand_name = brand["brand"]
-                    if brand_name not in brand_map:
-                        brand_map[brand_name] = {
-                            "reviews": 0,
-                            "sales": 0,
-                            "products": 0,
-                            "ratings": [],
-                            "prices": []
-                        }
-
-                    brand_map[brand_name]["reviews"] += brand["total_reviews"]
-                    brand_map[brand_name]["sales"] += brand["total_sales"]
-                    brand_map[brand_name]["products"] += brand["product_count"]
-                    if brand["avg_rating"]:
-                        brand_map[brand_name]["ratings"].append(brand["avg_rating"])
-                    if brand["avg_price"]:
-                        brand_map[brand_name]["prices"].append(brand["avg_price"])
-
-        total_reviews = sum(b["reviews"] for b in brand_map.values())
-
-        combined_brands = []
-        your_brand_combined_share = None
-
-        for brand_name, data in brand_map.items():
-            share_pct = (data["reviews"] / total_reviews * 100) if total_reviews > 0 else 0
-
-            combined_brand = {
-                "brand": brand_name,
-                "share_percentage": round(share_pct, 2),
-                "total_reviews": data["reviews"],
-                "total_sales": data["sales"],
-                "avg_rating": round(sum(data["ratings"]) / len(data["ratings"]), 2) if data["ratings"] else None,
-                "avg_price": round(sum(data["prices"]) / len(data["prices"]), 2) if data["prices"] else None,
-                "product_count": data["products"]
-            }
-            combined_brands.append(combined_brand)
-
-            if your_brand and brand_name.lower() == your_brand.lower():
-                your_brand_combined_share = share_pct
-
-        combined_brands.sort(key=lambda x: x["share_percentage"], reverse=True)
-
-        return {
-            "category_name": category_name,
-            "combined_brands": combined_brands,
-            "flipkart_data": flipkart_data if "error" not in flipkart_data else None,
-            "amazon_data": amazon_data if "error" not in amazon_data else None,
-            "your_brand_combined_share": round(your_brand_combined_share, 2) if your_brand_combined_share else None
-        }
-
-    except Exception as e:
-        return {"error": f"Error getting combined SOV: {str(e)}"}
-
-
-# ==================== Brands ====================
-
-@app.get("/sov/brands")
-def get_all_brands(
-    marketplace: str = Query(default="all", enum=["flipkart", "amazon", "all"]),
-    db: Session = Depends(get_db)
-):
-    """Get list of all available brands"""
-    try:
-        brands = set()
-
-        if marketplace in ["flipkart", "all"]:
-            flipkart_query = text("""
-                SELECT DISTINCT brand
-                FROM rapidapi_flipkart_products
-                WHERE brand IS NOT NULL AND brand != 'NULL'
-                ORDER BY brand
-            """)
-            result = db.execute(flipkart_query)
-            brands.update([row[0] for row in result if row[0]])
-
-        if marketplace in ["amazon", "all"]:
-            amazon_query = text("""
-                SELECT DISTINCT SPLIT_PART(product_title, ' ', 1) as brand
-                FROM rapidapi_amazon_products
-                WHERE product_title IS NOT NULL
-                ORDER BY brand
-            """)
-            result = db.execute(amazon_query)
-            brands.update([row[0] for row in result if row[0]])
-
-        return {"brands": sorted(list(brands))[:100]}  # Limit to 100 brands
-
-    except Exception as e:
-        return {"error": f"Error fetching brands: {str(e)}"}
-
-
-# ==================== Ollama helper — single source of truth ====================
-# Change the model here and it changes everywhere.  Nothing else to update.
-
-_OLLAMA_MODEL = "llama3.2:3b"
-
-
-def _call_ollama(prompt: str, timeout: int) -> str:
-    """
-    Run one prompt through local Ollama.
-    Returns cleaned output.  Empty string on any failure — callers do fallback.
-    """
-    try:
-        result = subprocess.run(
-            ["ollama", "run", _OLLAMA_MODEL],
-            input=prompt,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="ignore",
-            timeout=timeout,
-        )
-        raw = (result.stdout or result.stderr or "").strip()
-        # Strip tokens small local models like to emit
-        raw = raw.replace("<|MODEL_RESPONSE|>", "").replace("</s>", "").strip()
-        # Strip markdown code-fence wrappers  ```json … ```
-        raw = re.sub(r"^```(?:json)?\s*", "", raw)
-        raw = re.sub(r"\s*```$", "", raw)
-        return raw.strip()
-    except subprocess.TimeoutExpired:
-        print(f"[ollama] timeout after {timeout}s")
-    except FileNotFoundError:
-        print("[ollama] binary not found — is Ollama running?")
-    except Exception as e:
-        print(f"[ollama] {e}")
-    return ""
-
-
-def _run_ollama_parallel(tasks: list[tuple[str, int]]) -> list[str]:
-    """
-    Fire every (prompt, timeout) pair concurrently in threads.
-    Returns outputs in the same order as input.
-
-    Why threads?  subprocess.run blocks on I/O waiting for the Ollama
-    process.  ThreadPoolExecutor is the lightest correct primitive —
-    no event-loop plumbing, works fine in sync FastAPI routes.
-    """
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-
-    results       = [""] * len(tasks)
-    future_to_idx = {}
-
-    with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
-        for idx, (prompt, timeout) in enumerate(tasks):
-            future_to_idx[pool.submit(_call_ollama, prompt, timeout)] = idx
-
-        for future in as_completed(future_to_idx):
-            results[future_to_idx[future]] = future.result()
-
-    return results
-
-
-# ==================== AI Insights ====================
-
-@app.post("/sov/ai-insights")
-def get_ai_insights(
-    category_name: str = Query(...),
-    your_brand: str = Query(...),
-    target_share: float = Query(default=25.0),
-    target_days: int = Query(default=60),
-    marketplace: str = Query(default="flipkart", enum=["flipkart", "amazon"]),
-    db: Session = Depends(get_db)
-):
-    """Get AI-powered insights and recommendations using Ollama llama3.2:3b"""
-    try:
-        # ✅ Uses the internal helper — no usage increment, no async mismatch
-        sov_data = _get_category_sov_data(category_name, marketplace, your_brand, db)
-
-        if "error" in sov_data:
-            return {"error": sov_data["error"], "ai_generated_insights": "Cannot generate insights without valid SOV data"}
-
-        current_share = sov_data.get("your_brand_share") or 0
-        market_leader = sov_data.get("market_leader")
-        brands        = sov_data.get("brands", [])
-
-        # ── early exits ──
-        if not brands:
-            return {
-                "error": "No brand data found",
-                "ai_generated_insights": "No brands found in this category for the selected marketplace"
-            }
-
-        # Find your brand data — case-insensitive
-        your_brand_data = next(
-            (b for b in brands if b["brand"].lower() == your_brand.lower()), None
-        )
-        if not your_brand_data:
-            available_brands = [b["brand"] for b in brands[:10]]
-            return {
-                "error": f"Brand '{your_brand}' not found in {marketplace}",
-                "ai_generated_insights": f"Brand not found. Available brands include: {', '.join(available_brands)}",
-                "available_brands": available_brands
-            }
-
-        # Find market leader data
-        leader_data = next(
-            (b for b in brands if b["brand"] == market_leader), None
-        )
-
-        # ── pull out your numbers once, reuse everywhere ──
-        your_products   = your_brand_data.get("product_count", 0)  or 0
-        your_avg_price  = your_brand_data.get("avg_price", 0)      or 0
-        your_avg_rating = your_brand_data.get("avg_rating", 0)     or 0
-        your_reviews    = your_brand_data.get("total_reviews", 0)  or 0
-        leader_share    = (leader_data.get("share_percentage", 0) or 0) if leader_data else 0
-
-        # ── rank — single pass ──
-        rank = next(
-            (i + 1 for i, b in enumerate(brands) if b["brand"].lower() == your_brand.lower()),
-            None
-        )
-
-        # ── initialize the response shell ──
-        insights = {
-            "current_analysis": {
-                "current_share": current_share,
-                "target_share": target_share,
-                "gap": round(target_share - current_share, 2),
-                "days_to_target": target_days,
-                "required_daily_growth": round((target_share - current_share) / target_days, 4) if target_days > 0 else 0
-            },
-            "market_position": {
-                "rank": rank,
-                "total_brands": len(brands),
-                "distance_from_leader": round(leader_share - current_share, 2),
-                "market_leader": market_leader
-            },
-            "competitive_analysis": [],
-            "actionable_recommendations": [],
-            "growth_strategy": [],
-            "product_gaps": [],
-            "pricing_insights": {},
-            "ai_generated_insights": ""
-        }
-
-        # ── Competitive Analysis — top 5 vs you ──
-        top_5_brands = brands[:5]
-        for competitor in top_5_brands:
-            if competitor["brand"].lower() != your_brand.lower():
-                insights["competitive_analysis"].append({
-                    "brand":            competitor["brand"],
-                    "share":            competitor.get("share_percentage", 0) or 0,
-                    "products":         competitor.get("product_count", 0)    or 0,
-                    "avg_price":        competitor.get("avg_price", 0)        or 0,
-                    "avg_rating":       competitor.get("avg_rating", 0)       or 0,
-                    "reviews":          competitor.get("total_reviews", 0)    or 0,
-                    "advantage":        "Higher" if (competitor.get("share_percentage", 0) or 0) > current_share else "Lower",
-                    "price_comparison": "Cheaper" if (competitor.get("avg_price", 0) or 0) < your_avg_price else "More Expensive"
-                })
-
-        # ── shared numbers for prompts ──
-        top_competitors_for_prompt = [
-            {
-                "brand":   c["brand"],
-                "share":   c.get("share", 0)       or 0,
-                "products": c.get("products", 0)   or 0,
-                "price":   c.get("avg_price", 0)   or 0,
-                "rating":  c.get("avg_rating", 0)  or 0,
-            }
-            for c in insights["competitive_analysis"][:3]
-        ]
-
-        gap        = target_share - current_share
-        total_brands = len(brands)
-
-        # phase count — used by prompt AND fallback
-        num_phases = 2 if target_days <= 30 else (3 if target_days <= 60 else 4)
-
-        # competitor text block — built once, used in both prompts
-        competitor_lines = "\n".join(
-            f"- {c['brand']}: {c['share']}% share, {c['products']} products, ₹{c['price']} avg price, {c['rating']} rating"
-            for c in top_competitors_for_prompt
-        ) or "- No competitor data available"
-
-        # ──────────────────────────────────────────────────────
-        # PROMPT 1 — Strategic Insights
-        # Tighter than the Mistral version: llama3.2:3b is 3 B params,
-        # so less context + clearer structure = better output.
-        # ──────────────────────────────────────────────────────
-        ai_prompt = (
-            "You are an expert market analyst. Analyze this e-commerce data.\n\n"
-            "MARKET DATA:\n"
-            f"- Marketplace: {marketplace.upper()}\n"
-            f"- Brand: {your_brand} | Category: {category_name}\n"
-            f"- Current Share: {current_share}% | Target: {target_share}% | Timeline: {target_days} days\n"
-            f"- Rank: #{rank} of {total_brands} | Market Leader: {market_leader} ({leader_share}% share)\n\n"
-            "YOUR BRAND:\n"
-            f"- Products: {your_products} | Avg Price: ₹{your_avg_price} | Rating: {your_avg_rating} | Reviews: {your_reviews}\n\n"
-            "TOP COMPETITORS:\n"
-            f"{competitor_lines}\n\n"
-            "Respond in EXACTLY this format, nothing else:\n\n"
-            "1. KEY INSIGHTS:\n"
-            "- [Critical observation]\n"
-            "- [Major opportunity]\n"
-            "- [Biggest challenge]\n\n"
-            "2. PRIORITY ACTIONS:\n"
-            "- [Action with impact]\n"
-            "- [Action with impact]\n"
-            "- [Action with impact]\n\n"
-            "3. COMPETITIVE ADVANTAGE:\n"
-            "[One sentence on differentiation]\n\n"
-            "4. RISK FACTORS:\n"
-            "[One sentence on main risks]"
-        )
-
-        # ──────────────────────────────────────────────────────
-        # PROMPT 2 — Growth Strategy (must return pure JSON)
-        # Explicit JSON example keeps llama3.2:3b on-format.
-        # ──────────────────────────────────────────────────────
-        growth_prompt = (
-            f"Create a {num_phases}-phase e-commerce growth roadmap.\n"
-            "Return ONLY valid JSON — no text before or after, no markdown.\n\n"
-            "DATA:\n"
-            f"- Brand: {your_brand} | Marketplace: {marketplace.upper()} | Category: {category_name}\n"
-            f"- Current Share: {current_share}% | Target: {target_share}% | Gap: {gap}% | Days: {target_days}\n"
-            f"- Rank: #{rank} | Products: {your_products} | Avg Price: ₹{your_avg_price} | Rating: {your_avg_rating} | Reviews: {your_reviews}\n\n"
-            "COMPETITORS:\n"
-            f"{competitor_lines}\n\n"
-            "Rules:\n"
-            "- Phase 1 = quick wins (pricing, listings, reviews)\n"
-            "- Middle phases = product expansion + marketing\n"
-            "- Last phase = scaling + dominance\n"
-            "- 3-4 actions per phase, specific to {marketplace}\n"
-            f"- Targets progress linearly to {target_share}%\n\n"
-            "Output ONLY this JSON shape:\n"
-            '{"phases":[{"phase":"Phase 1 (Days 1-X)","focus":"…","actions":["…","…","…"],"target":"X.X% market share"}]}'
-        )
-
-        # ── FIRE BOTH PROMPTS IN PARALLEL ──
-        # Original: two sequential subprocess.run calls → ~55-70 s total
-        # Now:      both run concurrently            → ~max(30, 40) = 40 s worst-case
-        ai_output, growth_output = _run_ollama_parallel([
-            (ai_prompt,    30),   # strategic insights — 30 s
-            (growth_prompt, 40),  # growth JSON        — 40 s
-        ])
-
-        # ── process prompt-1 output ──
-        insights["ai_generated_insights"] = (
-            ai_output
-            if ai_output and len(ai_output) > 20
-            else "AI analysis temporarily unavailable. Using rule-based recommendations below."
-        )
-
-        # ── process prompt-2 output (JSON parse with single fallback) ──
-        growth_ok = False
-        if growth_output:
-            try:
-                growth_data = json.loads(growth_output)
-                phases = growth_data.get("phases")
-                if isinstance(phases, list) and phases:
-                    insights["growth_strategy"] = phases
-                    growth_ok = True
-                    print("✓ AI growth strategy parsed OK")
-            except (json.JSONDecodeError, ValueError) as e:
-                print(f"[growth] JSON parse failed: {e}")
-
-        if not growth_ok:
-            print("[growth] using rule-based fallback")
-            insights["growth_strategy"] = _generate_fallback_strategy(
-                gap, target_days, current_share, target_share, num_phases
+    if not user_email:
+        raise HTTPException(status_code=400, detail="user_email is required")
+    
+    # ✅ DEBUG: Print incoming parameters
+    print(f"🔍 FETCH REQUEST: user_id={user_id}, user_email={user_email}, seller_id={seller_id}")
+    
+    # ✅ Check usage limits if user_id provided
+    if user_id:
+        usage = check_keyword_tracker_limit(user_id, db)
+        print(f"📊 USAGE CHECK: count={usage['count']}, limit={usage['limit']}, tier={usage['subscription_tier']}")
+        
+        # Check if limit reached (only if not unlimited)
+        if usage['limit'] != -1 and usage['count'] >= usage['limit']:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Keyword Tracker limit reached for {usage['subscription_tier'].upper()} plan. You've used all {usage['limit']} product trackings this month. Upgrade for more!"
             )
+    
+    try:
+        # Step 1: Fetch seller products
+        params = {
+            "seller_id": seller_id,
+            "country": country,
+            "page": page,
+            "sort_by": "RELEVANCE"
+        }
+        print("HEADERS SENT:", HEADERS)
+        print(f"Fetching products for user: {user_email}")
 
-        # ── Rule-Based Actionable Recommendations ──
-        # Averages from top-5 (computed once)
-        avg_products = (
-            sum(b.get("product_count", 0) for b in top_5_brands if b.get("product_count"))
-            / max(sum(1 for b in top_5_brands if b.get("product_count")), 1)
+        response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+        response.raise_for_status()
+        data = response.json()
+
+        seller_products = data.get("data", {}).get("seller_products", [])
+        if not seller_products:
+            print("No products returned from RapidAPI")
+            return []
+
+        # Step 2: Fetch seller reviews once for the entire seller
+        print(f"Fetching reviews for seller {seller_id}...")
+        comments, ratings = fetch_seller_reviews(seller_id, country)
+        
+        # ✅ Convert to separate JSON strings for storage
+        comments_json = json.dumps(comments) if comments else None
+        ratings_json = json.dumps(ratings) if ratings else None
+
+        saved_products = []
+        new_products_count = 0  # Track new products for usage increment
+
+        for item in seller_products:
+            # Check if product already exists
+            existing = db.query(TrackedProduct).filter(
+                TrackedProduct.seller_id == seller_id,
+                TrackedProduct.asin == item["asin"],
+                TrackedProduct.user_email == user_email
+            ).first()
+            
+            if existing:
+                # ✅ Update existing product with separate reviews data
+                existing.review_comments = comments_json
+                existing.review_ratings = ratings_json
+                db.commit()
+                db.refresh(existing)
+                saved_products.append(existing)
+                print(f"📝 UPDATED existing product: {item['asin']}")
+                continue
+
+            # ✅ Create new product with separate reviews data
+            new_product = TrackedProduct(
+                seller_id=seller_id,
+                asin=item["asin"],
+                product_title=item["product_title"],
+                product_photo=item.get("product_photo", ""),
+                country=country,
+                user_email=user_email,
+                review_comments=comments_json,
+                review_ratings=ratings_json
+            )
+            db.add(new_product)
+            db.commit()
+            db.refresh(new_product)
+            saved_products.append(new_product)
+            new_products_count += 1
+            print(f"✨ CREATED new product: {item['asin']}")
+
+        # ✅✅ FIXED: Increment usage counter for NEW products only (if user_id provided)
+        if user_id and new_products_count > 0:
+            print(f"🔢 INCREMENTING usage for {new_products_count} new products...")
+            # Increment usage by the number of new products added
+            current_month = datetime.utcnow().strftime('%Y-%m')
+            update_query = text("""
+                UPDATE users 
+                SET keyword_tracker_used = COALESCE(keyword_tracker_used, 0) + :increment,
+                    keyword_tracker_month = :current_month
+                WHERE id = :user_id
+            """)
+            db.execute(update_query, {
+                "increment": new_products_count,
+                "current_month": current_month, 
+                "user_id": user_id
+            })
+            db.commit()
+            
+            # Verify increment
+            verify_query = text("SELECT keyword_tracker_used FROM users WHERE id = :user_id")
+            result = db.execute(verify_query, {"user_id": user_id}).fetchone()
+            print(f"✅ INCREMENTED by {new_products_count}: User {user_id} now has {result[0]} product trackings used")
+        else:
+            if not user_id:
+                print("⚠️ WARNING: user_id not provided, usage NOT tracked")
+            if new_products_count == 0:
+                print("ℹ️ INFO: No new products added, usage NOT incremented")
+
+        print(f"✅ COMPLETED: Saved {len(saved_products)} products ({new_products_count} new) with reviews for user {user_email}")
+        
+        # Format response with parsed reviews
+        response_products = []
+        for product in saved_products:
+            response_products.append(TrackedProductResponse(
+                id=product.id,
+                seller_id=product.seller_id,
+                asin=product.asin,
+                product_title=product.product_title,
+                product_photo=product.product_photo,
+                country=product.country,
+                user_email=product.user_email,
+                review_comments=parse_review_comments(product.review_comments),
+                review_ratings=parse_review_ratings(product.review_ratings)
+            ))
+        
+        return response_products
+
+    except requests.exceptions.RequestException as e:
+        print(f"RapidAPI request failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"RapidAPI request failed: {str(e)}")
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+# ----------------------
+# 2️⃣ Track keywords for a product with user_email
+# ----------------------
+@app.post("/keyword_tracker/track_keywords")
+def track_keywords(req: KeywordTrackRequest, db: Session = Depends(get_db)):
+    """
+    Track keywords for a product with user_email
+    """
+    if not req.user_email:
+        raise HTTPException(status_code=400, detail="user_email is required")
+    
+    product = db.query(TrackedProduct).filter(
+        TrackedProduct.id == req.tracked_product_id,
+        TrackedProduct.user_email == req.user_email
+    ).first()
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Tracked product not found or doesn't belong to this user")
+
+    for kw in req.keywords:
+        existing_kw = db.query(KeywordRankHistory).filter(
+            KeywordRankHistory.tracked_product_id == req.tracked_product_id,
+            KeywordRankHistory.keyword == kw,
+            KeywordRankHistory.user_email == req.user_email
+        ).first()
+        
+        if existing_kw:
+            continue
+            
+        entry = KeywordRankHistory(
+            tracked_product_id=req.tracked_product_id,
+            keyword=kw,
+            rank=0,
+            checked_at=datetime.utcnow(),
+            user_email=req.user_email
         )
-        avg_rating = (
-            sum(b.get("avg_rating", 0) for b in top_5_brands if b.get("avg_rating"))
-            / max(sum(1 for b in top_5_brands if b.get("avg_rating")), 1)
-        )
-        avg_reviews = (
-            sum(b.get("total_reviews", 0) for b in top_5_brands if b.get("total_reviews"))
-            / max(sum(1 for b in top_5_brands if b.get("total_reviews")), 1)
-        )
-        avg_price = (
-            sum(b.get("avg_price", 0) for b in top_5_brands if b.get("avg_price"))
-            / max(sum(1 for b in top_5_brands if b.get("avg_price")), 1)
+        db.add(entry)
+    
+    db.commit()
+    print(f"Tracked {len(req.keywords)} keywords for user {req.user_email}")
+    return {"status": "ok", "message": f"Keywords tracked for {req.user_email}"}
+
+
+# ----------------------
+# 3️⃣ Get all tracked products for a seller (with reviews)
+# ----------------------
+@app.get("/keyword_tracker/tracked_products/{seller_id}", response_model=List[TrackedProductResponse])
+def get_tracked_products(
+    seller_id: str, 
+    user_email: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get tracked products for a seller with reviews included
+    """
+    query = db.query(TrackedProduct).filter(TrackedProduct.seller_id == seller_id)
+    
+    if user_email:
+        query = query.filter(TrackedProduct.user_email == user_email)
+    
+    products = query.all()
+    
+    # Format response with parsed reviews
+    response_products = []
+    for product in products:
+        response_products.append(TrackedProductResponse(
+            id=product.id,
+            seller_id=product.seller_id,
+            asin=product.asin,
+            product_title=product.product_title,
+            product_photo=product.product_photo,
+            country=product.country,
+            user_email=product.user_email,
+            review_comments=parse_review_comments(product.review_comments),
+            review_ratings=parse_review_ratings(product.review_ratings)
+        ))
+    
+    return response_products
+
+
+# ----------------------
+# 4️⃣ Get keyword rank history for a product (filtered by user)
+# ----------------------
+@app.get("/keyword_tracker/rank_history/{tracked_product_id}", response_model=List[KeywordRankResponse])
+def get_rank_history(
+    tracked_product_id: int, 
+    user_email: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get rank history for a product, optionally filtered by user_email
+    """
+    query = db.query(KeywordRankHistory).filter(
+        KeywordRankHistory.tracked_product_id == tracked_product_id
+    )
+    
+    if user_email:
+        query = query.filter(KeywordRankHistory.user_email == user_email)
+    
+    history = query.order_by(KeywordRankHistory.checked_at.asc()).all()
+    return history
+
+
+# ----------------------
+# 5️⃣ Update daily ranks using RapidAPI (filtered by user)
+# ----------------------
+@app.post("/keyword_tracker/update_daily_ranks")
+def update_daily_ranks(req: UpdateRanksRequest, db: Session = Depends(get_db)):
+    """
+    Update ranks for all tracked keywords for a specific user using live RapidAPI data.
+    """
+    if not req.user_email:
+        raise HTTPException(status_code=400, detail="user_email is required")
+    
+    products = db.query(TrackedProduct).filter(
+        TrackedProduct.user_email == req.user_email
+    ).all()
+    
+    if not products:
+        return {"status": "success", "message": f"No products found for {req.user_email}"}
+    
+    updated_count = 0
+    
+    for product in products:
+        keyword_entries = db.query(KeywordRankHistory).filter(
+            KeywordRankHistory.tracked_product_id == product.id,
+            KeywordRankHistory.user_email == req.user_email
+        ).all()
+        
+        for kw_entry in keyword_entries:
+            try:
+                params = {
+                    "seller_id": product.seller_id,
+                    "country": product.country,
+                    "page": 1,
+                    "sort_by": "RELEVANCE"
+                }
+                response = requests.get(AMAZON_API_URL, headers=HEADERS, params=params, timeout=20)
+                response.raise_for_status()
+                data = response.json()
+                seller_products = data.get("data", {}).get("seller_products", [])
+
+                asin_rank_map = {item["asin"]: idx + 1 for idx, item in enumerate(seller_products)}
+                rank = asin_rank_map.get(product.asin)
+                
+                if rank:
+                    kw_entry.rank = rank
+                    kw_entry.checked_at = datetime.utcnow()
+                    updated_count += 1
+                    
+            except Exception as e:
+                print(f"Error updating rank for {product.asin}, keyword {kw_entry.keyword}: {str(e)}")
+
+    db.commit()
+    print(f"Updated {updated_count} keyword ranks for user {req.user_email}")
+    return {
+        "status": "success", 
+        "message": f"Updated {updated_count} keyword ranks for {req.user_email}",
+        "updated_count": updated_count
+    }
+
+
+# ----------------------
+# 6️⃣ AI-Powered Keyword Analysis using Ollama (with user verification)
+# ----------------------
+@app.get("/keyword_tracker/ai_analysis/{tracked_product_id}", response_model=AIAnalysisResponse)
+def get_ai_keyword_analysis(
+    tracked_product_id: int, 
+    user_email: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate AI-powered insights for keyword rankings using Ollama Mistral
+    Optionally filtered by user_email
+    """
+    query = db.query(TrackedProduct).filter(TrackedProduct.id == tracked_product_id)
+    
+    if user_email:
+        query = query.filter(TrackedProduct.user_email == user_email)
+    
+    product = query.first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=404, 
+            detail="Tracked product not found or doesn't belong to this user"
         )
 
-        # Product expansion
-        if avg_products > 0 and your_products < avg_products:
-            insights["actionable_recommendations"].append({
-                "type": "Product Expansion",
-                "priority": "High",
-                "current": your_products,
-                "benchmark": int(avg_products),
-                "action": f"Expand product line by {int(avg_products - your_products)} products to match competitors",
-                "impact": "Could increase market share by 2-5%"
+    rank_query = db.query(KeywordRankHistory).filter(
+        KeywordRankHistory.tracked_product_id == tracked_product_id
+    )
+    
+    if user_email:
+        rank_query = rank_query.filter(KeywordRankHistory.user_email == user_email)
+    
+    rank_history = rank_query.order_by(
+        KeywordRankHistory.keyword, 
+        KeywordRankHistory.checked_at.desc()
+    ).all()
+
+    if not rank_history:
+        raise HTTPException(status_code=404, detail="No rank history found for this product")
+
+    # Organize rank history by keyword
+    keyword_ranks = defaultdict(list)
+    for entry in rank_history:
+        keyword_ranks[entry.keyword].append({
+            "rank": entry.rank,
+            "checked_at": entry.checked_at.isoformat()
+        })
+
+    # Prepare data summary for AI
+    rank_summary = []
+    for keyword, ranks in keyword_ranks.items():
+        if len(ranks) >= 2:
+            latest_rank = ranks[0]["rank"]
+            previous_rank = ranks[1]["rank"]
+            change = previous_rank - latest_rank
+            rank_summary.append({
+                "keyword": keyword,
+                "current_rank": latest_rank,
+                "previous_rank": previous_rank,
+                "change": change,
+                "trend": "improved" if change > 0 else "declined" if change < 0 else "stable"
+            })
+        else:
+            rank_summary.append({
+                "keyword": keyword,
+                "current_rank": ranks[0]["rank"],
+                "previous_rank": None,
+                "change": 0,
+                "trend": "new"
             })
 
-        # Quality / rating
-        if avg_rating > 0 and your_avg_rating > 0 and your_avg_rating < avg_rating:
-            insights["actionable_recommendations"].append({
-                "type": "Quality Improvement",
-                "priority": "High",
-                "current": your_avg_rating,
-                "benchmark": round(avg_rating, 2),
-                "action": f"Improve product rating by {round(avg_rating - your_avg_rating, 2)} points through quality enhancements",
-                "impact": "Better ratings can increase conversions by 15-20%"
-            })
+    # Create AI prompt
+    prompt = f"""You are an Amazon SEO expert analyzing keyword ranking performance for a product.
 
-        # Review generation
-        if avg_reviews > 0 and your_reviews < avg_reviews:
-            insights["actionable_recommendations"].append({
-                "type": "Review Generation",
-                "priority": "Medium",
-                "current": your_reviews,
-                "benchmark": int(avg_reviews),
-                "action": f"Increase reviews by {int(avg_reviews - your_reviews)} through customer engagement campaigns",
-                "impact": "More reviews increase trust and visibility"
-            })
+Product: {product.product_title}
+ASIN: {product.asin}
+Country: {product.country}
 
-        # Pricing
-        if avg_price > 0 and your_avg_price > 0:
-            price_diff = your_avg_price - avg_price
-            if abs(price_diff) > avg_price * 0.15:
-                if price_diff > 0:
-                    insights["actionable_recommendations"].append({
-                        "type": "Pricing Optimization",
-                        "priority": "Medium",
-                        "current": your_avg_price,
-                        "benchmark": round(avg_price, 2),
-                        "action": f"Consider reducing price by ₹{round(price_diff, 2)} to be more competitive",
-                        "impact": "Price optimization can increase sales by 10-15%"
-                    })
-                else:
-                    insights["actionable_recommendations"].append({
-                        "type": "Premium Positioning",
-                        "priority": "Low",
-                        "current": your_avg_price,
-                        "benchmark": round(avg_price, 2),
-                        "action": f"Your pricing is ₹{round(abs(price_diff), 2)} below average - consider premium positioning",
-                        "impact": "Could justify price increase with improved marketing"
-                    })
+Current Keyword Rankings:
+{json.dumps(rank_summary, indent=2)}
 
-        # ── Product Gaps Analysis ──
+Provide a detailed analysis in the following JSON format (respond ONLY with valid JSON, no markdown):
+{{
+  "why_changed": "Explain the likely reasons for rank changes (2-3 sentences)",
+  "what_to_do": "Actionable steps the seller should take immediately (3-4 bullet points)",
+  "which_keywords_matter": "Identify the most important keywords to focus on and why (2-3 keywords with explanations)",
+  "future_prediction": "Predict potential ranking trends for the next 30 days (2-3 sentences)",
+  "product_optimization": "Specific product listing optimization recommendations (3-4 bullet points)",
+  "roadmap": "30-60-90 day strategic roadmap (3 phases with specific goals)"
+}}
+
+Be specific, data-driven, and focus on actionable insights."""
+
+    try:
+        ollama_response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "mistral",
+                "prompt": prompt,
+                "stream": False,
+                "format": "json"
+            },
+            timeout=60
+        )
+        
+        if ollama_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Ollama API error: {ollama_response.text}")
+
+        ollama_data = ollama_response.json()
+        ai_response_text = ollama_data.get("response", "{}")
+        
+        # Clean up response
+        ai_response_text = ai_response_text.strip()
+        if ai_response_text.startswith("```json"):
+            ai_response_text = ai_response_text[7:]
+        if ai_response_text.startswith("```"):
+            ai_response_text = ai_response_text[3:]
+        if ai_response_text.endswith("```"):
+            ai_response_text = ai_response_text[:-3]
+        ai_response_text = ai_response_text.strip()
+
         try:
-            if marketplace == "flipkart":
-                gaps_query = text("""
-                    SELECT
-                        product_title,
-                        COUNT(*) as competitor_products,
-                        AVG(product_price) as avg_price,
-                        AVG(CAST(product_star_rating AS FLOAT)) as avg_rating,
-                        SUM(product_rating_count) as total_reviews
-                    FROM rapidapi_flipkart_products
-                    WHERE category_name = :category_name
-                        AND LOWER(brand) != LOWER(:your_brand)
-                    GROUP BY product_title
-                    HAVING COUNT(*) >= 2
-                    ORDER BY total_reviews DESC
-                    LIMIT 10
-                """)
-            else:
-                gaps_query = text("""
-                    SELECT
-                        product_title,
-                        COUNT(*) as competitor_products,
-                        AVG(product_price_numeric) as avg_price,
-                        AVG(product_star_rating_numeric) as avg_rating,
-                        SUM(product_num_ratings) as total_reviews
-                    FROM rapidapi_amazon_products
-                    WHERE category_name = :category_name
-                        AND LOWER(brand) != LOWER(:your_brand)
-                    GROUP BY product_title
-                    HAVING COUNT(*) >= 2
-                    ORDER BY total_reviews DESC
-                    LIMIT 10
-                """)
-
-            result = db.execute(gaps_query, {"category_name": category_name, "your_brand": your_brand})
-            gaps_rows = result.fetchall()
-
-            for gap_item in gaps_rows[:5]:
-                demand = int(gap_item[4]) if gap_item[4] else 0
-                insights["product_gaps"].append({
-                    "product_type":         gap_item[0][:100] if gap_item[0] else "Unknown",
-                    "competitors_offering": int(gap_item[1]) if gap_item[1] else 0,
-                    "avg_price":            round(float(gap_item[2]), 2) if gap_item[2] else 0,
-                    "avg_rating":           round(float(gap_item[3]), 2) if gap_item[3] else 0,
-                    "total_demand":         demand,
-                    "opportunity":          "High" if demand > 1000 else ("Medium" if demand > 500 else "Low")
-                })
-        except Exception as e:
-            print(f"Product gaps error: {str(e)}")
-
-        # ── Pricing Insights ──
-        if your_avg_price and avg_price > 0:
-            budget_count   = sum(1 for b in brands if b.get("avg_price") and b["avg_price"] < your_avg_price * 0.8)
-            similar_count  = sum(1 for b in brands if b.get("avg_price") and your_avg_price * 0.8 <= b["avg_price"] <= your_avg_price * 1.2)
-            premium_count  = sum(1 for b in brands if b.get("avg_price") and b["avg_price"] > your_avg_price * 1.2)
-
-            insights["pricing_insights"] = {
-                "your_price":                your_avg_price,
-                "market_average":            round(avg_price, 2),
-                "budget_competitors":        budget_count,
-                "similar_price_competitors": similar_count,
-                "premium_competitors":       premium_count,
-                "price_positioning":         "Budget" if your_avg_price < avg_price * 0.8 else ("Premium" if your_avg_price > avg_price * 1.2 else "Mid-Range"),
-                "recommendation":            "Your pricing is competitive" if similar_count > budget_count else "Consider price adjustment to be more competitive"
+            analysis = json.loads(ai_response_text)
+        except json.JSONDecodeError:
+            analysis = {
+                "why_changed": "Unable to parse AI response. Please try again.",
+                "what_to_do": "Check your keyword rankings manually and adjust your listing accordingly.",
+                "which_keywords_matter": "Focus on keywords with high search volume and low competition.",
+                "future_prediction": "Rankings may fluctuate based on competition and seasonality.",
+                "product_optimization": "Improve product images, title, and description with relevant keywords.",
+                "roadmap": "Week 1-4: Optimize listing. Week 5-8: Monitor rankings. Week 9-12: Adjust strategy."
             }
 
-        return insights
-
-    except Exception as e:
-        print(f"Error in AI insights: {traceback.format_exc()}")
         return {
-            "error": f"Error generating AI insights: {str(e)}",
-            "ai_generated_insights": "Unable to generate insights due to an error. Please try again.",
-            "details": str(e)
+            "product_title": product.product_title,
+            "asin": product.asin,
+            "total_keywords": len(rank_summary),
+            "analysis": analysis
         }
 
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Ollama service unavailable: {str(e)}. Make sure Ollama is running on localhost:11434"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-# ==================== Fallback Growth Strategy ====================
 
-def _generate_fallback_strategy(gap, target_days, current_share, target_share, num_phases):
-    """Generate rule-based growth strategy when AI is unavailable"""
-
-    days_per_phase = target_days // num_phases
-    strategies = []
-
-    for i in range(num_phases):
-        start_day = i * days_per_phase + 1
-        end_day = (i + 1) * days_per_phase if i < num_phases - 1 else target_days
-
-        # Calculate progressive target
-        progress_ratio = (i + 1) / num_phases
-        phase_target = round(current_share + (gap * progress_ratio), 2)
-
-        if i == 0:
-            phase = {
-                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
-                "focus": "Quick Wins & Foundation",
-                "actions": [
-                    "Launch aggressive review generation campaign with post-purchase emails",
-                    "Optimize top 5 product listings with better keywords and images",
-                    "Run limited-time promotional pricing on bestsellers",
-                    "Set up automated customer feedback system"
-                ],
-                "target": f"{phase_target}% market share"
-            }
-        elif i == num_phases - 1:
-            phase = {
-                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
-                "focus": "Market Dominance & Scaling",
-                "actions": [
-                    "Scale successful products with increased inventory",
-                    "Launch premium product line to capture higher margins",
-                    "Implement customer loyalty and referral program",
-                    "Expand to adjacent categories with proven success formula"
-                ],
-                "target": f"{target_share}% market share"
-            }
-        elif i == 1:
-            phase = {
-                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
-                "focus": "Product Expansion & Marketing",
-                "actions": [
-                    "Add 5-7 new product variants based on competitor gaps",
-                    "Launch influencer marketing campaign with micro-influencers",
-                    "Improve product photography and video content",
-                    "Implement A/B testing on product descriptions and pricing"
-                ],
-                "target": f"{phase_target}% market share"
-            }
-        else:
-            phase = {
-                "phase": f"Phase {i + 1} (Days {start_day}-{end_day})",
-                "focus": "Growth Acceleration",
-                "actions": [
-                    "Expand product catalog with data-driven selections",
-                    "Launch seasonal promotions and bundle offers",
-                    "Optimize pricing strategy based on competitor monitoring",
-                    "Increase advertising spend on top-performing products"
-                ],
-                "target": f"{phase_target}% market share"
-            }
-
-        strategies.append(phase)
-
-    return strategies
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

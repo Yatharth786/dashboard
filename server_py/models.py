@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, Numeric, DateTime
+from sqlalchemy import Column, String, Text, Integer, Float, Boolean, JSON, TIMESTAMP, ARRAY, Numeric, DateTime, Date, ForeignKey 
 from .database_config import Base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 
@@ -197,6 +198,14 @@ class User(Base):
     # ✅ NEW: Product analysis tracking
     analysis_used = Column(Integer, default=0)
     analysis_month = Column(String, nullable=True)
+
+    # SOV Analysis tracking  
+    sov_used = Column(Integer, default=0)
+    sov_month = Column(String)  # YYYY-MM format
+
+    # Keyword tracking
+    keyword_tracker_used = Column(Integer, default=0)
+    keyword_tracker_month = Column(String)   # YYYY-MM format
    
     # Optional: Add is_active if you want to enable/disable accounts
     # is_active = Column(Boolean, default=True)
@@ -242,3 +251,52 @@ class ProductTrackerAnalysis(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+
+
+
+
+
+
+
+
+
+class TrackedProduct(Base):
+    __tablename__ = "tracked_products"  # matches your SQL table
+
+    id = Column(Integer, primary_key=True, index=True)
+    seller_id = Column(String, index=True, nullable=False)
+    asin = Column(String, index=True, nullable=False)
+    product_title = Column(String, nullable=False)
+    product_photo = Column(String)
+    country = Column(String, default="IN")
+    user_email = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    review_comments = Column(Text, nullable=True)  # JSON array of comment strings
+    review_ratings = Column(Text, nullable=True) 
+
+    # Relationship to keyword history
+    keywords = relationship(
+        "KeywordRankHistory",
+        back_populates="product",
+        cascade="all, delete-orphan"
+    )
+
+
+# ----------------------
+# Keyword Rank History
+# ----------------------
+class KeywordRankHistory(Base):
+    __tablename__ = "keyword_rank_history"  # matches your SQL table
+
+    id = Column(Integer, primary_key=True, index=True)
+    tracked_product_id = Column(Integer, ForeignKey("tracked_products.id", ondelete="CASCADE"))
+    keyword = Column(String, nullable=False)
+    rank = Column(Integer, nullable=True)
+    user_email = Column(String, index=True)
+    checked_at = Column(Date, default=datetime.utcnow)
+
+    # Relationship back to product
+    product = relationship("TrackedProduct", back_populates="keywords")

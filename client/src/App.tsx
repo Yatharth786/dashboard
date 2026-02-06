@@ -920,6 +920,8 @@ import KeywordRankTrackingFeaturePage from "@/pages/keyword-rank-tracking-featur
 import ProductResearchFeaturePage from "@/pages/product-research-feature";
 import AIRecommendationsFeaturePage from "@/pages/ai-recommendations-feature";
 import WhatsAppAlertsFeaturePage from "@/pages/whatsapp-alerts-feature";
+import UseCasesPage from "@/pages/use-cases";
+import SolutionsPage from "@/pages/solutions";
 
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -1147,22 +1149,24 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/terms-service" component={TermsOfService} />
-      <Route path="/amazon-sellers" component={AmazonSellersPage} />
-      <Route path="/flipkart-sellers" component={FlipkartSellersPage} />
-      <Route path="/brand-managers" component={BrandManagersPage} />
-      <Route path="/ecommerce-agencies" component={EcommerceAgenciesPage} />
-      <Route path="/track-competitor-prices" component={TrackCompetitorPricesPage} />
-      <Route path="/find-profitable-products" component={FindProfitableProductsPage} />
-      <Route path="/analyze-customer-reviews" component={AnalyzeCustomerReviewsPage} />
-      <Route path="/improve-seo" component={ImproveSEOPage} />
-      <Route path="/avoid-stockouts" component={AvoidStockoutsPage} />
-      <Route path="/competitor-price-tracking-feature" component={CompetitorPriceTrackingFeaturePage} />
-      <Route path="/review-analytics-feature" component={ReviewAnalyticsFeaturePage} />
-      <Route path="/price-optimization-feature" component={PriceOptimizationFeaturePage} />
-      <Route path="/keyword-rank-tracking-feature" component={KeywordRankTrackingFeaturePage} />
-      <Route path="/product-research-feature" component={ProductResearchFeaturePage} />
-      <Route path="/ai-recommendations-feature" component={AIRecommendationsFeaturePage} />
-      <Route path="/whatsapp-alerts-feature" component={WhatsAppAlertsFeaturePage} />
+      <Route path="/solutions/amazon-sellers" component={AmazonSellersPage} />
+      <Route path="/solutions/flipkart-sellers" component={FlipkartSellersPage} />
+      <Route path="/solutions/brand-managers" component={BrandManagersPage} />
+      <Route path="/solutions/ecommerce-agencies" component={EcommerceAgenciesPage} />
+      <Route path="/use-cases/track-competitor-prices" component={TrackCompetitorPricesPage} />
+      <Route path="/use-cases/find-profitable-products" component={FindProfitableProductsPage} />
+      <Route path="/use-cases/analyze-customer-reviews" component={AnalyzeCustomerReviewsPage} />
+      <Route path="/use-cases/improve-seo" component={ImproveSEOPage} />
+      <Route path="/use-cases/avoid-stockouts" component={AvoidStockoutsPage} />
+      <Route path="/features/competitor-price-tracking-feature" component={CompetitorPriceTrackingFeaturePage} />
+      <Route path="/features/review-analytics-feature" component={ReviewAnalyticsFeaturePage} />
+      <Route path="/features/price-optimization-feature" component={PriceOptimizationFeaturePage} />
+      <Route path="/features/keyword-rank-tracking-feature" component={KeywordRankTrackingFeaturePage} />
+      <Route path="/features/product-research-feature" component={ProductResearchFeaturePage} />
+      <Route path="/features/ai-recommendations-feature" component={AIRecommendationsFeaturePage} />
+      <Route path="/features/whatsapp-alerts-feature" component={WhatsAppAlertsFeaturePage} />
+      <Route path="/use-cases" component={UseCasesPage} />
+      <Route path="/solutions" component={SolutionsPage} />
 
       {/* Auth Pages (redirect to dashboard if already logged in) */}
       <PublicRoute path="/login" component={Login} />

@@ -922,6 +922,20 @@ import AIRecommendationsFeaturePage from "@/pages/ai-recommendations-feature";
 import WhatsAppAlertsFeaturePage from "@/pages/whatsapp-alerts-feature";
 import UseCasesPage from "@/pages/use-cases";
 import SolutionsPage from "@/pages/solutions";
+import Pricing from "@/pages/pricing";
+import InsydzVsHeliumPage from "@/pages/insydzvshelium";
+import InsydzVsJungleScoutPage from "@/pages/insydzvsjunglescout";
+import InsydzVsViralLaunchPage from "@/pages/insydzvsvirallaunch";
+import ExpertBlog from "@/pages/expert-blog";
+import FreeAmazonProductAnalyzerPage from "@/pages/free-amazon-product-analyzer";
+import FreeReviewSentimentCheckerPage from "@/pages/free-review-sentiment-checker";
+import FreeKeywordRankCheckerPage from "@/pages/free-keyword-rank-checker";
+import FreeCompetitorPriceCheckerPage from "@/pages/free-competitor-price-checker";
+import FestiveTrendFeaturePage from "@/pages/festive-trend-feature";
+import AboutUsPage from "@/pages/about-us";
+import OurVisionPage from "@/pages/our-vision";
+import CareersPage from "@/pages/careers";
+import ContactUsPage from "@/pages/contact-us";
 
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -942,7 +956,6 @@ import ProductTracker from "@/pages/product-tracker";
 import ProductTrackerHistory from "@/pages/ProductTrackerHistory";
 import ShareOfVoice from "@/pages/ShareOfVoice";
 import KeywordTracker from "@/pages/keyword-tracker";
-
 
 // ==================
 // Environment Config
@@ -1165,9 +1178,23 @@ function Router() {
       <Route path="/features/product-research-feature" component={ProductResearchFeaturePage} />
       <Route path="/features/ai-recommendations-feature" component={AIRecommendationsFeaturePage} />
       <Route path="/features/whatsapp-alerts-feature" component={WhatsAppAlertsFeaturePage} />
+      <Route path="/features/festive-trend-feature" component={FestiveTrendFeaturePage} />
       <Route path="/use-cases" component={UseCasesPage} />
       <Route path="/solutions" component={SolutionsPage} />
-
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/compare/insydzvshelium" component={InsydzVsHeliumPage} />
+      <Route path="/compare/insydzvsjunglescout" component={InsydzVsJungleScoutPage} />
+      <Route path="/compare/insydzvsvirallaunch" component={InsydzVsViralLaunchPage} />
+      <Route path="/resources/expert-blog" component={ExpertBlog} />
+      <Route path="/free-tools/free-amazon-product-analyzer" component={FreeAmazonProductAnalyzerPage} />
+      <Route path="/free-tools/free-review-sentiment-checker" component={FreeReviewSentimentCheckerPage} />
+      <Route path="/free-tools/free-keyword-rank-checker" component={FreeKeywordRankCheckerPage} />
+      <Route path="/free-tools/free-competitor-price-checker" component={FreeCompetitorPriceCheckerPage} />
+      <Route path="/about/about-us" component={AboutUsPage} />
+      <Route path="/about/our-vision" component={OurVisionPage} />
+      <Route path="/about/careers" component={CareersPage} />
+      <Route path="/about/contact-us" component={ContactUsPage} />
+      
       {/* Auth Pages (redirect to dashboard if already logged in) */}
       <PublicRoute path="/login" component={Login} />
       <PublicRoute path="/signup" component={Signup} />

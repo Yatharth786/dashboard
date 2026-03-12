@@ -183,30 +183,59 @@ export default function ContactUsPage() {
 
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center space-x-2" ref={dropdownRef}>
-              {(["Solutions", "Use Cases", "Features", "Free Tools", "Compare", "Resources"] as const).map((menu) => (
-                <div key={menu} className="relative">
-                  <button
-                    onMouseEnter={() => setActiveDropdown(menu)}
-                    className="px-3 py-2 text-sm text-gray-700 hover:text-orange-600 font-medium rounded-lg hover:bg-orange-50 transition-all flex items-center gap-1"
-                  >
-                    {menu} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeDropdown === menu ? "rotate-180" : ""}`} />
-                  </button>
-                  {activeDropdown === menu && (
-                    <div
-                      onMouseLeave={() => setActiveDropdown(null)}
-                      className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50"
-                    >
-                      {(navigationMenu[menu as keyof NavigationMenu] as MenuItemWithBadge[]).map((item, i) => (
-                        <button key={i} onClick={() => handleMenuItemClick(item)} className="w-full px-4 py-3 text-left hover:bg-orange-50 transition-colors flex items-center gap-3 group">
-                          <span className="text-orange-500 group-hover:scale-110 transition-transform">{item.icon}</span>
-                          <span className="text-sm text-gray-700 group-hover:text-orange-600 flex-1">{item.name}</span>
-                          {item.badge && <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-semibold">{item.badge}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {(["Solutions", "Use Cases", "Features", "Pricing", "Free Tools", "Compare", "Resources"] as const).map((menu) => (
+                 menu === "Pricing" ? (
+    <button
+      key={menu}
+      onClick={() => setLocation('/pricing')}
+      onMouseEnter={() => setActiveDropdown(null)}
+      className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-orange-600 font-medium rounded-lg hover:bg-orange-50 transition-all"
+    >
+      Pricing
+    </button>
+  ) : (
+    <div key={menu} className="relative">
+      <button
+        onMouseEnter={() => setActiveDropdown(menu)}
+        className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-orange-600 font-medium rounded-lg hover:bg-orange-50 transition-all flex items-center gap-1"
+      >
+        {menu}
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform ${
+            activeDropdown === menu ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {activeDropdown === menu && (
+        <div
+          onMouseLeave={() => setActiveDropdown(null)}
+          className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+        >
+          {(navigationMenu[menu as keyof NavigationMenu] as MenuItemWithBadge[]).map((item, i) => (
+            <button
+              key={i}
+              onClick={() => handleMenuItemClick(item)}
+              className="w-full px-4 py-3 text-left hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors flex items-center gap-3 group"
+            >
+              <span className="text-orange-500 group-hover:scale-110 transition-transform">
+                {item.icon}
+              </span>
+              <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-orange-600 flex-1">
+                {item.name}
+              </span>
+              {item.badge && (
+                <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-semibold">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+))}
 
               {/* About */}
               <div className="relative">
@@ -228,7 +257,6 @@ export default function ContactUsPage() {
                 )}
               </div>
 
-              <button onClick={() => setLocation("/pricing")} className="px-3 py-2 text-sm text-gray-700 hover:text-orange-600 font-medium rounded-lg hover:bg-orange-50 transition-all">Pricing</button>
               <Button onClick={handleGetStarted} className="ml-2 text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 py-2 rounded-full shadow-lg transition-all transform hover:scale-105">Login</Button>
             </div>
 
@@ -536,7 +564,7 @@ export default function ContactUsPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</p>
-                <a href="mailto:hello@insydz.com" className="text-gray-900 font-bold text-base hover:text-orange-600 transition-colors">hello@insydz.com</a>
+                <a href="mailto:contact@insydz.com" className="text-gray-900 font-bold text-base hover:text-orange-600 transition-colors">contact@insydz.com</a>
                 <p className="text-gray-500 text-sm mt-0.5">General enquiries</p>
               </div>
             </div>
@@ -652,7 +680,7 @@ export default function ContactUsPage() {
             <div>
               <h4 className="font-bold mb-4 text-white">Contact</h4>
               <div className="space-y-2 text-sm text-gray-400">
-                <p>hello@insydz.com</p>
+                <p>contact@insydz.com</p>
                 <p>support@insydz.com</p>
                 <p>New Delhi, India 🇮🇳</p>
               </div>

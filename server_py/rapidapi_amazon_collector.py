@@ -2822,7 +2822,8 @@ class Config:
         self.PRODUCT_CONDITION = os.getenv("PRODUCT_CONDITION", "ALL")
         self.IS_PRIME = os.getenv("IS_PRIME", "false")
         self.DEALS_AND_DISCOUNTS = os.getenv("DEALS_AND_DISCOUNTS", "NONE")
-        self.MAX_PAGES = int(os.getenv("MAX_PAGES", "5"))
+        self.MAX_PAGES = int(os.getenv("MAX_PAGES", "32"))
+        self.FLIPKART_MAX_PAGES = int(os.getenv("FLIPKART_MAX_PAGES", "110"))
         self.OUTPUT_DIR = os.getenv("OUTPUT_DIR", "data_output")
         self.DB_CONNECT_TIMEOUT = int(os.getenv("DB_CONNECT_TIMEOUT", "10"))
         self.DB_MAX_RETRIES = int(os.getenv("DB_MAX_RETRIES", "3"))
@@ -2875,7 +2876,7 @@ class Config:
             "6bo,b5g": "Electronics",
             "clo": "Clothing & Accessories",
             "4rq": "Home & Kitchen",
-            "j9e": "Beauty & Personal Care"
+            "j9e": "Home Appliances"
         }
  
  
@@ -3438,8 +3439,8 @@ class MultiPlatformCollector:
         total = 0
         
         # Use category-based endpoint (BASIC plan compatible)
-        for page in range(1, self.config.MAX_PAGES + 1):
-            logger.info(f"[FLIPKART] Page {page}/{self.config.MAX_PAGES}...")
+        for page in range(1, self.config.FLIPKART_MAX_PAGES + 1):
+            logger.info(f"[FLIPKART] Page {page}/{self.config.FLIPKART_MAX_PAGES}...")
             
             # Call the category endpoint
             response = self.flipkart_api.get_flipkart_products_by_category(

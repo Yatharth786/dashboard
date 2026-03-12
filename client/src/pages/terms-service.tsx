@@ -240,7 +240,7 @@ export default function TermsOfService() {
 
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">12.3 Dispute Resolution</h3>
             <p className="text-gray-700 dark:text-gray-300">
-              Before filing any legal action, you agree to attempt to resolve any dispute informally by contacting us at legal@insydz.com. We will work in good faith to resolve the dispute within 30 days.
+              Before filing any legal action, you agree to attempt to resolve any dispute informally by contacting us at contact@insydz.com. We will work in good faith to resolve the dispute within 30 days.
             </p>
           </section>
 
@@ -271,7 +271,7 @@ export default function TermsOfService() {
               If you have any questions about these Terms, please contact us:
             </p>
             <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl mt-4">
-              <p className="text-gray-700 dark:text-gray-300"><strong>Email:</strong> legal@insydz.com</p>
+              <p className="text-gray-700 dark:text-gray-300"><strong>Email:</strong> contact@insydz.com</p>
               <p className="text-gray-700 dark:text-gray-300"><strong>Support:</strong> support@insydz.com</p>
               <p className="text-gray-700 dark:text-gray-300"><strong>Phone:</strong> +91 98765 43210</p>
               <p className="text-gray-700 dark:text-gray-300"><strong>Address:</strong> New Delhi, India</p>

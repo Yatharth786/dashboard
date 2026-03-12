@@ -334,7 +334,9 @@ export default function CareersPage() {
               <DesktopDropdown label="Solutions" menuKey="Solutions" accent />
               <DesktopDropdown label="Use Cases" menuKey="Use Cases" />
               <DesktopDropdown label="Features" menuKey="Features" />
-              <button onClick={() => setLocation("/pricing")} className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+              <button onClick={() => setLocation("/pricing")}
+               onMouseEnter={() => setActiveDropdown(null)} 
+               className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
                 Pricing
               </button>
               <DesktopDropdown label="Free Tools" menuKey="Free Tools" />
@@ -630,7 +632,7 @@ export default function CareersPage() {
                     </div>
                     <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">{role.desc}</p>
                   </div>
-                  <a href={`mailto:careers@insydz.com?subject=Application: ${role.title}`} className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg transition-all whitespace-nowrap">
+                  <a href={`mailto:contact@insydz.com?subject=Application: ${role.title}`} className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg transition-all whitespace-nowrap">
                     Apply → <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
@@ -645,8 +647,8 @@ export default function CareersPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
                   No open roles right now, but strong product thinkers and growth operators are always welcome.
                 </p>
-                <a href="mailto:careers@insydz.com" className="text-xl font-black text-orange-600 hover:text-orange-700 border-b-2 border-orange-300 pb-0.5 transition-colors">
-                  careers@insydz.com
+                <a href="mailto:contact@insydz.com" className="text-xl font-black text-orange-600 hover:text-orange-700 border-b-2 border-orange-300 pb-0.5 transition-colors">
+                  contact@insydz.com
                 </a>
               </div>
               <div className="flex-shrink-0 opacity-20">
@@ -752,7 +754,7 @@ export default function CareersPage() {
             <Button
               size="lg"
               className="bg-orange-700 hover:bg-orange-800 text-white font-bold px-12 py-6 text-lg rounded-full border-2 border-orange-400"
-              onClick={() => { window.location.href = "mailto:careers@insydz.com"; }}
+              onClick={() => { window.location.href = "mailto:contact@insydz.com"; }}
             >
               Email Your Profile →
             </Button>

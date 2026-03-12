@@ -138,6 +138,8 @@ import {
   Presentation
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Helmet } from 'react-helmet-async';
+
 
 // Navigation Menu Data
 type MenuItemWithBadge = {
@@ -275,6 +277,7 @@ export default function ImproveSEOPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
+      
       {/* Navigation */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${

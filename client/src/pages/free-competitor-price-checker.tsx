@@ -13,6 +13,8 @@ import {
   Presentation
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Helmet } from 'react-helmet-async';
+
 
 type MenuItemWithBadge = {
   name: string;
@@ -180,6 +182,11 @@ export default function FreeCompetitorPriceCheckerPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
+      <Helmet>
+        <link rel="canonical" href="https://insydz.com/free-tools/free-competitor-price-checker" />
+        <title></title>
+        <meta name="description" content="." />
+      </Helmet>
 
       {/* ─── NAVIGATION ─── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-lg' : 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md'}`}>

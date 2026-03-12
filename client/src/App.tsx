@@ -932,10 +932,16 @@ import FreeReviewSentimentCheckerPage from "@/pages/free-review-sentiment-checke
 import FreeKeywordRankCheckerPage from "@/pages/free-keyword-rank-checker";
 import FreeCompetitorPriceCheckerPage from "@/pages/free-competitor-price-checker";
 import FestiveTrendFeaturePage from "@/pages/festive-trend-feature";
-import AboutUsPage from "@/pages/about-us";
 import OurVisionPage from "@/pages/our-vision";
 import CareersPage from "@/pages/careers";
 import ContactUsPage from "@/pages/contact-us";
+import AllFeaturesPage from "@/pages/features";
+import AmazonCompetitorPriceTrackingTool from "@/pages/amazon-competitor-price-tracking-tool";
+import AmazonSeoToolIndia from "@/pages/amazon-seo-tool-india";
+import HowToRankPage1AmazonIndia from "@/pages/how-to-rank-page-1-amazon-india";
+import BestCompetitorPriceTrackingToolsIndia from "@/pages/best-competitor-price-tools-india";
+import InsydzVsHelium10India from "@/pages/insydz-vs-helium-10-india";
+import AmazonReviewAnalysisToolIndia from "@/pages/ai-review-intelligence-tool-for-amazon-and-flipkart-sellers";
 
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
@@ -1171,6 +1177,7 @@ function Router() {
       <Route path="/use-cases/analyze-customer-reviews" component={AnalyzeCustomerReviewsPage} />
       <Route path="/use-cases/improve-seo" component={ImproveSEOPage} />
       <Route path="/use-cases/avoid-stockouts" component={AvoidStockoutsPage} />
+      <Route path="/features" component={AllFeaturesPage} />
       <Route path="/features/competitor-price-tracking-feature" component={CompetitorPriceTrackingFeaturePage} />
       <Route path="/features/review-analytics-feature" component={ReviewAnalyticsFeaturePage} />
       <Route path="/features/price-optimization-feature" component={PriceOptimizationFeaturePage} />
@@ -1190,11 +1197,16 @@ function Router() {
       <Route path="/free-tools/free-review-sentiment-checker" component={FreeReviewSentimentCheckerPage} />
       <Route path="/free-tools/free-keyword-rank-checker" component={FreeKeywordRankCheckerPage} />
       <Route path="/free-tools/free-competitor-price-checker" component={FreeCompetitorPriceCheckerPage} />
-      <Route path="/about/about-us" component={AboutUsPage} />
       <Route path="/about/our-vision" component={OurVisionPage} />
       <Route path="/about/careers" component={CareersPage} />
       <Route path="/about/contact-us" component={ContactUsPage} />
-      
+      <Route path="/resources/expert-blog/amazon-competitor-price-tracking-tool" component={AmazonCompetitorPriceTrackingTool} />
+      <Route path="/resources/expert-blog/amazon-seo-tool-india" component={AmazonSeoToolIndia} />
+      <Route path="/resources/expert-blog/how-to-rank-page-1-amazon-india" component={HowToRankPage1AmazonIndia} />
+      <Route path="/resources/expert-blog/best-competitor-price-tools-india" component={BestCompetitorPriceTrackingToolsIndia} />
+      <Route path="/resources/expert-blog/insydz-vs-helium-10-india" component={InsydzVsHelium10India} />
+      <Route path="/resources/expert-blog/ai-review-intelligence-tool-for-amazon-and-flipkart-sellers" component={AmazonReviewAnalysisToolIndia} />
+
       {/* Auth Pages (redirect to dashboard if already logged in) */}
       <PublicRoute path="/login" component={Login} />
       <PublicRoute path="/signup" component={Signup} />
